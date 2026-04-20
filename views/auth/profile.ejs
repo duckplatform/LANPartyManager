@@ -1,0 +1,76 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main>
+  <section class="section page-section">
+    <div class="container container-narrow">
+      <%- include('../partials/flash') %>
+
+      <div class="page-header">
+        <h1 class="page-title">👾 Mon profil</h1>
+      </div>
+
+      <div class="profile-card">
+        <div class="profile-info">
+          <div class="profile-avatar">
+            <span><%- user.username ? user.username.charAt(0).toUpperCase() : '?' %></span>
+          </div>
+          <div class="profile-details">
+            <h2><%= user.username %></h2>
+            <p class="text-muted"><%= user.email %></p>
+            <span class="badge badge-role badge-<%= user.role %>"><%= user.role %></span>
+            <p class="text-muted">Membre depuis le <%= new Date(user.created_at).toLocaleDateString('fr-FR') %></p>
+          </div>
+        </div>
+      </div>
+
+      <% if (errors && errors.length > 0) { %>
+        <div class="form-errors">
+          <% errors.forEach(e => { %><p>❌ <%= e.msg %></p><% }) %>
+        </div>
+      <% } %>
+
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">Modifier mon profil</h3>
+
+          <form action="/auth/profile" method="POST" class="form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="form-group">
+              <label class="form-label">Bio</label>
+              <textarea name="bio" class="form-input" rows="4"
+                placeholder="Parlez de vous..." maxlength="500"><%= user.bio || '' %></textarea>
+              <span class="form-hint">Max. 500 caractères</span>
+            </div>
+
+            <hr class="form-divider">
+            <h4>Changer le mot de passe (optionnel)</h4>
+
+            <div class="form-group">
+              <label class="form-label">Mot de passe actuel</label>
+              <input type="password" name="current_password" class="form-input"
+                placeholder="••••••••" autocomplete="current-password">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Nouveau mot de passe</label>
+              <input type="password" name="new_password" class="form-input"
+                placeholder="••••••••" minlength="8" autocomplete="new-password">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Confirmer le nouveau mot de passe</label>
+              <input type="password" name="password_confirm" class="form-input"
+                placeholder="••••••••" autocomplete="new-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

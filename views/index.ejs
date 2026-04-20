@@ -1,0 +1,108 @@
+<%- include('partials/header') %>
+<%- include('partials/navbar') %>
+
+<main>
+  <%- include('partials/flash') %>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-bg">
+      <div class="hero-grid"></div>
+    </div>
+    <div class="container hero-content">
+      <div class="hero-badge">🎮 Gaming Community</div>
+      <h1 class="hero-title">
+        <span class="glow-text">LAN</span> Party<br>
+        <span class="hero-subtitle">Manager</span>
+      </h1>
+      <p class="hero-desc">La plateforme ultime pour organiser et participer à vos LAN parties. Inscrivez-vous, jouez, gagnez !</p>
+      <div class="hero-actions">
+        <a href="/events" class="btn btn-primary btn-lg">Voir les événements</a>
+        <% if (!user) { %>
+          <a href="/auth/register" class="btn btn-outline btn-lg">Rejoindre la communauté</a>
+        <% } %>
+      </div>
+    </div>
+    <div class="hero-scroll-indicator">
+      <span>↓</span>
+    </div>
+  </section>
+
+  <!-- Active Event Banner -->
+  <% if (activeEvent) { %>
+  <section class="active-event-banner">
+    <div class="container">
+      <div class="event-banner-inner">
+        <div class="event-banner-badge pulse">🔴 EN COURS / À VENIR</div>
+        <h2 class="event-banner-title"><%= activeEvent.title %></h2>
+        <div class="event-banner-meta">
+          <% if (activeEvent.location) { %>
+            <span>📍 <%= activeEvent.location %></span>
+          <% } %>
+          <% if (activeEvent.start_date) { %>
+            <span>📅 <%= new Date(activeEvent.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) %></span>
+          <% } %>
+          <% if (activeEvent.max_participants > 0) { %>
+            <span>👥 <%= activeEvent.max_participants %> places</span>
+          <% } %>
+        </div>
+        <a href="/events/<%= activeEvent.slug %>" class="btn btn-accent">S'inscrire maintenant →</a>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <!-- Latest News -->
+  <section class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Dernières <span class="glow-text">Actualités</span></h2>
+        <a href="/news" class="btn btn-outline btn-sm">Toutes les actualités →</a>
+      </div>
+
+      <% if (latestNews && latestNews.length > 0) { %>
+        <div class="news-grid">
+          <% latestNews.forEach(article => { %>
+          <article class="card card-news">
+            <div class="card-body">
+              <div class="card-meta">
+                <span class="card-author">👾 <%= article.author_name || 'Admin' %></span>
+                <span class="card-date"><%= new Date(article.created_at).toLocaleDateString('fr-FR') %></span>
+              </div>
+              <h3 class="card-title">
+                <a href="/news/<%= article.slug %>"><%= article.title %></a>
+              </h3>
+              <% if (article.excerpt) { %>
+                <p class="card-excerpt"><%= article.excerpt %></p>
+              <% } %>
+              <a href="/news/<%= article.slug %>" class="card-link">Lire la suite →</a>
+            </div>
+          </article>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <div class="empty-state">
+          <p>Aucune actualité pour le moment.</p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- CTA Section -->
+  <section class="cta-section">
+    <div class="container">
+      <div class="cta-inner">
+        <h2>Prêt à jouer ?</h2>
+        <p>Rejoignez notre communauté de gamers et participez aux prochains événements LAN.</p>
+        <div class="cta-actions">
+          <a href="/events" class="btn btn-primary btn-lg">Voir les événements</a>
+          <% if (!user) { %>
+            <a href="/auth/register" class="btn btn-outline btn-lg">Créer un compte</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/footer') %>

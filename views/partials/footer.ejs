@@ -1,0 +1,40 @@
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <img src="/images/logo.svg" alt="Logo" class="footer-logo">
+          <p class="footer-tagline"><%= appName %></p>
+          <p class="footer-desc">La plateforme de gestion de LAN parties pour les passionnés de jeux vidéo.</p>
+        </div>
+        <div class="footer-links">
+          <h4>Navigation</h4>
+          <ul>
+            <li><a href="/">Accueil</a></li>
+            <li><a href="/news">Actualités</a></li>
+            <li><a href="/events">Événements</a></li>
+          </ul>
+        </div>
+        <div class="footer-links">
+          <h4>Compte</h4>
+          <ul>
+            <% if (user) { %>
+              <li><a href="/auth/profile">Mon profil</a></li>
+              <li><a href="/auth/logout">Déconnexion</a></li>
+              <% if (user.role === 'admin' || user.role === 'moderator') { %>
+                <li><a href="/admin">Administration</a></li>
+              <% } %>
+            <% } else { %>
+              <li><a href="/auth/login">Connexion</a></li>
+              <li><a href="/auth/register">Inscription</a></li>
+            <% } %>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; <%= new Date().getFullYear() %> <%= appName %> — Propulsé par LAN Party Manager</p>
+      </div>
+    </div>
+  </footer>
+  <script src="/js/main.js"></script>
+</body>
+</html>

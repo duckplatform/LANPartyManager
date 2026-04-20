@@ -1,0 +1,46 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main>
+  <section class="auth-section">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-icon">🔐</div>
+        <h1 class="auth-title">Connexion</h1>
+        <p class="auth-subtitle">Accédez à votre espace gaming</p>
+      </div>
+
+      <%- include('../partials/flash') %>
+
+      <% if (errors && errors.length > 0) { %>
+        <div class="form-errors">
+          <% errors.forEach(e => { %><p>❌ <%= e.msg %></p><% }) %>
+        </div>
+      <% } %>
+
+      <form action="/auth/login" method="POST" class="auth-form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="form-group">
+          <label for="email" class="form-label">Email</label>
+          <input type="email" id="email" name="email" class="form-input"
+            placeholder="votre@email.com" required autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label for="password" class="form-label">Mot de passe</label>
+          <input type="password" id="password" name="password" class="form-input"
+            placeholder="••••••••" required autocomplete="current-password">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Se connecter</button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Pas encore de compte ? <a href="/auth/register">S'inscrire</a></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

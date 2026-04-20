@@ -1,0 +1,78 @@
+<%- include('../../../partials/header') %>
+<%- include('../../../partials/navbar') %>
+
+<main class="admin-layout">
+  <div class="admin-sidebar">
+    <div class="sidebar-header"><span>⚙️ Admin Panel</span></div>
+    <nav class="sidebar-nav">
+      <a href="/admin/dashboard" class="sidebar-link">📊 Tableau de bord</a>
+      <a href="/admin/news" class="sidebar-link active">📰 Actualités</a>
+      <a href="/admin/events" class="sidebar-link">🎮 Événements</a>
+      <% if (user && user.role === 'admin') { %><a href="/admin/users" class="sidebar-link">👥 Utilisateurs</a><% } %>
+      <hr class="sidebar-divider">
+      <a href="/" class="sidebar-link">🏠 Site public</a>
+    </nav>
+  </div>
+
+  <div class="admin-content">
+    <%- include('../../../partials/flash') %>
+    <div class="admin-header">
+      <h1 class="admin-title">📰 Actualités</h1>
+      <a href="/admin/news/create" class="btn btn-primary">+ Créer</a>
+    </div>
+
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Titre</th>
+            <th>Auteur</th>
+            <th>Statut</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (news && news.length > 0) { %>
+            <% news.forEach(article => { %>
+            <tr>
+              <td><a href="/news/<%= article.slug %>" target="_blank"><%= article.title %></a></td>
+              <td><%= article.author_name || '-' %></td>
+              <td>
+                <span class="badge <%= article.is_published ? 'badge-active' : 'badge-inactive' %>">
+                  <%= article.is_published ? 'Publié' : 'Brouillon' %>
+                </span>
+              </td>
+              <td><%= new Date(article.created_at).toLocaleDateString('fr-FR') %></td>
+              <td class="table-actions">
+                <a href="/admin/news/<%= article.id %>/edit" class="btn btn-sm btn-outline">Modifier</a>
+                <form action="/admin/news/<%= article.id %>/delete" method="POST" style="display:inline;">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-sm btn-danger"
+                    onclick="return confirm('Supprimer cette actualité ?')">Supprimer</button>
+                </form>
+              </td>
+            </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="5" class="text-center text-muted">Aucune actualité</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (totalPages > 1) { %>
+    <div class="pagination">
+      <% if (currentPage > 1) { %>
+        <a href="/admin/news?page=<%= currentPage - 1 %>" class="btn btn-outline btn-sm">← Précédent</a>
+      <% } %>
+      <span class="page-info">Page <%= currentPage %> / <%= totalPages %></span>
+      <% if (currentPage < totalPages) { %>
+        <a href="/admin/news?page=<%= currentPage + 1 %>" class="btn btn-outline btn-sm">Suivant →</a>
+      <% } %>
+    </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../../../partials/footer') %>

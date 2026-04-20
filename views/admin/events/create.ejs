@@ -1,0 +1,90 @@
+<%- include('../../../partials/header') %>
+<%- include('../../../partials/navbar') %>
+
+<main class="admin-layout">
+  <div class="admin-sidebar">
+    <div class="sidebar-header"><span>⚙️ Admin Panel</span></div>
+    <nav class="sidebar-nav">
+      <a href="/admin/dashboard" class="sidebar-link">📊 Tableau de bord</a>
+      <a href="/admin/news" class="sidebar-link">📰 Actualités</a>
+      <a href="/admin/events" class="sidebar-link active">🎮 Événements</a>
+      <% if (user && user.role === 'admin') { %><a href="/admin/users" class="sidebar-link">👥 Utilisateurs</a><% } %>
+      <hr class="sidebar-divider">
+      <a href="/" class="sidebar-link">🏠 Site public</a>
+    </nav>
+  </div>
+
+  <div class="admin-content">
+    <%- include('../../../partials/flash') %>
+    <div class="admin-header">
+      <h1 class="admin-title">🎮 Créer un événement</h1>
+      <a href="/admin/events" class="btn btn-outline">← Retour</a>
+    </div>
+
+    <% if (errors && errors.length > 0) { %>
+      <div class="form-errors">
+        <% errors.forEach(e => { %><p>❌ <%= e.msg %></p><% }) %>
+      </div>
+    <% } %>
+
+    <div class="admin-form-card">
+      <form action="/admin/events/create" method="POST" class="form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="form-group">
+          <label class="form-label">Titre *</label>
+          <input type="text" name="title" class="form-input" required maxlength="255" placeholder="Nom de l'événement">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Lieu</label>
+          <input type="text" name="location" class="form-input" maxlength="255" placeholder="Adresse, salle...">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Date de début</label>
+            <input type="datetime-local" name="start_date" class="form-input">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Date de fin</label>
+            <input type="datetime-local" name="end_date" class="form-input">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nombre maximum de participants (0 = illimité)</label>
+          <input type="number" name="max_participants" class="form-input" min="0" value="0">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea name="description" class="form-input form-textarea" rows="10"
+            placeholder="Description de l'événement (HTML autorisé)..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group form-check">
+            <label class="checkbox-label">
+              <input type="checkbox" name="is_published" value="1">
+              <span>Publier</span>
+            </label>
+          </div>
+          <div class="form-group form-check">
+            <label class="checkbox-label">
+              <input type="checkbox" name="is_active" value="1">
+              <span>Marquer comme actif (affiché en bannière sur l'accueil)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Créer l'événement</button>
+          <a href="/admin/events" class="btn btn-outline">Annuler</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<%- include('../../../partials/footer') %>

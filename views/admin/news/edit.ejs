@@ -1,0 +1,66 @@
+<%- include('../../../partials/header') %>
+<%- include('../../../partials/navbar') %>
+
+<main class="admin-layout">
+  <div class="admin-sidebar">
+    <div class="sidebar-header"><span>⚙️ Admin Panel</span></div>
+    <nav class="sidebar-nav">
+      <a href="/admin/dashboard" class="sidebar-link">📊 Tableau de bord</a>
+      <a href="/admin/news" class="sidebar-link active">📰 Actualités</a>
+      <a href="/admin/events" class="sidebar-link">🎮 Événements</a>
+      <% if (user && user.role === 'admin') { %><a href="/admin/users" class="sidebar-link">👥 Utilisateurs</a><% } %>
+      <hr class="sidebar-divider">
+      <a href="/" class="sidebar-link">🏠 Site public</a>
+    </nav>
+  </div>
+
+  <div class="admin-content">
+    <%- include('../../../partials/flash') %>
+    <div class="admin-header">
+      <h1 class="admin-title">✏️ Modifier l'actualité</h1>
+      <a href="/admin/news" class="btn btn-outline">← Retour</a>
+    </div>
+
+    <% if (errors && errors.length > 0) { %>
+      <div class="form-errors">
+        <% errors.forEach(e => { %><p>❌ <%= e.msg %></p><% }) %>
+      </div>
+    <% } %>
+
+    <div class="admin-form-card">
+      <form action="/admin/news/<%= article.id %>/edit" method="POST" class="form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+        <div class="form-group">
+          <label class="form-label">Titre *</label>
+          <input type="text" name="title" class="form-input" required maxlength="255"
+            value="<%= article.title %>">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Extrait</label>
+          <textarea name="excerpt" class="form-input" rows="3" maxlength="500"><%= article.excerpt || '' %></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Contenu *</label>
+          <textarea name="content" class="form-input form-textarea" rows="15" required><%= article.content %></textarea>
+        </div>
+
+        <div class="form-group form-check">
+          <label class="checkbox-label">
+            <input type="checkbox" name="is_published" value="1" <%= article.is_published ? 'checked' : '' %>>
+            <span>Publier</span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+          <a href="/admin/news" class="btn btn-outline">Annuler</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<%- include('../../../partials/footer') %>

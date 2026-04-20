@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | LAN Party Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<main class="install-page">
+  <div class="install-container">
+    <div class="install-header">
+      <img src="/images/logo.svg" alt="Logo" class="install-logo">
+      <h1 class="install-title">LAN Party Manager</h1>
+      <p class="install-subtitle">Assistant d'installation</p>
+    </div>
+
+    <div class="install-progress">
+      <div class="progress-step active">1</div>
+      <div class="progress-line"></div>
+      <div class="progress-step">2</div>
+      <div class="progress-line"></div>
+      <div class="progress-step">3</div>
+    </div>
+
+    <div class="install-card">
+      <h2>Étape 1 — Configuration de la base de données</h2>
+      <p class="install-desc">Renseignez les informations de connexion à votre serveur MySQL.</p>
+
+      <% if (errors && errors.length > 0) { %>
+        <div class="form-errors">
+          <% errors.forEach(e => { %><p>❌ <%= e.msg %></p><% }) %>
+        </div>
+      <% } %>
+
+      <form action="/install/step1" method="POST" class="form">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Hôte MySQL *</label>
+            <input type="text" name="db_host" class="form-input" value="<%= data.db_host %>" required placeholder="localhost">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Port *</label>
+            <input type="number" name="db_port" class="form-input" value="<%= data.db_port %>" required min="1" max="65535">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Utilisateur *</label>
+            <input type="text" name="db_user" class="form-input" value="<%= data.db_user %>" required placeholder="root" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mot de passe</label>
+            <input type="password" name="db_password" class="form-input" placeholder="(vide si aucun)" autocomplete="current-password">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nom de la base de données *</label>
+          <input type="text" name="db_name" class="form-input" value="<%= data.db_name %>" required placeholder="lan_party_manager">
+          <span class="form-hint">La base de données sera créée si elle n'existe pas encore.</span>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-lg">Tester et continuer →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script src="/js/main.js"></script>
+</body>
+</html>

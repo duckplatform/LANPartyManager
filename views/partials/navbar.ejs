@@ -1,0 +1,35 @@
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a href="/" class="navbar-brand">
+        <img src="/images/logo.svg" alt="Logo" class="navbar-logo">
+        <span class="brand-text"><%= appName %></span>
+      </a>
+      <button class="navbar-toggle" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="navbar-menu" id="navMenu">
+        <ul class="nav-links">
+          <li><a href="/" class="nav-link">Accueil</a></li>
+          <li><a href="/news" class="nav-link">Actualités</a></li>
+          <li><a href="/events" class="nav-link">Événements</a></li>
+        </ul>
+        <div class="nav-auth">
+          <% if (user) { %>
+            <% if (user.role === 'admin' || user.role === 'moderator') { %>
+              <a href="/admin" class="btn btn-sm btn-outline">Admin</a>
+            <% } %>
+            <div class="nav-user">
+              <span class="nav-username">👾 <%= user.username %></span>
+              <div class="nav-dropdown">
+                <a href="/auth/profile">Mon profil</a>
+                <a href="/auth/logout">Déconnexion</a>
+              </div>
+            </div>
+          <% } else { %>
+            <a href="/auth/login" class="btn btn-sm btn-outline">Connexion</a>
+            <a href="/auth/register" class="btn btn-sm btn-primary">Inscription</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </nav>

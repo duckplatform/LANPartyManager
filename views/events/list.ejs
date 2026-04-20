@@ -1,0 +1,67 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main>
+  <%- include('../partials/flash') %>
+
+  <section class="section page-section">
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">🎮 Événements</h1>
+      </div>
+
+      <% if (events && events.length > 0) { %>
+        <div class="events-grid">
+          <% events.forEach(event => { %>
+          <article class="card card-event">
+            <div class="card-event-header">
+              <% if (event.is_active) { %>
+                <span class="badge badge-active pulse">🔴 Actif</span>
+              <% } %>
+            </div>
+            <div class="card-body">
+              <h2 class="card-title">
+                <a href="/events/<%= event.slug %>"><%= event.title %></a>
+              </h2>
+              <div class="event-meta">
+                <% if (event.location) { %>
+                  <div class="event-meta-item">📍 <%= event.location %></div>
+                <% } %>
+                <% if (event.start_date) { %>
+                  <div class="event-meta-item">
+                    📅 <%= new Date(event.start_date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) %>
+                  </div>
+                <% } %>
+                <% if (event.max_participants > 0) { %>
+                  <div class="event-meta-item">👥 <%= event.max_participants %> places</div>
+                <% } %>
+              </div>
+              <a href="/events/<%= event.slug %>" class="btn btn-primary btn-sm">Voir les détails →</a>
+            </div>
+          </article>
+          <% }) %>
+        </div>
+
+        <% if (totalPages > 1) { %>
+        <div class="pagination">
+          <% if (currentPage > 1) { %>
+            <a href="/events?page=<%= currentPage - 1 %>" class="btn btn-outline btn-sm">← Précédent</a>
+          <% } %>
+          <span class="page-info">Page <%= currentPage %> / <%= totalPages %></span>
+          <% if (currentPage < totalPages) { %>
+            <a href="/events?page=<%= currentPage + 1 %>" class="btn btn-outline btn-sm">Suivant →</a>
+          <% } %>
+        </div>
+        <% } %>
+
+      <% } else { %>
+        <div class="empty-state">
+          <div class="empty-icon">🎮</div>
+          <p>Aucun événement disponible pour le moment.</p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

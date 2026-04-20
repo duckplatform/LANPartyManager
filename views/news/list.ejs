@@ -1,0 +1,57 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main>
+  <%- include('../partials/flash') %>
+
+  <section class="section page-section">
+    <div class="container">
+      <div class="page-header">
+        <h1 class="page-title">📰 Actualités</h1>
+      </div>
+
+      <% if (news && news.length > 0) { %>
+        <div class="news-grid">
+          <% news.forEach(article => { %>
+          <article class="card card-news">
+            <div class="card-body">
+              <div class="card-meta">
+                <span class="card-author">👾 <%= article.author_name || 'Admin' %></span>
+                <span class="card-date"><%= new Date(article.created_at).toLocaleDateString('fr-FR') %></span>
+              </div>
+              <h2 class="card-title">
+                <a href="/news/<%= article.slug %>"><%= article.title %></a>
+              </h2>
+              <% if (article.excerpt) { %>
+                <p class="card-excerpt"><%= article.excerpt %></p>
+              <% } %>
+              <a href="/news/<%= article.slug %>" class="card-link">Lire la suite →</a>
+            </div>
+          </article>
+          <% }) %>
+        </div>
+
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+        <div class="pagination">
+          <% if (currentPage > 1) { %>
+            <a href="/news?page=<%= currentPage - 1 %>" class="btn btn-outline btn-sm">← Précédent</a>
+          <% } %>
+          <span class="page-info">Page <%= currentPage %> / <%= totalPages %></span>
+          <% if (currentPage < totalPages) { %>
+            <a href="/news?page=<%= currentPage + 1 %>" class="btn btn-outline btn-sm">Suivant →</a>
+          <% } %>
+        </div>
+        <% } %>
+
+      <% } else { %>
+        <div class="empty-state">
+          <div class="empty-icon">📰</div>
+          <p>Aucune actualité publiée pour le moment.</p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

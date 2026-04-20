@@ -1,0 +1,40 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main>
+  <%- include('../partials/flash') %>
+
+  <section class="section page-section">
+    <div class="container container-narrow">
+      <div class="breadcrumb">
+        <a href="/">Accueil</a> / <a href="/news">Actualités</a> / <%= article.title %>
+      </div>
+
+      <article class="article">
+        <header class="article-header">
+          <h1 class="article-title"><%= article.title %></h1>
+          <div class="article-meta">
+            <span>👾 <%= article.author_name || 'Admin' %></span>
+            <span>📅 <%= new Date(article.created_at).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) %></span>
+          </div>
+        </header>
+
+        <% if (article.excerpt) { %>
+          <div class="article-excerpt">
+            <%= article.excerpt %>
+          </div>
+        <% } %>
+
+        <div class="article-content">
+          <%- article.content %>
+        </div>
+
+        <div class="article-footer">
+          <a href="/news" class="btn btn-outline">← Retour aux actualités</a>
+        </div>
+      </article>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | LAN Party Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<main class="install-page">
+  <div class="install-container">
+    <div class="install-header">
+      <img src="/images/logo.svg" alt="Logo" class="install-logo">
+      <h1 class="install-title">Installation Terminée !</h1>
+    </div>
+
+    <div class="install-card install-success">
+      <div class="success-icon">🎉</div>
+      <h2>LAN Party Manager est prêt !</h2>
+      <p>L'installation s'est déroulée avec succès. Votre site est maintenant opérationnel.</p>
+
+      <div class="credentials-box">
+        <h3>🔑 Vos identifiants administrateur</h3>
+        <div class="credentials-item">
+          <strong>Pseudo :</strong> <code><%= admin.username %></code>
+        </div>
+        <div class="credentials-item">
+          <strong>Email :</strong> <code><%= admin.email %></code>
+        </div>
+        <p class="credentials-warning">⚠️ Conservez ces informations en lieu sûr. Le fichier <code>.env</code> a été créé avec votre configuration.</p>
+      </div>
+
+      <div class="next-steps">
+        <h3>Prochaines étapes :</h3>
+        <ol>
+          <li>Connectez-vous avec votre compte administrateur</li>
+          <li>Personnalisez les paramètres de votre site</li>
+          <li>Créez vos premiers événements et actualités</li>
+        </ol>
+      </div>
+
+      <div class="form-actions" style="text-align:center; margin-top: 2rem;">
+        <a href="/auth/login" class="btn btn-primary btn-lg">Se connecter →</a>
+        <a href="/" class="btn btn-outline btn-lg">Aller sur le site</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="/js/main.js"></script>
+</body>
+</html>

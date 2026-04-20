@@ -1,0 +1,72 @@
+<%- include('../../../partials/header') %>
+<%- include('../../../partials/navbar') %>
+
+<main class="admin-layout">
+  <div class="admin-sidebar">
+    <div class="sidebar-header"><span>⚙️ Admin Panel</span></div>
+    <nav class="sidebar-nav">
+      <a href="/admin/dashboard" class="sidebar-link">📊 Tableau de bord</a>
+      <a href="/admin/news" class="sidebar-link">📰 Actualités</a>
+      <a href="/admin/events" class="sidebar-link active">🎮 Événements</a>
+      <% if (user && user.role === 'admin') { %><a href="/admin/users" class="sidebar-link">👥 Utilisateurs</a><% } %>
+      <hr class="sidebar-divider">
+      <a href="/" class="sidebar-link">🏠 Site public</a>
+    </nav>
+  </div>
+
+  <div class="admin-content">
+    <%- include('../../../partials/flash') %>
+    <div class="admin-header">
+      <h1 class="admin-title">🎮 Événements</h1>
+      <a href="/admin/events/create" class="btn btn-primary">+ Créer</a>
+    </div>
+
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Titre</th>
+            <th>Lieu</th>
+            <th>Date début</th>
+            <th>Places</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (events && events.length > 0) { %>
+            <% events.forEach(event => { %>
+            <tr>
+              <td><a href="/events/<%= event.slug %>" target="_blank"><%= event.title %></a></td>
+              <td><%= event.location || '-' %></td>
+              <td><%= event.start_date ? new Date(event.start_date).toLocaleDateString('fr-FR') : '-' %></td>
+              <td><%= event.max_participants > 0 ? event.max_participants : 'Illimité' %></td>
+              <td>
+                <% if (event.is_active) { %>
+                  <span class="badge badge-active">Actif</span>
+                <% } else if (event.is_published) { %>
+                  <span class="badge badge-active">Publié</span>
+                <% } else { %>
+                  <span class="badge badge-inactive">Brouillon</span>
+                <% } %>
+              </td>
+              <td class="table-actions">
+                <a href="/admin/events/<%= event.id %>/edit" class="btn btn-sm btn-outline">Modifier</a>
+                <form action="/admin/events/<%= event.id %>/delete" method="POST" style="display:inline;">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-sm btn-danger"
+                    onclick="return confirm('Supprimer cet événement ?')">Supprimer</button>
+                </form>
+              </td>
+            </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="6" class="text-center text-muted">Aucun événement</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<%- include('../../../partials/footer') %>

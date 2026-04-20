@@ -1,0 +1,71 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/navbar') %>
+
+<main class="admin-layout">
+  <div class="admin-sidebar">
+    <div class="sidebar-header">
+      <span>⚙️ Admin Panel</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/admin/dashboard" class="sidebar-link">📊 Tableau de bord</a>
+      <a href="/admin/news" class="sidebar-link">📰 Actualités</a>
+      <a href="/admin/events" class="sidebar-link">🎮 Événements</a>
+      <% if (user && user.role === 'admin') { %>
+        <a href="/admin/users" class="sidebar-link">👥 Utilisateurs</a>
+      <% } %>
+      <hr class="sidebar-divider">
+      <a href="/" class="sidebar-link">🏠 Site public</a>
+    </nav>
+  </div>
+
+  <div class="admin-content">
+    <%- include('../../partials/flash') %>
+
+    <div class="admin-header">
+      <h1 class="admin-title">📊 Tableau de bord</h1>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-value"><%= stats.userCount %></div>
+        <div class="stat-label">Utilisateurs</div>
+        <a href="/admin/users" class="stat-link">Gérer →</a>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">📰</div>
+        <div class="stat-value"><%= stats.newsCount %></div>
+        <div class="stat-label">Actualités</div>
+        <a href="/admin/news" class="stat-link">Gérer →</a>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎮</div>
+        <div class="stat-value"><%= stats.eventCount %></div>
+        <div class="stat-label">Événements</div>
+        <a href="/admin/events" class="stat-link">Gérer →</a>
+      </div>
+    </div>
+
+    <div class="admin-quick-actions">
+      <h2>Actions rapides</h2>
+      <div class="quick-actions-grid">
+        <a href="/admin/news/create" class="quick-action-card">
+          <span>✏️</span>
+          <p>Créer une actualité</p>
+        </a>
+        <a href="/admin/events/create" class="quick-action-card">
+          <span>🎮</span>
+          <p>Créer un événement</p>
+        </a>
+        <% if (user && user.role === 'admin') { %>
+          <a href="/admin/users" class="quick-action-card">
+            <span>👥</span>
+            <p>Gérer les utilisateurs</p>
+          </a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</main>
+
+<%- include('../../partials/footer') %>

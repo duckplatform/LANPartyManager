@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> | LAN Party Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<main class="install-page">
+  <div class="install-container">
+    <div class="install-header">
+      <img src="/images/logo.svg" alt="Logo" class="install-logo">
+      <h1 class="install-title">LAN Party Manager</h1>
+      <p class="install-subtitle">Assistant d'installation</p>
+    </div>
+
+    <div class="install-progress">
+      <div class="progress-step done">✓</div>
+      <div class="progress-line done"></div>
+      <div class="progress-step active">2</div>
+      <div class="progress-line"></div>
+      <div class="progress-step">3</div>
+    </div>
+
+    <div class="install-card">
+      <h2>Étape 2 — Compte administrateur</h2>
+      <p class="install-desc">Créez le compte administrateur principal de l'application.</p>
+
+      <% if (errors && errors.length > 0) { %>
+        <div class="form-errors">
+          <% errors.forEach(e => { %><p>❌ <%= e.msg %></p><% }) %>
+        </div>
+      <% } %>
+
+      <form action="/install/step2" method="POST" class="form">
+        <div class="form-group">
+          <label class="form-label">Pseudo administrateur *</label>
+          <input type="text" name="username" class="form-input" value="<%= data.username || '' %>"
+            required minlength="3" maxlength="30" pattern="[a-zA-Z0-9_-]+"
+            placeholder="admin" autocomplete="username">
+          <span class="form-hint">3-30 caractères alphanumériques</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email *</label>
+          <input type="email" name="email" class="form-input" value="<%= data.email || '' %>"
+            required placeholder="admin@example.com" autocomplete="email">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Mot de passe *</label>
+          <input type="password" name="password" class="form-input"
+            required minlength="8" placeholder="••••••••" autocomplete="new-password">
+          <span class="form-hint">Min. 8 caractères avec majuscule, minuscule, chiffre et caractère spécial</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirmer le mot de passe *</label>
+          <input type="password" name="password_confirm" class="form-input"
+            required placeholder="••••••••" autocomplete="new-password">
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-lg">Créer le compte →</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+
+<script src="/js/main.js"></script>
+</body>
+</html>

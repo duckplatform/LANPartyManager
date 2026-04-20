@@ -1,0 +1,116 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main>
+  <%- include('../partials/flash') %>
+
+  <section class="section page-section">
+    <div class="container">
+      <div class="breadcrumb">
+        <a href="/">Accueil</a> / <a href="/events">Événements</a> / <%= event.title %>
+      </div>
+
+      <div class="event-detail">
+        <div class="event-detail-header">
+          <% if (event.is_active) { %>
+            <span class="badge badge-active pulse">🔴 Événement actif</span>
+          <% } %>
+          <h1 class="page-title"><%= event.title %></h1>
+          <div class="event-info-grid">
+            <% if (event.location) { %>
+              <div class="event-info-item">
+                <span class="info-icon">📍</span>
+                <div>
+                  <strong>Lieu</strong>
+                  <p><%= event.location %></p>
+                </div>
+              </div>
+            <% } %>
+            <% if (event.start_date) { %>
+              <div class="event-info-item">
+                <span class="info-icon">📅</span>
+                <div>
+                  <strong>Début</strong>
+                  <p><%= new Date(event.start_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></p>
+                </div>
+              </div>
+            <% } %>
+            <% if (event.end_date) { %>
+              <div class="event-info-item">
+                <span class="info-icon">🏁</span>
+                <div>
+                  <strong>Fin</strong>
+                  <p><%= new Date(event.end_date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></p>
+                </div>
+              </div>
+            <% } %>
+            <div class="event-info-item">
+              <span class="info-icon">👥</span>
+              <div>
+                <strong>Participants</strong>
+                <p><%= registrations.length %><% if (event.max_participants > 0) { %> / <%= event.max_participants %><% } %> inscrits</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <% if (event.description) { %>
+          <div class="event-description article-content">
+            <%- event.description %>
+          </div>
+        <% } %>
+
+        <!-- Inscription -->
+        <div class="event-registration-box">
+          <% if (!user) { %>
+            <div class="reg-prompt">
+              <p>Connectez-vous pour vous inscrire à cet événement.</p>
+              <a href="/auth/login" class="btn btn-primary">Se connecter</a>
+            </div>
+          <% } else if (isRegistered) { %>
+            <div class="reg-status reg-confirmed">
+              <p>✅ Vous êtes inscrit(e) à cet événement !</p>
+              <form action="/events/<%= event.slug %>/unregister" method="POST" style="display:inline;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Confirmer la désinscription ?')">
+                  Se désinscrire
+                </button>
+              </form>
+            </div>
+          <% } else if (event.max_participants > 0 && registrations.length >= event.max_participants) { %>
+            <div class="reg-status reg-full">
+              <p>⚠️ Cet événement est complet.</p>
+            </div>
+          <% } else { %>
+            <form action="/events/<%= event.slug %>/register" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-primary btn-lg">🎮 S'inscrire à cet événement</button>
+            </form>
+          <% } %>
+        </div>
+
+        <!-- Liste des participants -->
+        <% if (registrations.length > 0) { %>
+          <div class="participants-section">
+            <h3>Participants (<%= registrations.length %>)</h3>
+            <div class="participants-list">
+              <% registrations.forEach(p => { %>
+                <div class="participant-item">
+                  <span class="participant-avatar">👾</span>
+                  <span class="participant-name"><%= p.username %></span>
+                  <span class="participant-date">depuis le <%= new Date(p.registered_at).toLocaleDateString('fr-FR') %></span>
+                </div>
+              <% }) %>
+            </div>
+          </div>
+        <% } %>
+
+        <div class="article-footer">
+          <a href="/events" class="btn btn-outline">← Retour aux événements</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

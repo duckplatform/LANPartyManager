@@ -1,0 +1,88 @@
+<%- include('../../../partials/header') %>
+<%- include('../../../partials/navbar') %>
+
+<main class="admin-layout">
+  <div class="admin-sidebar">
+    <div class="sidebar-header"><span>⚙️ Admin Panel</span></div>
+    <nav class="sidebar-nav">
+      <a href="/admin/dashboard" class="sidebar-link">📊 Tableau de bord</a>
+      <a href="/admin/news" class="sidebar-link">📰 Actualités</a>
+      <a href="/admin/events" class="sidebar-link">🎮 Événements</a>
+      <a href="/admin/users" class="sidebar-link active">👥 Utilisateurs</a>
+      <hr class="sidebar-divider">
+      <a href="/" class="sidebar-link">🏠 Site public</a>
+    </nav>
+  </div>
+
+  <div class="admin-content">
+    <%- include('../../../partials/flash') %>
+    <div class="admin-header">
+      <h1 class="admin-title">👥 Utilisateurs</h1>
+    </div>
+
+    <form action="/admin/users" method="GET" class="search-form">
+      <input type="text" name="search" class="form-input" placeholder="Rechercher..." value="<%= search %>">
+      <button type="submit" class="btn btn-outline">Rechercher</button>
+    </form>
+
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Pseudo</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>Statut</th>
+            <th>Inscrit le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (users && users.length > 0) { %>
+            <% users.forEach(u => { %>
+            <tr>
+              <td><strong><%= u.username %></strong></td>
+              <td><%= u.email %></td>
+              <td>
+                <span class="badge badge-role badge-<%= u.role %>"><%= u.role %></span>
+              </td>
+              <td>
+                <span class="badge <%= u.is_active ? 'badge-active' : 'badge-inactive' %>">
+                  <%= u.is_active ? 'Actif' : 'Inactif' %>
+                </span>
+              </td>
+              <td><%= new Date(u.created_at).toLocaleDateString('fr-FR') %></td>
+              <td class="table-actions">
+                <a href="/admin/users/<%= u.id %>/edit" class="btn btn-sm btn-outline">Modifier</a>
+                <% if (u.id !== user.id) { %>
+                  <form action="/admin/users/<%= u.id %>/delete" method="POST" style="display:inline;">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button type="submit" class="btn btn-sm btn-danger"
+                      onclick="return confirm('Supprimer cet utilisateur ?')">Supprimer</button>
+                  </form>
+                <% } %>
+              </td>
+            </tr>
+            <% }) %>
+          <% } else { %>
+            <tr><td colspan="6" class="text-center text-muted">Aucun utilisateur trouvé</td></tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <% if (totalPages > 1) { %>
+    <div class="pagination">
+      <% if (currentPage > 1) { %>
+        <a href="/admin/users?page=<%= currentPage - 1 %>" class="btn btn-outline btn-sm">← Précédent</a>
+      <% } %>
+      <span class="page-info">Page <%= currentPage %> / <%= totalPages %></span>
+      <% if (currentPage < totalPages) { %>
+        <a href="/admin/users?page=<%= currentPage + 1 %>" class="btn btn-outline btn-sm">Suivant →</a>
+      <% } %>
+    </div>
+    <% } %>
+  </div>
+</main>
+
+<%- include('../../../partials/footer') %>
