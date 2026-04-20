@@ -12,6 +12,13 @@ const dbConfig = {
   queueLimit: 0,
 };
 
+// Support unix socket connections (common on Linux MariaDB installs)
+if (process.env.DB_SOCKET_PATH) {
+  dbConfig.socketPath = process.env.DB_SOCKET_PATH;
+  delete dbConfig.host;
+  delete dbConfig.port;
+}
+
 const pool = mysql.createPool(dbConfig);
 
 module.exports = pool;

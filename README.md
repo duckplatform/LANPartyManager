@@ -30,7 +30,7 @@ Application **Node.js / Express + MySQL** de gestion des membres d'une associati
 ## Prérequis
 
 - **Node.js** ≥ 18
-- **MySQL** ≥ 8.0
+- **MySQL** ≥ 8.0 ou **MariaDB** ≥ 10.6
 
 ---
 
@@ -68,12 +68,46 @@ Le serveur écoute par défaut sur **http://localhost:3000**.
 | `DB_HOST` | Hôte MySQL | `localhost` |
 | `DB_PORT` | Port MySQL | `3306` |
 | `DB_USER` | Utilisateur MySQL | `root` |
-| `DB_PASSWORD` | Mot de passe MySQL | *(vide)* |
+| `DB_PASSWORD` | Mot de passe MySQL/MariaDB | *(vide)* |
 | `DB_NAME` | Nom de la base de données | `lan_party_manager` |
+| `DB_SOCKET_PATH` | Chemin du socket unix MariaDB/MySQL (optionnel, remplace host/port) | *(non défini)* |
 | `JWT_SECRET` | Clé secrète JWT | *(obligatoire)* |
 | `JWT_EXPIRES_IN` | Durée de validité des tokens | `24h` |
 | `ADMIN_EMAIL` | Email du compte admin par défaut | `admin@lanparty.local` |
 | `ADMIN_PASSWORD` | Mot de passe du compte admin par défaut | `Admin@123` |
+
+---
+
+## MariaDB – authentification par socket unix
+
+Sur les distributions Linux (Debian, Ubuntu…), le compte `root` de MariaDB utilise par défaut le plugin `unix_socket` plutôt qu'un mot de passe TCP. `npm run db:init` peut alors échouer avec `Access denied` même si le mot de passe dans `.env` est correct.
+
+**Solution A – utiliser le socket unix (recommandé)**
+
+Ajoutez dans votre `.env` :
+
+```ini
+DB_SOCKET_PATH=/var/run/mysqld/mysqld.sock
+DB_PASSWORD=
+```
+
+> Le chemin exact peut varier : `/run/mysqld/mysqld.sock` ou `/tmp/mysql.sock` selon la distribution.
+
+**Solution B – créer un utilisateur dédié avec mot de passe TCP**
+
+```sql
+CREATE USER 'lpm'@'localhost' IDENTIFIED BY 'votre_mot_de_passe';
+GRANT ALL PRIVILEGES ON lan_party_manager.* TO 'lpm'@'localhost';
+GRANT ALL PRIVILEGES ON lan_party_manager_test.* TO 'lpm'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Puis dans `.env` :
+
+```ini
+DB_USER=lpm
+DB_PASSWORD=votre_mot_de_passe
+```
 
 ---
 
