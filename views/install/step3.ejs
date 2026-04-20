@@ -37,6 +37,7 @@
       <% } %>
 
       <form action="/install/step3" method="POST" class="form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="seed-options">
           <label class="seed-option">
             <input type="radio" name="load_seeds" value="1" checked>

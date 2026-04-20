@@ -79,13 +79,7 @@ app.use((req, res, next) => {
   next();
 });
 
-// ─── Vérification installation ────────────────────────────────────────────────
-app.use(checkInstall);
-
-// ─── Routes d'installation (sans CSRF) ───────────────────────────────────────
-app.use('/install', installRoutes);
-
-// ─── CSRF pour toutes les autres routes ──────────────────────────────────────
+// ─── CSRF Protection (toutes les routes) ─────────────────────────────────────
 const csrfProtection = csrf({ cookie: false });
 app.use(csrfProtection);
 
@@ -94,7 +88,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// ─── Vérification installation ────────────────────────────────────────────────
+app.use(checkInstall);
+
 // ─── Routes principales ───────────────────────────────────────────────────────
+app.use('/install', installRoutes);
 app.use('/', indexRoutes);
 app.use('/auth', authRoutes);
 app.use('/admin', adminRoutes);

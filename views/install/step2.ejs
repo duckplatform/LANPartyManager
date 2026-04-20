@@ -37,6 +37,7 @@
       <% } %>
 
       <form action="/install/step2" method="POST" class="form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <div class="form-group">
           <label class="form-label">Pseudo administrateur *</label>
           <input type="text" name="username" class="form-input" value="<%= data.username || '' %>"

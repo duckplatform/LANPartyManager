@@ -35,7 +35,7 @@ router.get('/', (req, res) => res.redirect('/install/step1'));
 router.get('/step1', (req, res) => {
   res.render('install/step1', {
     title: 'Installation - Étape 1',
-    csrfToken: '',
+    csrfToken: req.csrfToken ? req.csrfToken() : '',
     errors: [],
     data: {
       db_host: 'localhost',
@@ -57,7 +57,7 @@ router.post('/step1', installLimiter, [
   if (!errors.isEmpty()) {
     return res.render('install/step1', {
       title: 'Installation - Étape 1',
-      csrfToken: '',
+      csrfToken: req.csrfToken ? req.csrfToken() : '',
       errors: errors.array(),
       data: req.body
     });
@@ -88,7 +88,7 @@ router.post('/step1', installLimiter, [
     logger.error('Erreur installation étape 1:', err.message);
     res.render('install/step1', {
       title: 'Installation - Étape 1',
-      csrfToken: '',
+      csrfToken: req.csrfToken ? req.csrfToken() : '',
       errors: [{ msg: `Erreur de connexion: ${err.message}` }],
       data: req.body
     });
@@ -102,7 +102,7 @@ router.get('/step2', (req, res) => {
   }
   res.render('install/step2', {
     title: 'Installation - Étape 2',
-    csrfToken: '',
+    csrfToken: req.csrfToken ? req.csrfToken() : '',
     errors: [],
     data: {}
   });
@@ -125,7 +125,7 @@ router.post('/step2', installLimiter, [
   if (!errors.isEmpty()) {
     return res.render('install/step2', {
       title: 'Installation - Étape 2',
-      csrfToken: '',
+      csrfToken: req.csrfToken ? req.csrfToken() : '',
       errors: errors.array(),
       data: req.body
     });
@@ -163,7 +163,7 @@ router.post('/step2', installLimiter, [
     logger.error('Erreur installation étape 2:', err.message);
     res.render('install/step2', {
       title: 'Installation - Étape 2',
-      csrfToken: '',
+      csrfToken: req.csrfToken ? req.csrfToken() : '',
       errors: [{ msg: `Erreur: ${err.message}` }],
       data: req.body
     });
@@ -177,7 +177,7 @@ router.get('/step3', (req, res) => {
   }
   res.render('install/step3', {
     title: 'Installation - Étape 3',
-    csrfToken: '',
+    csrfToken: req.csrfToken ? req.csrfToken() : '',
     errors: []
   });
 });
@@ -244,7 +244,7 @@ APP_NAME=LAN Party Manager
     logger.error('Erreur installation étape 3:', err.message);
     res.render('install/step3', {
       title: 'Installation - Étape 3',
-      csrfToken: '',
+      csrfToken: req.csrfToken ? req.csrfToken() : '',
       errors: [{ msg: `Erreur: ${err.message}` }]
     });
   }
@@ -256,7 +256,7 @@ router.get('/complete', (req, res) => {
   req.session.destroy(() => {});
   res.render('install/complete', {
     title: 'Installation terminée',
-    csrfToken: '',
+    csrfToken: req.csrfToken ? req.csrfToken() : '',
     admin
   });
 });
