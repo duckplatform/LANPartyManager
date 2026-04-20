@@ -105,7 +105,7 @@ router.delete('/:id', authenticate, requireAdmin, async (req, res) => {
     return res.status(400).json({ message: 'ID invalide.' });
   }
   if (id === req.user.id) {
-    return res.status(400).json({ message: "Vous ne pouvez pas supprimer votre propre compte." });
+    return res.status(400).json({ message: "Vous ne pouvez pas supprimer votre propre compte administrateur. Veuillez demander à un autre administrateur de le faire." });
   }
   try {
     const member = await Member.findById(id);

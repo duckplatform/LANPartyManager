@@ -60,7 +60,7 @@ async function seedAdmin() {
 }
 
 async function clearMembers() {
-  await connection.query("DELETE FROM members WHERE role = 'member'");
+  await connection.query('DELETE FROM members WHERE role = ?', ['member']);
 }
 
 async function teardownTestDb() {
