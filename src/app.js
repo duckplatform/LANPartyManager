@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
@@ -10,6 +11,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Serve the web frontend
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 const isTest = process.env.NODE_ENV === 'test';
 
@@ -36,8 +40,14 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/members', apiLimiter, memberRoutes);
 
-app.use((req, res) => {
+// Unknown API routes → JSON 404
+app.use('/api', (req, res) => {
   res.status(404).json({ message: 'Route introuvable.' });
+});
+
+// All other routes → serve the landing page (SPA-style fallback)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
 app.use((err, req, res, next) => {

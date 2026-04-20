@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mon espace — LANPartyManager</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="brand" href="/"><span>LAN</span>PartyManager</a>
+  <div class="navbar-links">
+    <span id="nav-username" style="color:var(--text-muted);font-size:.9rem;padding:.3rem .6rem;"></span>
+    <a id="nav-dashboard" href="/dashboard.html">Mon espace</a>
+    <a id="nav-admin"     href="/admin.html">Administration</a>
+    <a id="nav-login"     href="/login.html">Connexion</a>
+    <a id="nav-register"  href="/register.html">Inscription</a>
+    <button id="nav-logout">Déconnexion</button>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="container--wide">
+
+    <!-- Profile header -->
+    <div class="flex gap-1 mt-3" style="gap:1.25rem;margin-bottom:2rem;flex-wrap:wrap;">
+      <div class="avatar" id="avatar-initials">?</div>
+      <div>
+        <h1 id="display-name" style="font-size:1.6rem;">Chargement…</h1>
+        <p id="display-role" style="color:var(--text-muted);font-size:.9rem;"></p>
+      </div>
+    </div>
+
+    <div id="page-alert" class="alert"></div>
+
+    <div class="profile-grid">
+
+      <!-- Left: info form -->
+      <div class="card">
+        <h2 style="margin-bottom:1.25rem;">Mes informations</h2>
+        <form id="info-form" novalidate>
+          <div class="form-group">
+            <label for="nom">Nom</label>
+            <input type="text" id="nom" name="nom" required />
+          </div>
+          <div class="form-group">
+            <label for="prenom">Prénom</label>
+            <input type="text" id="prenom" name="prenom" required />
+          </div>
+          <div class="form-group">
+            <label for="surnom">Surnom (pseudo)</label>
+            <input type="text" id="surnom" name="surnom" required />
+          </div>
+          <div class="form-group">
+            <label for="email">Adresse email</label>
+            <input type="email" id="email" name="email" required />
+          </div>
+          <div id="info-alert" class="alert" style="margin-top:.5rem;"></div>
+          <button type="submit" class="btn btn--primary btn--full mt-2" id="info-btn">
+            Enregistrer les modifications
+          </button>
+        </form>
+      </div>
+
+      <!-- Right: password form -->
+      <div class="card">
+        <h2 style="margin-bottom:1.25rem;">Changer de mot de passe</h2>
+        <form id="pw-form" novalidate>
+          <div class="form-group">
+            <label for="currentPassword">Mot de passe actuel</label>
+            <input type="password" id="currentPassword" name="currentPassword" placeholder="••••••••" autocomplete="current-password" />
+          </div>
+          <div class="form-group">
+            <label for="newPassword">Nouveau mot de passe <span style="color:var(--text-muted);font-weight:400;font-size:.8rem;">(min. 6 caractères)</span></label>
+            <input type="password" id="newPassword" name="newPassword" placeholder="••••••••" autocomplete="new-password" />
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirmer le nouveau mot de passe</label>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="••••••••" autocomplete="new-password" />
+          </div>
+          <div id="pw-alert" class="alert" style="margin-top:.5rem;"></div>
+          <button type="submit" class="btn btn--secondary btn--full mt-2" id="pw-btn">
+            Changer le mot de passe
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script src="/js/api.js"></script>
+<script>
+  if (!requireAuth()) throw new Error('Not authenticated');
+  initNavbar();
+
+  /* ── Load profile ── */
+  async function loadProfile() {
+    const { ok, data } = await apiRequest('GET', '/api/members/me');
+    if (!ok) { clearSession(); window.location.href = '/login.html'; return; }
+
+    const m = data.member;
+    document.getElementById('display-name').textContent = `${m.prenom} "${m.surnom}" ${m.nom}`;
+    document.getElementById('display-role').innerHTML =
+      `<span class="badge badge--${m.role}">${m.role}</span>  ${m.email}`;
+    document.getElementById('avatar-initials').textContent =
+      (m.prenom[0] + m.nom[0]).toUpperCase();
+
+    document.getElementById('nom').value    = m.nom;
+    document.getElementById('prenom').value = m.prenom;
+    document.getElementById('surnom').value = m.surnom;
+    document.getElementById('email').value  = m.email;
+
+    // Keep localStorage user in sync
+    const token = getToken();
+    setSession(token, { ...getUser(), surnom: m.surnom, email: m.email, role: m.role });
+  }
+
+  loadProfile();
+
+  /* ── Info form ── */
+  const infoForm  = document.getElementById('info-form');
+  const infoAlert = document.getElementById('info-alert');
+  const infoBtn   = document.getElementById('info-btn');
+
+  infoForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert(infoAlert);
+
+    const nom    = infoForm.nom.value.trim();
+    const prenom = infoForm.prenom.value.trim();
+    const surnom = infoForm.surnom.value.trim();
+    const email  = infoForm.email.value.trim();
+
+    if (!nom || !prenom || !surnom || !email) {
+      showAlert(infoAlert, 'Tous les champs sont requis.');
+      return;
+    }
+
+    infoBtn.disabled = true;
+    infoBtn.innerHTML = '<span class="spinner"></span> Enregistrement…';
+
+    const { ok, data } = await apiRequest('PUT', '/api/members/me', { nom, prenom, surnom, email });
+
+    infoBtn.disabled = false;
+    infoBtn.textContent = 'Enregistrer les modifications';
+
+    if (!ok) {
+      const msg = data.errors ? data.errors.map(e => e.msg).join(' ') : (data.message || 'Erreur.');
+      showAlert(infoAlert, msg);
+      return;
+    }
+
+    showAlert(infoAlert, 'Profil mis à jour !', 'success');
+    loadProfile();
+  });
+
+  /* ── Password form ── */
+  const pwForm  = document.getElementById('pw-form');
+  const pwAlert = document.getElementById('pw-alert');
+  const pwBtn   = document.getElementById('pw-btn');
+
+  pwForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert(pwAlert);
+
+    const currentPassword = pwForm.currentPassword.value;
+    const newPassword     = pwForm.newPassword.value;
+    const confirmPassword = pwForm.confirmPassword.value;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      showAlert(pwAlert, 'Veuillez remplir tous les champs.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      showAlert(pwAlert, 'Le nouveau mot de passe doit contenir au moins 6 caractères.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      showAlert(pwAlert, 'Les mots de passe ne correspondent pas.');
+      return;
+    }
+
+    pwBtn.disabled = true;
+    pwBtn.innerHTML = '<span class="spinner"></span> Changement…';
+
+    const { ok, data } = await apiRequest('PUT', '/api/members/me', { currentPassword, newPassword });
+
+    pwBtn.disabled = false;
+    pwBtn.textContent = 'Changer le mot de passe';
+
+    if (!ok) {
+      showAlert(pwAlert, data.message || 'Erreur.');
+      return;
+    }
+
+    showAlert(pwAlert, 'Mot de passe changé !', 'success');
+    pwForm.reset();
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion — LANPartyManager</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="brand" href="/"><span>LAN</span>PartyManager</a>
+  <div class="navbar-links">
+    <span id="nav-username" style="color:var(--text-muted);font-size:.9rem;padding:.3rem .6rem;"></span>
+    <a id="nav-dashboard" href="/dashboard.html">Mon espace</a>
+    <a id="nav-admin"     href="/admin.html">Administration</a>
+    <a id="nav-login"     href="/login.html">Connexion</a>
+    <a id="nav-register"  href="/register.html">Inscription</a>
+    <button id="nav-logout">Déconnexion</button>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="container">
+    <div class="card mt-4">
+      <div class="center mb-3">
+        <div style="font-size:2.5rem;margin-bottom:.5rem;">🕹️</div>
+        <h2>Connexion</h2>
+        <p style="color:var(--text-muted);font-size:.9rem;margin-top:.25rem;">Accédez à votre espace membre</p>
+      </div>
+
+      <div id="alert" class="alert"></div>
+
+      <form id="login-form" novalidate>
+        <div class="form-group">
+          <label for="email">Adresse email</label>
+          <input type="email" id="email" name="email" placeholder="vous@exemple.com" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+        <button type="submit" class="btn btn--primary btn--full mt-2" id="submit-btn">
+          Se connecter
+        </button>
+      </form>
+
+      <p class="center mt-3" style="font-size:.9rem;color:var(--text-muted);">
+        Pas encore membre ?
+        <a href="/register.html">S'inscrire</a>
+      </p>
+    </div>
+  </div>
+</main>
+
+<script src="/js/api.js"></script>
+<script>
+  redirectIfLoggedIn();
+  initNavbar();
+
+  const form      = document.getElementById('login-form');
+  const alertEl   = document.getElementById('alert');
+  const submitBtn = document.getElementById('submit-btn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert(alertEl);
+
+    const email    = form.email.value.trim();
+    const password = form.password.value;
+
+    if (!email || !password) {
+      showAlert(alertEl, 'Veuillez remplir tous les champs.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span> Connexion…';
+
+    const { ok, data } = await apiRequest('POST', '/api/auth/login', { email, password });
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Se connecter';
+
+    if (!ok) {
+      showAlert(alertEl, data.message || 'Identifiants incorrects.');
+      return;
+    }
+
+    setSession(data.token, { ...data.member });
+    window.location.href = data.member.role === 'admin' ? '/admin.html' : '/dashboard.html';
+  });
+</script>
+</body>
+</html>

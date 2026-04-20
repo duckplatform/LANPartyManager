@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inscription — LANPartyManager</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="brand" href="/"><span>LAN</span>PartyManager</a>
+  <div class="navbar-links">
+    <span id="nav-username" style="color:var(--text-muted);font-size:.9rem;padding:.3rem .6rem;"></span>
+    <a id="nav-dashboard" href="/dashboard.html">Mon espace</a>
+    <a id="nav-admin"     href="/admin.html">Administration</a>
+    <a id="nav-login"     href="/login.html">Connexion</a>
+    <a id="nav-register"  href="/register.html">Inscription</a>
+    <button id="nav-logout">Déconnexion</button>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="container">
+    <div class="card mt-4">
+      <div class="center mb-3">
+        <div style="font-size:2.5rem;margin-bottom:.5rem;">🎮</div>
+        <h2>Inscription</h2>
+        <p style="color:var(--text-muted);font-size:.9rem;margin-top:.25rem;">Rejoignez l'association</p>
+      </div>
+
+      <div id="alert" class="alert"></div>
+
+      <form id="register-form" novalidate>
+        <div class="profile-grid">
+          <div class="form-group">
+            <label for="nom">Nom</label>
+            <input type="text" id="nom" name="nom" placeholder="Dupont" autocomplete="family-name" required />
+          </div>
+          <div class="form-group">
+            <label for="prenom">Prénom</label>
+            <input type="text" id="prenom" name="prenom" placeholder="Jean" autocomplete="given-name" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="surnom">Surnom (pseudo)</label>
+          <input type="text" id="surnom" name="surnom" placeholder="ex: DarkWarrior42" required />
+        </div>
+        <div class="form-group">
+          <label for="email">Adresse email</label>
+          <input type="email" id="email" name="email" placeholder="vous@exemple.com" autocomplete="email" required />
+        </div>
+        <div class="form-group">
+          <label for="password">Mot de passe <span style="color:var(--text-muted);font-weight:400;font-size:.8rem;">(min. 6 caractères)</span></label>
+          <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="new-password" required minlength="6" />
+        </div>
+        <button type="submit" class="btn btn--primary btn--full mt-2" id="submit-btn">
+          Créer mon compte
+        </button>
+      </form>
+
+      <p class="center mt-3" style="font-size:.9rem;color:var(--text-muted);">
+        Déjà membre ?
+        <a href="/login.html">Se connecter</a>
+      </p>
+    </div>
+  </div>
+</main>
+
+<script src="/js/api.js"></script>
+<script>
+  redirectIfLoggedIn();
+  initNavbar();
+
+  const form      = document.getElementById('register-form');
+  const alertEl   = document.getElementById('alert');
+  const submitBtn = document.getElementById('submit-btn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideAlert(alertEl);
+
+    const nom      = form.nom.value.trim();
+    const prenom   = form.prenom.value.trim();
+    const surnom   = form.surnom.value.trim();
+    const email    = form.email.value.trim();
+    const password = form.password.value;
+
+    if (!nom || !prenom || !surnom || !email || !password) {
+      showAlert(alertEl, 'Veuillez remplir tous les champs.');
+      return;
+    }
+    if (password.length < 6) {
+      showAlert(alertEl, 'Le mot de passe doit contenir au moins 6 caractères.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner"></span> Inscription…';
+
+    const { ok, data } = await apiRequest('POST', '/api/auth/register', { nom, prenom, surnom, email, password });
+
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Créer mon compte';
+
+    if (!ok) {
+      const msg = data.errors ? data.errors.map(e => e.msg).join(' ') : (data.message || 'Erreur lors de l\'inscription.');
+      showAlert(alertEl, msg);
+      return;
+    }
+
+    showAlert(alertEl, 'Compte créé ! Redirection vers la connexion…', 'success');
+    setTimeout(() => { window.location.href = '/login.html'; }, 1500);
+  });
+</script>
+</body>
+</html>

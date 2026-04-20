@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administration — LANPartyManager</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="brand" href="/"><span>LAN</span>PartyManager</a>
+  <div class="navbar-links">
+    <span id="nav-username" style="color:var(--text-muted);font-size:.9rem;padding:.3rem .6rem;"></span>
+    <a id="nav-dashboard" href="/dashboard.html">Mon espace</a>
+    <a id="nav-admin"     href="/admin.html">Administration</a>
+    <a id="nav-login"     href="/login.html">Connexion</a>
+    <a id="nav-register"  href="/register.html">Inscription</a>
+    <button id="nav-logout">Déconnexion</button>
+  </div>
+</nav>
+
+<main class="page">
+  <div class="container--wide">
+
+    <div class="flex justify-between mt-3" style="margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem;">
+      <div>
+        <h1 style="font-size:1.6rem;">Panneau d'administration</h1>
+        <p style="color:var(--text-muted);font-size:.9rem;">Gestion des membres de l'association</p>
+      </div>
+      <div class="flex gap-1" style="gap:.75rem;">
+        <span id="member-count" class="badge badge--member" style="font-size:.85rem;padding:.3rem .8rem;"></span>
+        <button class="btn btn--secondary btn--sm" id="refresh-btn">↻ Actualiser</button>
+      </div>
+    </div>
+
+    <div id="page-alert" class="alert"></div>
+
+    <div class="card">
+      <div class="table-wrap">
+        <table id="members-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nom complet</th>
+              <th>Surnom</th>
+              <th>Email</th>
+              <th>Rôle</th>
+              <th>Inscription</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="members-tbody">
+            <tr>
+              <td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">
+                <span class="spinner"></span> Chargement…
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- Confirm delete modal -->
+<div id="modal-overlay" style="
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.6);backdrop-filter:blur(3px);
+  z-index:1000;align-items:center;justify-content:center;">
+  <div class="card" style="max-width:400px;width:90%;">
+    <h2 style="margin-bottom:.75rem;">Confirmer la suppression</h2>
+    <p id="modal-text" style="color:var(--text-muted);margin-bottom:1.5rem;"></p>
+    <div class="flex gap-1" style="gap:.75rem;justify-content:flex-end;">
+      <button class="btn btn--secondary" id="modal-cancel">Annuler</button>
+      <button class="btn btn--danger"    id="modal-confirm">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+  if (!requireAdmin()) throw new Error('Not admin');
+  initNavbar();
+
+  const tbody       = document.getElementById('members-tbody');
+  const pageAlert   = document.getElementById('page-alert');
+  const countBadge  = document.getElementById('member-count');
+  const overlay     = document.getElementById('modal-overlay');
+  const modalText   = document.getElementById('modal-text');
+  const modalCancel = document.getElementById('modal-cancel');
+  const modalConfirm= document.getElementById('modal-confirm');
+
+  let pendingDeleteId = null;
+
+  /* ── Load members ── */
+  async function loadMembers() {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">
+      <span class="spinner"></span> Chargement…</td></tr>`;
+    hideAlert(pageAlert);
+
+    const { ok, data } = await apiRequest('GET', '/api/members');
+    if (!ok) {
+      showAlert(pageAlert, data.message || 'Erreur lors du chargement.');
+      tbody.innerHTML = '';
+      return;
+    }
+
+    const members = data.members;
+    countBadge.textContent = `${members.length} membre${members.length > 1 ? 's' : ''}`;
+
+    if (members.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">Aucun membre.</td></tr>`;
+      return;
+    }
+
+    const me = getUser();
+    tbody.innerHTML = members.map(m => {
+      const date = new Date(m.created_at).toLocaleDateString('fr-FR', { day:'2-digit', month:'short', year:'numeric' });
+      const isSelf = me && m.id === me.id;
+      return `
+        <tr>
+          <td style="color:var(--text-muted);">#${m.id}</td>
+          <td><strong>${escHtml(m.prenom)} ${escHtml(m.nom)}</strong></td>
+          <td style="color:var(--accent2);">${escHtml(m.surnom)}</td>
+          <td style="color:var(--text-muted);font-size:.88rem;">${escHtml(m.email)}</td>
+          <td><span class="badge badge--${m.role}">${m.role}</span></td>
+          <td style="color:var(--text-muted);font-size:.85rem;">${date}</td>
+          <td>
+            ${isSelf
+              ? `<span style="color:var(--text-muted);font-size:.8rem;">(vous)</span>`
+              : `<button class="btn btn--danger btn--sm" data-id="${m.id}" data-name="${escAttr(m.prenom + ' ' + m.nom)} (${escAttr(m.surnom)})">
+                   Supprimer
+                 </button>`
+            }
+          </td>
+        </tr>`;
+    }).join('');
+
+    // Attach delete handlers
+    tbody.querySelectorAll('[data-id]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        pendingDeleteId = parseInt(btn.dataset.id);
+        modalText.textContent = `Supprimer le membre « ${btn.dataset.name} » ? Cette action est irréversible.`;
+        overlay.style.display = 'flex';
+      });
+    });
+  }
+
+  /* ── Modal controls ── */
+  modalCancel.addEventListener('click', () => {
+    overlay.style.display = 'none';
+    pendingDeleteId = null;
+  });
+
+  modalConfirm.addEventListener('click', async () => {
+    if (!pendingDeleteId) return;
+    overlay.style.display = 'none';
+    modalConfirm.disabled = true;
+
+    const { ok, data } = await apiRequest('DELETE', `/api/members/${pendingDeleteId}`);
+    modalConfirm.disabled = false;
+    pendingDeleteId = null;
+
+    if (!ok) {
+      showAlert(pageAlert, data.message || 'Erreur lors de la suppression.');
+      return;
+    }
+    showAlert(pageAlert, 'Membre supprimé.', 'success');
+    loadMembers();
+  });
+
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) { overlay.style.display = 'none'; pendingDeleteId = null; }
+  });
+
+  document.getElementById('refresh-btn').addEventListener('click', loadMembers);
+
+  /* ── HTML escaping ── */
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function escAttr(str) { return escHtml(str); }
+
+  loadMembers();
+</script>
+</body>
+</html>
