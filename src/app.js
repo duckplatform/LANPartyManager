@@ -40,13 +40,21 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/members', apiLimiter, memberRoutes);
 
+const pageLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: isTest ? 0 : 300,
+  skip: () => isTest,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Unknown API routes → JSON 404
 app.use('/api', (req, res) => {
   res.status(404).json({ message: 'Route introuvable.' });
 });
 
 // All other routes → serve the landing page (SPA-style fallback)
-app.get('*', (req, res) => {
+app.get('*', pageLimiter, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 

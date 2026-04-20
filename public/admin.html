@@ -51,11 +51,6 @@
             </tr>
           </thead>
           <tbody id="members-tbody">
-            <tr>
-              <td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">
-                <span class="spinner"></span> Chargement…
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>
@@ -94,10 +89,12 @@
 
   let pendingDeleteId = null;
 
+  const LOADING_ROW = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">
+      <span class="spinner"></span> Chargement…</td></tr>`;
+
   /* ── Load members ── */
   async function loadMembers() {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:2rem;">
-      <span class="spinner"></span> Chargement…</td></tr>`;
+    tbody.innerHTML = LOADING_ROW;
     hideAlert(pageAlert);
 
     const { ok, data } = await apiRequest('GET', '/api/members');
