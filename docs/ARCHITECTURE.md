@@ -150,4 +150,4 @@ Le wizard en 4 étapes :
 3. `/install/step3` → Données de démonstration
 4. `/install/complete` → Affichage des identifiants
 
-Les routes d'installation n'utilisent **pas** CSRF (session non initialisée).
+Les routes d'installation utilisent **CSRF** comme toutes les autres routes (le middleware CSRF est appliqué globalement avant le montage des routes).
