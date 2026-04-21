@@ -51,8 +51,8 @@ services:
       MYSQL_USER:          lanparty
       MYSQL_PASSWORD:      lanparty_dev
     ports:
-      # Exposé sur l'hôte pour accès depuis un client SQL externe
-      - "3306:3306"
+      # Exposé sur localhost uniquement (privé) pour accès depuis VS Code MySQL Client
+      - "127.0.0.1:3306:3306"
     volumes:
       # Persistance des données entre les redémarrages du Codespace
       - mysql-data:/var/lib/mysql
