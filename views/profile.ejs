@@ -1,0 +1,161 @@
+<%- include('partials/head') %>
+
+<div class="profile-container container">
+  <div class="profile-header">
+    <div class="profile-avatar">
+      <i class="fas fa-circle-user"></i>
+    </div>
+    <div class="profile-info">
+      <h1 class="profile-name"><%= user.pseudo %></h1>
+      <p class="profile-meta"><%= user.prenom %> <%= user.nom %></p>
+      <% if (user.is_admin) { %>
+        <span class="badge badge--admin"><i class="fas fa-shield-halved"></i> Administrateur</span>
+      <% } else { %>
+        <span class="badge badge--member"><i class="fas fa-user"></i> Membre</span>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Onglets -->
+  <div class="profile-tabs" role="tablist">
+    <button class="tab-btn<%= (typeof activeTab === 'undefined' || activeTab === 'info') ? ' active' : '' %>"
+            role="tab" data-tab="tab-info" aria-selected="<%= (typeof activeTab === 'undefined' || activeTab === 'info') ? 'true' : 'false' %>">
+      <i class="fas fa-user-pen"></i> Informations
+    </button>
+    <button class="tab-btn<%= activeTab === 'password' ? ' active' : '' %>"
+            role="tab" data-tab="tab-password" aria-selected="<%= activeTab === 'password' ? 'true' : 'false' %>">
+      <i class="fas fa-key"></i> Mot de passe
+    </button>
+  </div>
+
+  <!-- Erreurs de validation -->
+  <% if (errors && errors.length > 0) { %>
+    <div class="form-errors" role="alert">
+      <% errors.forEach(function(err) { %>
+        <p class="form-error-msg"><i class="fas fa-triangle-exclamation"></i> <%= err.msg %></p>
+      <% }); %>
+    </div>
+  <% } %>
+
+  <!-- Panneau : Informations -->
+  <div id="tab-info" class="tab-panel<%= (typeof activeTab === 'undefined' || activeTab === 'info') ? ' active' : '' %>" role="tabpanel">
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fas fa-user-pen"></i> Modifier mes informations</h2>
+      </div>
+      <div class="card-body">
+        <form action="/profile" method="POST" class="profile-form" novalidate>
+          <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="nom" class="form-label">Nom</label>
+              <input type="text" id="nom" name="nom" class="form-input"
+                     value="<%= user.nom || '' %>" required maxlength="100" />
+            </div>
+            <div class="form-group">
+              <label for="prenom" class="form-label">Prénom</label>
+              <input type="text" id="prenom" name="prenom" class="form-input"
+                     value="<%= user.prenom || '' %>" required maxlength="100" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="pseudo" class="form-label">
+              <i class="fas fa-gamepad"></i> Pseudo (surnom en jeu)
+            </label>
+            <input type="text" id="pseudo" name="pseudo" class="form-input"
+                   value="<%= user.pseudo || '' %>" required minlength="2" maxlength="50" />
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="form-label">
+              <i class="fas fa-envelope"></i> Adresse e-mail
+            </label>
+            <input type="email" id="email" name="email" class="form-input"
+                   value="<%= user.email || '' %>" required autocomplete="email" />
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary">
+              <i class="fas fa-floppy-disk"></i> Sauvegarder
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panneau : Mot de passe -->
+  <div id="tab-password" class="tab-panel<%= activeTab === 'password' ? ' active' : '' %>" role="tabpanel">
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fas fa-key"></i> Changer mon mot de passe</h2>
+      </div>
+      <div class="card-body">
+        <form action="/profile/password" method="POST" class="profile-form" novalidate>
+          <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+
+          <div class="form-group">
+            <label for="current_password" class="form-label">Mot de passe actuel</label>
+            <div class="input-password-wrap">
+              <input type="password" id="current_password" name="current_password"
+                     class="form-input" placeholder="••••••••" required autocomplete="current-password" />
+              <button type="button" class="password-toggle" aria-label="Afficher/masquer">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="new_password" class="form-label">Nouveau mot de passe</label>
+            <div class="input-password-wrap">
+              <input type="password" id="new_password" name="new_password"
+                     class="form-input" placeholder="••••••••" required minlength="8"
+                     autocomplete="new-password" />
+              <button type="button" class="password-toggle" aria-label="Afficher/masquer">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+            <small class="form-hint">Minimum 8 caractères, une majuscule et un chiffre.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="new_password_confirm" class="form-label">Confirmer le nouveau mot de passe</label>
+            <div class="input-password-wrap">
+              <input type="password" id="new_password_confirm" name="new_password_confirm"
+                     class="form-input" placeholder="••••••••" required autocomplete="new-password" />
+              <button type="button" class="password-toggle" aria-label="Afficher/masquer">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary">
+              <i class="fas fa-key"></i> Changer le mot de passe
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Infos compte -->
+  <div class="card profile-meta-card">
+    <div class="card-body profile-meta-info">
+      <div class="meta-item">
+        <span class="meta-label"><i class="fas fa-calendar-plus"></i> Membre depuis</span>
+        <span class="meta-value"><%= new Date(user.created_at).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+      </div>
+      <% if (user.updated_at) { %>
+      <div class="meta-item">
+        <span class="meta-label"><i class="fas fa-pen-to-square"></i> Dernière modification</span>
+        <span class="meta-value"><%= new Date(user.updated_at).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/foot') %>

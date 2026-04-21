@@ -1,0 +1,206 @@
+# LANPartyManager — Documentation technique
+
+## Architecture
+
+### Vue d'ensemble
+
+```
+LANPartyManager/
+├── app.js                    # Point d'entrée de l'application
+├── package.json              # Dépendances et scripts npm
+├── .gitignore
+│
+├── config/
+│   ├── database.js           # Pool de connexion MySQL (mysql2/promise)
+│   └── logger.js             # Configuration du logger Winston
+│
+├── middleware/
+│   ├── auth.js               # requireAuth, requireAdmin, injectLocals
+│   └── rateLimiter.js        # Rate limiting global et auth (express-rate-limit)
+│
+├── models/
+│   └── User.js               # CRUD utilisateur + bcrypt
+│
+├── routes/
+│   ├── index.js              # GET / (page d'accueil)
+│   ├── auth.js               # GET/POST /auth/login, register, logout
+│   ├── profile.js            # GET/POST /profile, /profile/password
+│   └── admin.js              # GET /admin, actions admin
+│
+├── views/
+│   ├── partials/
+│   │   ├── head.ejs          # Début de page HTML (doctype, head, header, flash)
+│   │   ├── foot.ejs          # Fin de page HTML (footer, scripts)
+│   │   ├── header.ejs        # Barre de navigation
+│   │   ├── footer.ejs        # Pied de page
+│   │   └── flash.ejs         # Messages flash (succès/erreur/info)
+│   ├── index.ejs             # Page d'accueil
+│   ├── profile.ejs           # Page profil utilisateur
+│   ├── auth/
+│   │   ├── login.ejs         # Formulaire de connexion
+│   │   └── register.ejs      # Formulaire d'inscription
+│   ├── admin/
+│   │   └── dashboard.ejs     # Panneau d'administration
+│   └── errors/
+│       ├── 404.ejs           # Page 404
+│       └── 500.ejs           # Page 500
+│
+├── public/
+│   ├── css/style.css         # Feuille de style (thème gaming dark/neon)
+│   └── js/main.js            # JavaScript frontend (menu, flash, tabs, pwd toggle)
+│
+├── database/
+│   └── install.sql           # Script SQL d'installation (table + compte admin)
+│
+├── tests/
+│   ├── middleware.test.js    # Tests unitaires middleware
+│   ├── routes.test.js        # Tests d'intégration routes
+│   └── user.test.js          # Tests unitaires modèle User
+│
+├── logs/                     # Dossier créé automatiquement au démarrage
+│   ├── app.log               # Log principal
+│   └── error.log             # Erreurs uniquement
+│
+└── docs/
+    ├── ARCHITECTURE.md       # Ce fichier
+    └── USAGE.md              # Guide d'utilisation
+```
+
+### Stack technique
+
+| Couche | Technologie |
+|--------|-------------|
+| Runtime | Node.js ≥ 16 |
+| Framework HTTP | Express 4.x |
+| Base de données | MySQL 5.7+ / MariaDB 10+ |
+| Driver DB | mysql2/promise (pool de connexions) |
+| Templates | EJS (Embedded JavaScript) |
+| Authentification | Sessions (express-session) + bcryptjs |
+| Protection CSRF | csrf-sync (Synchroniser Token Pattern) |
+| Sécurité headers | helmet |
+| Rate limiting | express-rate-limit |
+| Validation | express-validator |
+| Logging | winston (console + fichiers rotatifs) |
+| HTTP log | morgan → winston |
+
+### Modèle de données
+
+**Table `users`**
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
+| nom | VARCHAR(100) | Nom de famille |
+| prenom | VARCHAR(100) | Prénom |
+| pseudo | VARCHAR(50) | Surnom en jeu (unique dans l'interface) |
+| email | VARCHAR(255) UNIQUE | Adresse e-mail (login) |
+| password | VARCHAR(255) | Mot de passe haché (bcrypt 12 rounds) |
+| is_admin | TINYINT(1) DEFAULT 0 | 1 = admin, 0 = membre |
+| created_at | DATETIME | Date de création |
+| updated_at | DATETIME | Date de dernière modification |
+
+### Flux de sécurité
+
+1. **Helmet** — Headers HTTP sécurisés (CSP, HSTS, X-Frame-Options, etc.)
+2. **Rate Limiting** — 200 req/15min global, 10 req/15min sur les routes auth
+3. **Sessions** — express-session avec cookie `httpOnly`, `sameSite: lax`, `secure` en prod
+4. **CSRF** — csrf-sync (Synchroniser Token Pattern) sur toutes les routes POST
+5. **Bcrypt** — Mots de passe hachés avec 12 rounds
+6. **Validation** — express-validator sur tous les formulaires
+7. **Requêtes préparées** — mysql2 avec paramètres bind (anti-injection SQL)
+8. **Session regenerate** — Régénération de session après login/register (anti-fixation)
+
+---
+
+## Installation
+
+### Prérequis
+
+- Node.js ≥ 16.0.0
+- MySQL 5.7+ ou MariaDB 10+
+- Serveur cPanel avec Node.js selector
+
+### 1. Base de données
+
+1. Connectez-vous à PHPMyAdmin
+2. Créez une nouvelle base de données (ex : `lanpartymanager`)
+3. Sélectionnez la base, allez dans **Importer**
+4. Importez le fichier `database/install.sql`
+5. Vérifiez la création de la table `users` et du compte admin
+
+### 2. Application
+
+```bash
+# Cloner / déposer les fichiers sur le serveur
+# Dans le dossier de l'application :
+npm install --omit=dev
+```
+
+### 3. Variables d'environnement (cPanel)
+
+Configurez ces variables dans l'interface cPanel → **Node.js Selector** :
+
+| Variable | Description | Exemple |
+|----------|-------------|---------|
+| `DB_HOST` | Hôte MySQL | `localhost` |
+| `DB_USER` | Utilisateur MySQL | `mon_user` |
+| `DB_PASSWORD` | Mot de passe MySQL | `secret` |
+| `DB_NAME` | Nom de la base | `lanpartymanager` |
+| `DB_PORT` | Port MySQL (optionnel) | `3306` |
+| `SESSION_SECRET` | Secret de session (clé longue aléatoire) | `abc123...xyz` |
+| `NODE_ENV` | Environnement | `production` |
+| `PORT` | Port d'écoute (optionnel) | `3000` |
+| `LOG_LEVEL` | Niveau de log (optionnel) | `info` |
+
+> ⚠️ **`SESSION_SECRET`** doit être une chaîne longue et aléatoire (64+ caractères).
+
+### 4. Démarrage
+
+```bash
+npm start
+# ou via cPanel Node.js Selector → Start Application
+```
+
+### 5. Première connexion
+
+Compte administrateur par défaut :
+- **Email** : `admin@lanparty.local`
+- **Mot de passe** : `Admin1234`
+
+> ⚠️ **Changez immédiatement ce mot de passe après la première connexion !**
+
+---
+
+## Mise à jour
+
+1. Sauvegardez la base de données (export SQL via PHPMyAdmin)
+2. Déposez les nouveaux fichiers (sauf `node_modules/` et `logs/`)
+3. Exécutez `npm install --omit=dev` si les dépendances ont changé
+4. Redémarrez l'application dans cPanel Node.js Selector
+5. Vérifiez les logs (`logs/app.log`) après redémarrage
+
+---
+
+## Exécution des tests
+
+```bash
+# Tous les tests (requires Node.js + deps)
+npm test
+
+# Avec affichage du rapport de couverture (si nyc installé)
+npx nyc npm test
+```
+
+Les tests utilisent des stubs (sinon) pour simuler la base de données et ne nécessitent pas de connexion MySQL.
+
+---
+
+## Logs
+
+Les logs sont écrits dans le dossier `logs/` :
+- `logs/app.log` — Toutes les activités (niveau configuré via `LOG_LEVEL`)
+- `logs/error.log` — Erreurs uniquement
+
+En développement, les logs sont également affichés en console avec couleurs.
+
+Rotation automatique : max 5 fichiers × 5 MB.

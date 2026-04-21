@@ -1,0 +1,42 @@
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="/" class="logo logo--sm">
+          <span class="logo-icon"><i class="fas fa-gamepad"></i></span>
+          <span class="logo-text">LAN<span class="logo-accent">Party</span>Manager</span>
+        </a>
+        <p class="footer-tagline">L'association gaming qui vous connecte.</p>
+      </div>
+
+      <nav class="footer-nav" aria-label="Navigation pied de page">
+        <h3 class="footer-nav-title">Navigation</h3>
+        <ul>
+          <li><a href="/">Accueil</a></li>
+          <% if (currentUser) { %>
+            <li><a href="/profile">Mon profil</a></li>
+            <% if (currentUser.isAdmin) { %>
+              <li><a href="/admin">Administration</a></li>
+            <% } %>
+          <% } else { %>
+            <li><a href="/auth/login">Connexion</a></li>
+            <li><a href="/auth/register">Inscription</a></li>
+          <% } %>
+        </ul>
+      </nav>
+
+      <div class="footer-social">
+        <h3 class="footer-nav-title">Communauté</h3>
+        <div class="social-links">
+          <a href="#" class="social-link" aria-label="Discord"><i class="fab fa-discord"></i></a>
+          <a href="#" class="social-link" aria-label="Twitch"><i class="fab fa-twitch"></i></a>
+          <a href="#" class="social-link" aria-label="Twitter / X"><i class="fab fa-x-twitter"></i></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; <%= new Date().getFullYear() %> LANPartyManager. Tous droits réservés.</p>
+    </div>
+  </div>
+</footer>

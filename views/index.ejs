@@ -1,0 +1,96 @@
+<%- include('partials/head') %>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="container hero-content">
+    <div class="hero-badge">
+      <span><i class="fas fa-bolt"></i> Association Gaming</span>
+    </div>
+    <h1 class="hero-title">
+      Rejoignez la<br />
+      <span class="text-gradient">LAN Party</span><br />
+      ultime
+    </h1>
+    <p class="hero-subtitle">
+      Compétitions, soirées gaming, tournois et bien plus encore.
+      Rejoignez notre communauté de passionnés !
+    </p>
+    <div class="hero-actions">
+      <% if (!currentUser) { %>
+        <a href="/auth/register" class="btn btn--primary btn--lg">
+          <i class="fas fa-user-plus"></i> Nous rejoindre
+        </a>
+        <a href="/auth/login" class="btn btn--ghost btn--lg">
+          <i class="fas fa-right-to-bracket"></i> Connexion
+        </a>
+      <% } else { %>
+        <a href="/profile" class="btn btn--primary btn--lg">
+          <i class="fas fa-user"></i> Mon profil
+        </a>
+      <% } %>
+    </div>
+  </div>
+  <div class="hero-scroll-indicator" aria-hidden="true">
+    <i class="fas fa-chevron-down"></i>
+  </div>
+</section>
+
+<!-- ═══════════════════ FEATURES ═══════════════════ -->
+<section class="section features-section">
+  <div class="container">
+    <h2 class="section-title text-center">
+      Pourquoi nous rejoindre ?
+    </h2>
+    <div class="features-grid">
+      <article class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-trophy"></i>
+        </div>
+        <h3>Tournois</h3>
+        <p>Participez à des tournois organisés régulièrement sur vos jeux favoris.</p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <h3>Communauté</h3>
+        <p>Rejoignez des centaines de gamers passionnés et faites-vous de nouveaux amis.</p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-calendar-days"></i>
+        </div>
+        <h3>Événements</h3>
+        <p>LAN parties, soirées gaming et rassemblements tout au long de l'année.</p>
+      </article>
+
+      <article class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-headset"></i>
+        </div>
+        <h3>Support</h3>
+        <p>Une équipe dédiée pour vous accompagner dans tous vos besoins gaming.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ CTA ═══════════════════ -->
+<% if (!currentUser) { %>
+<section class="section cta-section">
+  <div class="container cta-inner">
+    <div class="cta-content">
+      <h2>Prêt à rejoindre l'aventure ?</h2>
+      <p>Créez votre compte gratuitement et accédez à tous nos événements.</p>
+    </div>
+    <a href="/auth/register" class="btn btn--primary btn--lg">
+      <i class="fas fa-gamepad"></i> Commencer maintenant
+    </a>
+  </div>
+</section>
+<% } %>
+
+<%- include('partials/foot') %>
