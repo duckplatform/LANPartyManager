@@ -1,0 +1,58 @@
+<header class="site-header">
+  <div class="container header-inner">
+    <!-- Logo / Nom du site -->
+    <a href="/" class="logo" aria-label="LANPartyManager - Accueil">
+      <span class="logo-icon"><i class="fas fa-gamepad"></i></span>
+      <span class="logo-text">LAN<span class="logo-accent">Party</span>Manager</span>
+    </a>
+
+    <!-- Bouton menu mobile -->
+    <button class="nav-toggle" id="navToggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mainNav">
+      <span class="hamburger"></span>
+    </button>
+
+    <!-- Navigation principale -->
+    <nav class="main-nav" id="mainNav" role="navigation" aria-label="Navigation principale">
+      <ul class="nav-list">
+        <li><a href="/" class="nav-link<%= (typeof pageClass !== 'undefined' && pageClass === 'page-home') ? ' active' : '' %>">
+          <i class="fas fa-home"></i> Accueil
+        </a></li>
+
+        <% if (currentUser) { %>
+          <!-- Utilisateur connecté -->
+          <li><a href="/profile" class="nav-link<%= (typeof pageClass !== 'undefined' && pageClass === 'page-profile') ? ' active' : '' %>">
+            <i class="fas fa-user"></i> Mon profil
+          </a></li>
+
+          <% if (currentUser.isAdmin) { %>
+            <li><a href="/admin" class="nav-link nav-link--admin<%= (typeof pageClass !== 'undefined' && pageClass === 'page-admin') ? ' active' : '' %>">
+              <i class="fas fa-shield-halved"></i> Administration
+            </a></li>
+          <% } %>
+
+          <li class="nav-user-info">
+            <span class="nav-pseudo"><i class="fas fa-circle-user"></i> <%= currentUser.pseudo %></span>
+          </li>
+
+          <li>
+            <form action="/auth/logout" method="POST" class="nav-logout-form">
+              <input type="hidden" name="_csrf" value="<%= typeof csrfToken === 'function' ? csrfToken() : '' %>" />
+              <button type="submit" class="btn btn--ghost btn--sm">
+                <i class="fas fa-right-from-bracket"></i> Déconnexion
+              </button>
+            </form>
+          </li>
+
+        <% } else { %>
+          <!-- Utilisateur non connecté -->
+          <li><a href="/auth/login" class="btn btn--ghost btn--sm">
+            <i class="fas fa-right-to-bracket"></i> Connexion
+          </a></li>
+          <li><a href="/auth/register" class="btn btn--primary btn--sm">
+            <i class="fas fa-user-plus"></i> Inscription
+          </a></li>
+        <% } %>
+      </ul>
+    </nav>
+  </div>
+</header>

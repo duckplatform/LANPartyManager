@@ -1,0 +1,126 @@
+<%- include('../partials/head') %>
+
+<div class="container admin-container">
+
+  <!-- En-tête admin -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-shield-halved"></i> Panneau d'administration
+      </h1>
+      <p class="admin-subtitle">Gestion des membres de l'association</p>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--total"><i class="fas fa-users"></i></div>
+      <div class="stat-info">
+        <span class="stat-number"><%= totalUsers %></span>
+        <span class="stat-label">Membres total</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--admin"><i class="fas fa-shield-halved"></i></div>
+      <div class="stat-info">
+        <span class="stat-number"><%= stats.admins %></span>
+        <span class="stat-label">Administrateurs</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--member"><i class="fas fa-user"></i></div>
+      <div class="stat-info">
+        <span class="stat-number"><%= stats.members %></span>
+        <span class="stat-label">Membres</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des utilisateurs -->
+  <div class="card admin-users-card">
+    <div class="card-header admin-card-header">
+      <h2><i class="fas fa-users-gear"></i> Liste des utilisateurs</h2>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Pseudo</th>
+              <th>Nom complet</th>
+              <th>Email</th>
+              <th>Rôle</th>
+              <th>Inscription</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (users.length === 0) { %>
+              <tr>
+                <td colspan="7" class="table-empty">Aucun utilisateur trouvé.</td>
+              </tr>
+            <% } else { %>
+              <% users.forEach(function(u) { %>
+                <tr class="<%= u.id === currentUser.id ? 'row--current' : '' %>">
+                  <td class="td-id">#<%= u.id %></td>
+                  <td>
+                    <span class="user-pseudo">
+                      <i class="fas fa-circle-user"></i> <%= u.pseudo %>
+                    </span>
+                    <% if (u.id === currentUser.id) { %>
+                      <span class="badge badge--you">Vous</span>
+                    <% } %>
+                  </td>
+                  <td><%= u.prenom %> <%= u.nom %></td>
+                  <td><a href="mailto:<%= u.email %>" class="link-muted"><%= u.email %></a></td>
+                  <td>
+                    <% if (u.is_admin) { %>
+                      <span class="badge badge--admin"><i class="fas fa-shield-halved"></i> Admin</span>
+                    <% } else { %>
+                      <span class="badge badge--member"><i class="fas fa-user"></i> Membre</span>
+                    <% } %>
+                  </td>
+                  <td class="td-date">
+                    <%= new Date(u.created_at).toLocaleDateString('fr-FR') %>
+                  </td>
+                  <td class="td-actions">
+                    <% if (u.id !== currentUser.id) { %>
+                      <!-- Toggle Admin -->
+                      <form action="/admin/users/<%= u.id %>/toggle-admin" method="POST" class="inline-form">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                        <button type="submit"
+                                class="btn btn--xs <%= u.is_admin ? 'btn--warning' : 'btn--info' %>"
+                                title="<%= u.is_admin ? 'Retirer les droits admin' : 'Promouvoir en admin' %>"
+                                onclick="return confirm('<%= u.is_admin ? 'Retirer les droits administrateur à ' + u.pseudo + ' ?' : 'Promouvoir ' + u.pseudo + ' en administrateur ?' %>')">
+                          <i class="fas <%= u.is_admin ? 'fa-user-minus' : 'fa-user-shield' %>"></i>
+                          <%= u.is_admin ? 'Rétrograder' : 'Promouvoir' %>
+                        </button>
+                      </form>
+
+                      <!-- Supprimer -->
+                      <form action="/admin/users/<%= u.id %>/delete" method="POST" class="inline-form">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                        <button type="submit"
+                                class="btn btn--xs btn--danger"
+                                title="Supprimer l'utilisateur"
+                                onclick="return confirm('Supprimer définitivement <%= u.pseudo %> ?')">
+                          <i class="fas fa-trash"></i> Supprimer
+                        </button>
+                      </form>
+                    <% } else { %>
+                      <span class="text-muted text-sm">—</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/foot') %>

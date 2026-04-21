@@ -1,0 +1,32 @@
+# Dépendances Node.js
+node_modules/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Variables d'environnement (définies dans cPanel)
+.env
+.env.*
+
+# Build outputs
+dist/
+build/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Session store (si fichier)
+sessions/

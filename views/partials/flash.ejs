@@ -1,0 +1,24 @@
+<%# Affichage des messages flash (succès, erreur, info) %>
+<% if (flashSuccess && flashSuccess.length > 0) { %>
+  <div class="alert alert--success" role="alert" aria-live="polite">
+    <i class="fas fa-circle-check"></i>
+    <% flashSuccess.forEach(function(msg) { %><span><%= msg %></span><% }); %>
+    <button class="alert-close" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
+  </div>
+<% } %>
+
+<% if (flashError && flashError.length > 0) { %>
+  <div class="alert alert--error" role="alert" aria-live="assertive">
+    <i class="fas fa-triangle-exclamation"></i>
+    <% flashError.forEach(function(msg) { %><span><%= msg %></span><% }); %>
+    <button class="alert-close" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
+  </div>
+<% } %>
+
+<% if (flashInfo && flashInfo.length > 0) { %>
+  <div class="alert alert--info" role="alert" aria-live="polite">
+    <i class="fas fa-circle-info"></i>
+    <% flashInfo.forEach(function(msg) { %><span><%= msg %></span><% }); %>
+    <button class="alert-close" aria-label="Fermer"><i class="fas fa-xmark"></i></button>
+  </div>
+<% } %>
