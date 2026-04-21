@@ -1,0 +1,106 @@
+<%- include('../../partials/head') %>
+
+<div class="container admin-container">
+
+  <!-- En-tête admin -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-calendar-days"></i> Gestion des événements
+      </h1>
+      <p class="admin-subtitle">Créez et gérez les événements de l'association.</p>
+    </div>
+    <div class="admin-header-actions">
+      <a href="/admin" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Tableau de bord
+      </a>
+      <a href="/admin/events/create" class="btn btn--primary btn--sm">
+        <i class="fas fa-plus"></i> Nouvel événement
+      </a>
+    </div>
+  </div>
+
+  <!-- Tableau des événements -->
+  <div class="card admin-users-card">
+    <div class="card-header admin-card-header">
+      <h2><i class="fas fa-list"></i> Liste des événements (<%= events.length %>)</h2>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nom</th>
+              <th>Date / Heure</th>
+              <th>Lieu</th>
+              <th>Statut</th>
+              <th>Inscrits</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (events.length === 0) { %>
+              <tr>
+                <td colspan="7" class="table-empty">
+                  <i class="fas fa-inbox"></i> Aucun événement.
+                  <a href="/admin/events/create">Créer le premier</a>
+                </td>
+              </tr>
+            <% } else { %>
+              <% events.forEach(function(ev) { %>
+                <tr>
+                  <td class="td-id">#<%= ev.id %></td>
+                  <td><strong><%= ev.nom %></strong></td>
+                  <td class="td-date">
+                    <%= new Date(ev.date_heure).toLocaleDateString('fr-FR', {
+                      day: '2-digit', month: '2-digit', year: 'numeric'
+                    }) %>
+                    <%= new Date(ev.date_heure).toLocaleTimeString('fr-FR', {
+                      hour: '2-digit', minute: '2-digit'
+                    }) %>
+                  </td>
+                  <td><%= ev.lieu %></td>
+                  <td>
+                    <% if (ev.actif) { %>
+                      <span class="badge badge--published"><i class="fas fa-circle-check"></i> Actif</span>
+                    <% } else { %>
+                      <span class="badge badge--draft"><i class="fas fa-circle-xmark"></i> Inactif</span>
+                    <% } %>
+                  </td>
+                  <td class="text-center">
+                    <a href="/admin/events/<%= ev.id %>/registrations" class="badge badge--member" title="Voir les inscrits">
+                      <i class="fas fa-users"></i> <%= ev.registrationCount %>
+                    </a>
+                  </td>
+                  <td class="td-actions">
+                    <!-- Voir les inscrits -->
+                    <a href="/admin/events/<%= ev.id %>/registrations" class="btn btn--xs btn--info">
+                      <i class="fas fa-users"></i> Inscrits
+                    </a>
+                    <!-- Modifier -->
+                    <a href="/admin/events/<%= ev.id %>/edit" class="btn btn--xs btn--warning">
+                      <i class="fas fa-edit"></i> Modifier
+                    </a>
+                    <!-- Supprimer -->
+                    <form action="/admin/events/<%= ev.id %>/delete" method="POST" class="inline-form">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                      <button type="submit"
+                              class="btn btn--xs btn--danger"
+                              onclick="return confirm('Supprimer définitivement l\'événement «\u00A0<%= ev.nom %>\u00A0» et toutes ses inscriptions ?')">
+                        <i class="fas fa-trash"></i> Supprimer
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<%- include('../../partials/foot') %>

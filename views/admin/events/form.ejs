@@ -1,0 +1,168 @@
+<%- include('../../partials/head') %>
+
+<div class="container admin-container">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-<%= event && event.id ? 'edit' : 'plus-circle' %>"></i>
+        <%= event && event.id ? 'Modifier l\'événement' : 'Nouvel événement' %>
+      </h1>
+      <p class="admin-subtitle">Définissez les informations de l'événement.</p>
+    </div>
+    <div>
+      <a href="/admin/events" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Retour à la liste
+      </a>
+    </div>
+  </div>
+
+  <!-- Erreurs de validation -->
+  <% if (errors && errors.length > 0) { %>
+    <div class="form-errors">
+      <% errors.forEach(function(e) { %>
+        <p class="form-error-msg"><i class="fas fa-exclamation-circle"></i> <%= e.msg %></p>
+      <% }); %>
+    </div>
+  <% } %>
+
+  <!-- Formulaire -->
+  <form
+    action="<%= event && event.id ? '/admin/events/' + event.id : '/admin/events' %>"
+    method="POST"
+    class="news-form"
+    novalidate
+  >
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+
+    <div class="news-form-layout">
+
+      <!-- ── Colonne principale ── -->
+      <div class="news-form-main">
+
+        <!-- Nom -->
+        <div class="form-group">
+          <label class="form-label" for="nom">
+            <i class="fas fa-tag"></i> Nom de l'événement <span class="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="nom"
+            name="nom"
+            class="form-input"
+            placeholder="Ex. : LAN Party Printemps 2025"
+            value="<%= (event && event.nom) ? event.nom : '' %>"
+            maxlength="255"
+            required
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Date/heure -->
+        <div class="form-group">
+          <label class="form-label" for="date_heure">
+            <i class="fas fa-calendar-alt"></i> Date et heure <span class="required">*</span>
+          </label>
+          <input
+            type="datetime-local"
+            id="date_heure"
+            name="date_heure"
+            class="form-input"
+            value="<%= (event && event.date_heure) ? (new Date(new Date(event.date_heure).getTime() - new Date(event.date_heure).getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '' %>"
+            required
+          />
+        </div>
+
+        <!-- Lieu -->
+        <div class="form-group">
+          <label class="form-label" for="lieu">
+            <i class="fas fa-location-dot"></i> Lieu <span class="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="lieu"
+            name="lieu"
+            class="form-input"
+            placeholder="Ex. : Salle des fêtes, 12 rue de la Paix"
+            value="<%= (event && event.lieu) ? event.lieu : '' %>"
+            maxlength="255"
+            required
+            autocomplete="off"
+          />
+        </div>
+
+      </div>
+
+      <!-- ── Barre latérale ── -->
+      <aside class="news-form-sidebar">
+
+        <!-- Statut actif -->
+        <div class="card sidebar-card">
+          <div class="card-header">
+            <h2><i class="fas fa-toggle-on"></i> Visibilité</h2>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
+                <input
+                  type="checkbox"
+                  name="actif"
+                  value="1"
+                  <%= (event && event.actif) ? 'checked' : '' %>
+                  style="width:1.2rem;height:1.2rem;"
+                />
+                Événement actif (affiché sur le site)
+              </label>
+              <span class="form-hint">
+                Un seul événement peut être actif à la fois.<br />
+                Activer cet événement désactivera les autres.
+              </span>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary btn--full">
+                <i class="fas fa-save"></i>
+                <%= event && event.id ? 'Enregistrer' : 'Créer l\'événement' %>
+              </button>
+            </div>
+
+            <% if (event && event.id) { %>
+              <div style="margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border);">
+                <a href="/admin/events" class="btn btn--ghost btn--full btn--sm">
+                  <i class="fas fa-times"></i> Annuler
+                </a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Note inscriptions -->
+        <div class="card sidebar-card">
+          <div class="card-header">
+            <h2><i class="fas fa-circle-info"></i> Inscriptions</h2>
+          </div>
+          <div class="card-body">
+            <p class="form-hint">
+              <i class="fas fa-clock"></i>
+              Les inscriptions sont automatiquement <strong>bloquées 24 h avant</strong>
+              le début de l'événement.
+            </p>
+            <% if (event && event.id) { %>
+              <div style="margin-top: var(--space-sm);">
+                <a href="/admin/events/<%= event.id %>/registrations" class="btn btn--ghost btn--full btn--sm">
+                  <i class="fas fa-users"></i> Voir les inscrits
+                </a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+  </form>
+
+</div>
+
+<%- include('../../partials/foot') %>

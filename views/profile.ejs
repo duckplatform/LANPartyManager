@@ -26,6 +26,10 @@
             role="tab" data-tab="tab-password" aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'password') ? 'true' : 'false' %>">
       <i class="fas fa-key"></i> Mot de passe
     </button>
+    <button class="tab-btn<%= (typeof activeTab !== 'undefined' && activeTab === 'events') ? ' active' : '' %>"
+            role="tab" data-tab="tab-events" aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'events') ? 'true' : 'false' %>">
+      <i class="fas fa-calendar-days"></i> Événements
+    </button>
   </div>
 
   <!-- Erreurs de validation -->
@@ -139,6 +143,119 @@
         </form>
       </div>
     </div>
+  </div>
+
+  <!-- Panneau : Événements -->
+  <div id="tab-events" class="tab-panel<%= (typeof activeTab !== 'undefined' && activeTab === 'events') ? ' active' : '' %>" role="tabpanel">
+
+    <!-- Événement actif -->
+    <% if (activeEvent) { %>
+    <div class="card" style="margin-bottom: var(--space-md);">
+      <div class="card-header">
+        <h2><i class="fas fa-calendar-star"></i> Prochain événement</h2>
+      </div>
+      <div class="card-body">
+        <h3 style="margin-bottom: var(--space-sm);"><%= activeEvent.nom %></h3>
+        <p>
+          <i class="fas fa-calendar-alt"></i>
+          <%= new Date(activeEvent.date_heure).toLocaleDateString('fr-FR', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+          }) %>
+          à
+          <%= new Date(activeEvent.date_heure).toLocaleTimeString('fr-FR', {
+            hour: '2-digit', minute: '2-digit'
+          }) %>
+        </p>
+        <p><i class="fas fa-location-dot"></i> <%= activeEvent.lieu %></p>
+
+        <% if (isRegistered) { %>
+          <div class="event-registered-badge" style="margin: var(--space-md) 0;">
+            <i class="fas fa-circle-check"></i> Vous êtes inscrit à cet événement !
+          </div>
+          <% if (registrationOpen) { %>
+            <form action="/profile/events/<%= activeEvent.id %>/unregister" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+              <button type="submit" class="btn btn--ghost btn--sm"
+                      onclick="return confirm('Annuler votre inscription à cet événement ?')">
+                <i class="fas fa-user-minus"></i> Annuler mon inscription
+              </button>
+            </form>
+          <% } else { %>
+            <p class="form-hint"><i class="fas fa-lock"></i> Les inscriptions sont closes (moins de 24 h avant l'événement).</p>
+          <% } %>
+        <% } else if (registrationOpen) { %>
+          <form action="/profile/events/<%= activeEvent.id %>/register" method="POST">
+            <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+            <button type="submit" class="btn btn--primary">
+              <i class="fas fa-user-plus"></i> S'inscrire à cet événement
+            </button>
+          </form>
+        <% } else { %>
+          <p class="form-hint"><i class="fas fa-lock"></i> Les inscriptions sont closes (moins de 24 h avant l'événement).</p>
+        <% } %>
+      </div>
+    </div>
+    <% } else { %>
+    <div class="card" style="margin-bottom: var(--space-md);">
+      <div class="card-body">
+        <p class="text-muted text-center">
+          <i class="fas fa-calendar-xmark"></i> Aucun événement actif pour le moment.
+        </p>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- Historique des inscriptions -->
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fas fa-history"></i> Mes inscriptions</h2>
+      </div>
+      <div class="card-body">
+        <% if (!userRegistrations || userRegistrations.length === 0) { %>
+          <p class="text-muted text-center">
+            <i class="fas fa-inbox"></i> Vous n'êtes inscrit à aucun événement.
+          </p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Événement</th>
+                  <th>Date</th>
+                  <th>Lieu</th>
+                  <th>Statut</th>
+                  <th>Inscrit le</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% userRegistrations.forEach(function(r) { %>
+                  <tr>
+                    <td><strong><%= r.nom %></strong></td>
+                    <td class="td-date">
+                      <%= new Date(r.date_heure).toLocaleDateString('fr-FR', {
+                        day: '2-digit', month: '2-digit', year: 'numeric'
+                      }) %>
+                    </td>
+                    <td><%= r.lieu %></td>
+                    <td>
+                      <% if (r.actif) { %>
+                        <span class="badge badge--published"><i class="fas fa-circle-check"></i> Actif</span>
+                      <% } else { %>
+                        <span class="badge badge--draft"><i class="fas fa-circle-xmark"></i> Inactif</span>
+                      <% } %>
+                    </td>
+                    <td class="td-date">
+                      <%= new Date(r.created_at).toLocaleDateString('fr-FR') %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
   </div>
 
   <!-- Infos compte -->
