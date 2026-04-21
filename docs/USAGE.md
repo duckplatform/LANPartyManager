@@ -103,11 +103,10 @@ Pour chaque utilisateur (sauf vous-même) :
 
 ## Compte administrateur par défaut
 
-Lors de l'installation, un compte administrateur est créé :
-- **Email** : `admin@lanparty.local`
-- **Mot de passe** : `Admin1234`
+Lors de l'installation, un compte administrateur est créé automatiquement.
+Les identifiants vous sont fournis par votre administrateur système lors de la mise en place du site.
 
-> ⚠️ **Changez ce mot de passe dès la première connexion** via la page Mon profil → onglet Mot de passe.
+> ⚠️ **Changez votre mot de passe dès la première connexion** via la page Mon profil → onglet Mot de passe.
 
 ---
 
