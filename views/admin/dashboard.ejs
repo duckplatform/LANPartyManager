@@ -1,0 +1,116 @@
+<div class="admin-page">
+  <div class="container">
+
+    <!-- En-tête admin -->
+    <div class="admin-header">
+      <h1>
+        <i class="fas fa-shield-alt"></i>
+        Panneau d'Administration
+      </h1>
+      <p>Bienvenue, <strong><%= user.nickname %></strong></p>
+    </div>
+
+    <!-- Alertes -->
+    <% if (success && success.length > 0) { %>
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i>
+        <% success.forEach(msg => { %><%= msg %><% }) %>
+      </div>
+    <% } %>
+    <% if (errors && errors.length > 0) { %>
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i>
+        <ul class="error-list">
+          <% errors.forEach(err => { %>
+            <li><%= err %></li>
+          <% }) %>
+        </ul>
+      </div>
+    <% } %>
+
+    <!-- Statistiques -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value"><%= totalUsers %></div>
+          <div class="stat-label">Membres total</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-user">
+          <i class="fas fa-user"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value"><%= usersByRole.user || 0 %></div>
+          <div class="stat-label">Membres</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon stat-icon-admin">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-value"><%= usersByRole.admin || 0 %></div>
+          <div class="stat-label">Administrateurs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation admin -->
+    <div class="admin-nav">
+      <a href="/admin/users" class="admin-nav-card">
+        <i class="fas fa-users-cog"></i>
+        <span>Gérer les utilisateurs</span>
+        <i class="fas fa-chevron-right arrow"></i>
+      </a>
+    </div>
+
+    <!-- Derniers inscrits -->
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-user-clock"></i> Derniers inscrits
+        <a href="/admin/users" class="btn btn-sm btn-outline" style="float:right;">Voir tous</a>
+      </div>
+      <div class="card-body">
+        <% if (recentUsers.length === 0) { %>
+          <p class="text-muted text-center">Aucun utilisateur pour l'instant.</p>
+        <% } else { %>
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Pseudo</th>
+                  <th>Nom complet</th>
+                  <th>Email</th>
+                  <th>Rôle</th>
+                  <th>Inscrit le</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% recentUsers.forEach(u => { %>
+                  <tr>
+                    <td><strong><%= u.nickname %></strong></td>
+                    <td><%= u.first_name %> <%= u.last_name %></td>
+                    <td><%= u.email %></td>
+                    <td>
+                      <span class="badge badge-<%= u.role === 'admin' ? 'admin' : 'user' %>">
+                        <%= u.role === 'admin' ? 'Admin' : 'Membre' %>
+                      </span>
+                    </td>
+                    <td><%= new Date(u.created_at).toLocaleDateString('fr-FR') %></td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+  </div>
+</div>

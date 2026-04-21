@@ -1,0 +1,46 @@
+{
+  "name": "lan-party-manager",
+  "version": "1.0.0",
+  "description": "Site de gestion pour une association de jeux vidéo - LAN Party Manager",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "jest --runInBand --forceExit",
+    "test:coverage": "jest --runInBand --forceExit --coverage"
+  },
+  "keywords": [
+    "lan",
+    "gaming",
+    "association",
+    "nodejs",
+    "express",
+    "mysql"
+  ],
+  "author": "LAN Party Manager Team",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "connect-flash": "^0.1.1",
+    "csrf-csrf": "^3.2.2",
+    "dotenv": "^16.0.3",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "express-ejs-layouts": "^2.5.1",
+    "express-rate-limit": "^6.10.0",
+    "express-session": "^1.17.3",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0",
+    "mysql2": "^3.6.5",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.4"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

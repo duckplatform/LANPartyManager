@@ -1,0 +1,150 @@
+<div class="profile-page">
+  <div class="container">
+
+    <!-- En-tête profil -->
+    <div class="profile-header">
+      <div class="profile-avatar">
+        <span><%= user.nickname.charAt(0).toUpperCase() %></span>
+      </div>
+      <div class="profile-info">
+        <h1><%= user.nickname %></h1>
+        <p><%= user.first_name %> <%= user.last_name %></p>
+        <span class="badge badge-<%= user.role === 'admin' ? 'admin' : 'user' %>">
+          <i class="fas fa-<%= user.role === 'admin' ? 'shield-alt' : 'user' %>"></i>
+          <%= user.role === 'admin' ? 'Administrateur' : 'Membre' %>
+        </span>
+      </div>
+    </div>
+
+    <!-- Alertes -->
+    <% if (success && success.length > 0) { %>
+      <div class="alert alert-success">
+        <i class="fas fa-check-circle"></i>
+        <% success.forEach(msg => { %><%= msg %><% }) %>
+      </div>
+    <% } %>
+    <% if (errors && errors.length > 0) { %>
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-triangle"></i>
+        <ul class="error-list">
+          <% errors.forEach(err => { %>
+            <li><%= err %></li>
+          <% }) %>
+        </ul>
+      </div>
+    <% } %>
+
+    <div class="profile-grid">
+      <!-- Formulaire de mise à jour du profil -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-user-edit"></i> Modifier le profil
+        </div>
+        <div class="card-body">
+          <form action="/profile/update" method="POST" novalidate>
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Prénom</label>
+                <input type="text" name="firstName" class="form-control"
+                  value="<%= user.first_name %>" required maxlength="50">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Nom</label>
+                <input type="text" name="lastName" class="form-control"
+                  value="<%= user.last_name %>" required maxlength="50">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <i class="fas fa-gamepad"></i> Pseudo
+              </label>
+              <input type="text" name="nickname" class="form-control"
+                value="<%= user.nickname %>" required maxlength="30">
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">
+                <i class="fas fa-envelope"></i> Email
+              </label>
+              <input type="email" name="email" class="form-control"
+                value="<%= user.email %>" required>
+            </div>
+
+            <div class="form-group form-meta">
+              <small class="text-muted">
+                <i class="fas fa-clock"></i>
+                Membre depuis le <%= new Date(user.created_at).toLocaleDateString('fr-FR') %>
+              </small>
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-save"></i> Enregistrer les modifications
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Formulaire de changement de mot de passe -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-key"></i> Changer le mot de passe
+        </div>
+        <div class="card-body">
+          <form action="/profile/change-password" method="POST" novalidate>
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+            <div class="form-group">
+              <label class="form-label">Mot de passe actuel</label>
+              <div class="input-password">
+                <input type="password" name="currentPassword" class="form-control"
+                  placeholder="Votre mot de passe actuel" required autocomplete="current-password">
+                <button type="button" class="btn-toggle-password" data-target="currentPassword" aria-label="Afficher/masquer">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Nouveau mot de passe</label>
+              <div class="input-password">
+                <input type="password" name="newPassword" id="newPassword" class="form-control"
+                  placeholder="Min. 8 caractères" required minlength="8" autocomplete="new-password">
+                <button type="button" class="btn-toggle-password" data-target="newPassword" aria-label="Afficher/masquer">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+              <div class="password-strength" id="passwordStrength"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Confirmer le nouveau mot de passe</label>
+              <div class="input-password">
+                <input type="password" name="confirmNewPassword" class="form-control"
+                  placeholder="Répétez le mot de passe" required autocomplete="new-password">
+                <button type="button" class="btn-toggle-password" data-target="confirmNewPassword" aria-label="Afficher/masquer">
+                  <i class="fas fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-warning">
+              <i class="fas fa-key"></i> Changer le mot de passe
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <% if (user.role === 'admin') { %>
+    <div class="profile-admin-link">
+      <a href="/admin" class="btn btn-outline-admin">
+        <i class="fas fa-shield-alt"></i> Accéder au panneau d'administration
+      </a>
+    </div>
+    <% } %>
+
+  </div>
+</div>

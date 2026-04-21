@@ -1,0 +1,17 @@
+<div class="error-page">
+  <div class="container">
+    <div class="error-content">
+      <div class="error-code">500</div>
+      <h1>Erreur serveur</h1>
+      <p>Une erreur interne est survenue. Veuillez réessayer plus tard.</p>
+      <% if (error) { %>
+        <div class="alert alert-danger" style="text-align:left; margin-top: 1rem;">
+          <code><%= error %></code>
+        </div>
+      <% } %>
+      <a href="/" class="btn btn-primary">
+        <i class="fas fa-home"></i> Retour à l'accueil
+      </a>
+    </div>
+  </div>
+</div>

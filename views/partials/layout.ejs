@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="LAN Party Manager - Association de jeux vidéo">
+  <title><%= typeof title !== 'undefined' ? title : 'LAN Party Manager' %></title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+  <!-- CSS principal -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container navbar-inner">
+      <a class="navbar-brand" href="/">
+        <i class="fas fa-gamepad"></i>
+        <span>LAN<span class="brand-accent">Party</span></span>
+      </a>
+
+      <button class="navbar-toggle" id="navToggle" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <ul class="navbar-menu" id="navMenu">
+        <li><a href="/" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'home' ? 'active' : '' %>">
+          <i class="fas fa-home"></i> Accueil
+        </a></li>
+
+        <% if (user) { %>
+          <li><a href="/profile" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'profile' ? 'active' : '' %>">
+            <i class="fas fa-user"></i> Mon Profil
+          </a></li>
+          <% if (user.role === 'admin') { %>
+            <li><a href="/admin" class="nav-link nav-link-admin <%= typeof activePage !== 'undefined' && activePage === 'admin' ? 'active' : '' %>">
+              <i class="fas fa-shield-alt"></i> Administration
+            </a></li>
+          <% } %>
+          <li>
+            <form action="/auth/logout" method="POST" style="display:inline;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="btn btn-outline-danger btn-sm">
+                <i class="fas fa-sign-out-alt"></i> Déconnexion
+              </button>
+            </form>
+          </li>
+        <% } else { %>
+          <li><a href="/auth/login" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'login' ? 'active' : '' %>">
+            <i class="fas fa-sign-in-alt"></i> Connexion
+          </a></li>
+          <li><a href="/auth/register" class="btn btn-primary btn-sm">
+            <i class="fas fa-user-plus"></i> Inscription
+          </a></li>
+        <% } %>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Contenu principal -->
+  <main class="main-content">
+    <!-- Alertes globales -->
+    <% if (typeof success !== 'undefined' && success && success.length > 0) { %>
+      <div class="container">
+        <div class="alert alert-success">
+          <i class="fas fa-check-circle"></i>
+          <% success.forEach(msg => { %><%= msg %><% }) %>
+        </div>
+      </div>
+    <% } %>
+    <% if (typeof error !== 'undefined' && error && error.length > 0) { %>
+      <div class="container">
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-triangle"></i>
+          <% error.forEach(msg => { %><%= msg %><% }) %>
+        </div>
+      </div>
+    <% } %>
+
+    <%- body %>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <i class="fas fa-gamepad"></i>
+        <strong>LAN Party Manager</strong>
+      </div>
+      <p class="footer-text">Association de jeux vidéo &copy; <%= new Date().getFullYear() %></p>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!-- Hero Section -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="hero-particles" id="particles"></div>
+  </div>
+  <div class="container hero-content">
+    <div class="hero-badge">
+      <i class="fas fa-gamepad"></i> Association de Jeux Vidéo
+    </div>
+    <h1 class="hero-title">
+      Rejoignez la<br>
+      <span class="text-gradient">LAN Party</span>
+    </h1>
+    <p class="hero-subtitle">
+      Compétitions, amitié et passion du jeu vidéo.<br>
+      Rejoignez notre communauté de joueurs passionnés.
+    </p>
+    <div class="hero-actions">
+      <% if (!user) { %>
+        <a href="/auth/register" class="btn btn-primary btn-lg">
+          <i class="fas fa-user-plus"></i> Rejoindre l'association
+        </a>
+        <a href="/auth/login" class="btn btn-outline btn-lg">
+          <i class="fas fa-sign-in-alt"></i> Se connecter
+        </a>
+      <% } else { %>
+        <a href="/profile" class="btn btn-primary btn-lg">
+          <i class="fas fa-user"></i> Mon profil
+        </a>
+        <% if (user.role === 'admin') { %>
+          <a href="/admin" class="btn btn-outline btn-lg">
+            <i class="fas fa-shield-alt"></i> Administration
+          </a>
+        <% } %>
+      <% } %>
+    </div>
+  </div>
+  <div class="hero-scroll-indicator">
+    <i class="fas fa-chevron-down"></i>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section class="section features-section">
+  <div class="container">
+    <h2 class="section-title text-center">
+      <span class="text-gradient">Notre association</span>
+    </h2>
+    <p class="section-subtitle text-center">
+      Une communauté unie autour de la passion des jeux vidéo
+    </p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-trophy"></i>
+        </div>
+        <h3>Tournois & LAN</h3>
+        <p>Participez à des tournois organisés régulièrement. Compétition amicale et esprit sportif garantis.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <h3>Communauté</h3>
+        <p>Rejoignez une communauté de passionnés. Partagez vos expériences et trouvez des coéquipiers.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-gamepad"></i>
+        </div>
+        <h3>Multi-jeux</h3>
+        <p>FPS, RTS, MOBA, RPG... Nous couvrons tous les genres pour tous les types de joueurs.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-bolt"></i>
+        </div>
+        <h3>Événements</h3>
+        <p>Des LAN parties, des soirées gaming et des événements exclusifs pour les membres.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA Section -->
+<% if (!user) { %>
+<section class="section cta-section">
+  <div class="container">
+    <div class="cta-box">
+      <h2>Prêt à rejoindre l'aventure ?</h2>
+      <p>Créez votre compte gratuitement et rejoignez notre communauté de joueurs.</p>
+      <a href="/auth/register" class="btn btn-primary btn-lg">
+        <i class="fas fa-rocket"></i> Créer mon compte
+      </a>
+    </div>
+  </div>
+</section>
+<% } %>

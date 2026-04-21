@@ -1,0 +1,25 @@
+# Dépendances
+node_modules/
+
+# Variables d'environnement (contient des secrets !)
+.env
+
+# Logs
+logs/*.log
+
+# Couverture de tests
+coverage/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Fichiers temporaires
+tmp/
+temp/
