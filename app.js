@@ -25,6 +25,9 @@ const { testConnection } = require('./src/config/database');
 // ─── Initialisation ──────────────────────────────────────────────────────────
 const app = express();
 const PORT = process.env.PORT || 3000;
+// URL publique de l'application (sans slash final), utilisée pour les liens
+// canoniques, les meta og:url, et les logs de démarrage.
+const APP_URL = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
 
 // ─── Sécurité : Helmet (en-têtes HTTP sécurisés) ─────────────────────────────
 app.use(
@@ -125,6 +128,9 @@ app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
   res.locals.success = req.flash('success');
   res.locals.error = req.flash('error');
+  // Expose l'URL de base et le chemin courant pour les liens canoniques
+  res.locals.appUrl = APP_URL;
+  res.locals.currentPath = req.path;
   next();
 });
 
@@ -185,7 +191,7 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== 'test') {
     app.listen(PORT, () => {
-      logger.info(`🚀 Serveur démarré sur http://localhost:${PORT}`);
+      logger.info(`🚀 Serveur démarré sur ${APP_URL}`);
       logger.info(`🌍 Environnement : ${process.env.NODE_ENV || 'development'}`);
     });
   }

@@ -6,6 +6,14 @@
   <meta name="description" content="LAN Party Manager - Association de jeux vidéo">
   <title><%= typeof title !== 'undefined' ? title : 'LAN Party Manager' %></title>
 
+  <!-- URL canonique -->
+  <link rel="canonical" href="<%= appUrl + currentPath %>">
+  <!-- Open Graph -->
+  <meta property="og:url" content="<%= appUrl + currentPath %>">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'LAN Party Manager' %>">
+  <meta property="og:description" content="LAN Party Manager - Association de jeux vidéo">
+
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">

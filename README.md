@@ -125,6 +125,7 @@ cp .env.example .env
 | Variable                     | Défaut                | Description               |
 |------------------------------|-----------------------|---------------------------|
 | `PORT`                       | `3000`                | Port du serveur           |
+| `APP_URL`                    | `http://localhost:3000` | URL publique de l'application (sans slash final). Utilisée pour les liens canoniques et les logs. |
 | `DB_HOST`                    | `localhost`           | Hôte MySQL                |
 | `DB_USER`                    | `root`                | Utilisateur MySQL         |
 | `DB_PASSWORD`                | *(vide)*              | Mot de passe MySQL        |
