@@ -1,0 +1,269 @@
+<%- include('../../partials/head') %>
+
+<div class="container admin-container">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-<%= announcement ? 'edit' : 'plus-circle' %>"></i>
+        <%= announcement && announcement.id ? 'Modifier l\'annonce' : 'Nouvelle annonce' %>
+      </h1>
+      <p class="admin-subtitle">
+        Rédigez le contenu en <strong>Markdown</strong> — les emojis Unicode sont pris en charge (🎮 🏆 ✨).
+      </p>
+    </div>
+    <div>
+      <a href="/admin/news" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Retour à la liste
+      </a>
+    </div>
+  </div>
+
+  <!-- Erreurs de validation -->
+  <% if (errors && errors.length > 0) { %>
+    <div class="form-errors">
+      <% errors.forEach(function(e) { %>
+        <p class="form-error-msg"><i class="fas fa-exclamation-circle"></i> <%= e.msg %></p>
+      <% }); %>
+    </div>
+  <% } %>
+
+  <!-- Formulaire -->
+  <form
+    action="<%= announcement && announcement.id ? '/admin/news/' + announcement.id : '/admin/news' %>"
+    method="POST"
+    class="news-form"
+    id="newsForm"
+  >
+    <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+
+    <div class="news-form-layout">
+
+      <!-- ── Colonne principale ── -->
+      <div class="news-form-main">
+
+        <!-- Titre -->
+        <div class="form-group">
+          <label class="form-label" for="titre">
+            <i class="fas fa-heading"></i> Titre <span class="required">*</span>
+          </label>
+          <input
+            type="text"
+            id="titre"
+            name="titre"
+            class="form-input"
+            placeholder="Titre de l'annonce…"
+            value="<%= (announcement && announcement.titre) ? announcement.titre : '' %>"
+            maxlength="255"
+            required
+            autocomplete="off"
+          />
+        </div>
+
+        <!-- Éditeur Markdown + prévisualisation -->
+        <div class="form-group">
+          <label class="form-label" for="contenu">
+            <i class="fas fa-align-left"></i> Contenu (Markdown) <span class="required">*</span>
+          </label>
+
+          <!-- Barre d'outils Markdown -->
+          <div class="md-toolbar" role="toolbar" aria-label="Outils Markdown">
+            <button type="button" class="md-btn" data-action="bold"         title="Gras (**texte**)"><i class="fas fa-bold"></i></button>
+            <button type="button" class="md-btn" data-action="italic"       title="Italique (*texte*)"><i class="fas fa-italic"></i></button>
+            <button type="button" class="md-btn" data-action="strike"       title="Barré (~~texte~~)"><i class="fas fa-strikethrough"></i></button>
+            <span class="md-separator"></span>
+            <button type="button" class="md-btn" data-action="h2"           title="Titre niveau 2"><i class="fas fa-heading"></i><sup>2</sup></button>
+            <button type="button" class="md-btn" data-action="h3"           title="Titre niveau 3"><i class="fas fa-heading"></i><sup>3</sup></button>
+            <span class="md-separator"></span>
+            <button type="button" class="md-btn" data-action="ul"           title="Liste à puces"><i class="fas fa-list-ul"></i></button>
+            <button type="button" class="md-btn" data-action="ol"           title="Liste numérotée"><i class="fas fa-list-ol"></i></button>
+            <span class="md-separator"></span>
+            <button type="button" class="md-btn" data-action="code"         title="Code inline"><i class="fas fa-code"></i></button>
+            <button type="button" class="md-btn" data-action="blockquote"   title="Citation"><i class="fas fa-quote-right"></i></button>
+            <button type="button" class="md-btn" data-action="link"         title="Lien"><i class="fas fa-link"></i></button>
+            <span class="md-separator"></span>
+            <button type="button" class="md-btn md-btn--preview" id="btnPreview" title="Prévisualiser">
+              <i class="fas fa-eye"></i> Aperçu
+            </button>
+          </div>
+
+          <!-- Éditeur / Prévisualisation -->
+          <div class="md-editor-wrap">
+            <textarea
+              id="contenu"
+              name="contenu"
+              class="form-input md-editor"
+              rows="18"
+              placeholder="Rédigez votre annonce en Markdown…&#10;&#10;Exemples :&#10;## Titre de section&#10;**gras**, *italique*, ~~barré~~&#10;- élément de liste&#10;🎮 Les emojis sont supportés nativement !"
+              required
+            ><%= (announcement && announcement.contenu) ? announcement.contenu : '' %></textarea>
+
+            <!-- Zone de prévisualisation (cachée par défaut) -->
+            <div id="previewPane" class="md-preview markdown-body" style="display:none;">
+              <p class="md-preview-placeholder"><i class="fas fa-spinner fa-spin"></i> Chargement…</p>
+            </div>
+          </div>
+          <span class="form-hint">
+            <i class="fas fa-info-circle"></i>
+            Syntaxe <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" rel="noopener noreferrer">Markdown</a> supportée.
+            Emojis Unicode acceptés directement dans le texte.
+          </span>
+        </div>
+
+      </div>
+
+      <!-- ── Barre latérale ── -->
+      <aside class="news-form-sidebar">
+
+        <!-- Statut de publication -->
+        <div class="card sidebar-card">
+          <div class="card-header">
+            <h2><i class="fas fa-toggle-on"></i> Publication</h2>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label class="form-label" for="statut">Statut</label>
+              <select id="statut" name="statut" class="form-input">
+                <option value="brouillon" <%= (!announcement || announcement.statut === 'brouillon') ? 'selected' : '' %>>
+                  📝 Brouillon
+                </option>
+                <option value="publie" <%= (announcement && announcement.statut === 'publie') ? 'selected' : '' %>>
+                  ✅ Publié
+                </option>
+              </select>
+              <span class="form-hint">Un brouillon n'est pas visible sur le site public.</span>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn--primary btn--full">
+                <i class="fas fa-save"></i>
+                <%= announcement && announcement.id ? 'Enregistrer' : 'Créer l\'annonce' %>
+              </button>
+            </div>
+
+            <% if (announcement && announcement.id) { %>
+              <div style="margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border);">
+                <a href="/admin/news" class="btn btn--ghost btn--full btn--sm">
+                  <i class="fas fa-times"></i> Annuler
+                </a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Aide Markdown -->
+        <div class="card sidebar-card">
+          <div class="card-header">
+            <h2><i class="fas fa-circle-info"></i> Aide Markdown</h2>
+          </div>
+          <div class="card-body">
+            <ul class="md-help-list">
+              <li><code>**gras**</code> → <strong>gras</strong></li>
+              <li><code>*italique*</code> → <em>italique</em></li>
+              <li><code>~~barré~~</code> → <del>barré</del></li>
+              <li><code>## Titre 2</code></li>
+              <li><code>- élément</code> → liste</li>
+              <li><code>[texte](url)</code> → lien</li>
+              <li><code>`code`</code> → <code>code</code></li>
+              <li><code>&gt; citation</code></li>
+            </ul>
+            <p class="form-hint" style="margin-top: var(--space-sm);">
+              🎮 😀 ✨ Les emojis Unicode s'écrivent directement.
+            </p>
+          </div>
+        </div>
+
+      </aside>
+
+    </div>
+  </form>
+
+</div>
+
+<script>
+/* ── Éditeur Markdown avec prévisualisation ── */
+(function () {
+  'use strict';
+
+  const textarea   = document.getElementById('contenu');
+  const previewPane = document.getElementById('previewPane');
+  const btnPreview = document.getElementById('btnPreview');
+  let   isPreviewing = false;
+
+  // ── Barre d'outils ────────────────────────────────────────────
+  const ACTIONS = {
+    bold:       { wrap: '**', placeholder: 'texte en gras' },
+    italic:     { wrap: '*',  placeholder: 'texte en italique' },
+    strike:     { wrap: '~~', placeholder: 'texte barré' },
+    h2:         { prefix: '## ', placeholder: 'Titre' },
+    h3:         { prefix: '### ', placeholder: 'Titre' },
+    ul:         { prefix: '- ', placeholder: 'élément' },
+    ol:         { prefix: '1. ', placeholder: 'élément' },
+    code:       { wrap: '`', placeholder: 'code' },
+    blockquote: { prefix: '> ', placeholder: 'citation' },
+    link:       { template: (sel) => `[${sel || 'texte'}](url)` },
+  };
+
+  document.querySelectorAll('.md-btn[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      const def    = ACTIONS[action];
+      if (!def) return;
+
+      const start = textarea.selectionStart;
+      const end   = textarea.selectionEnd;
+      const sel   = textarea.value.slice(start, end);
+
+      let replacement;
+      if (def.template) {
+        replacement = def.template(sel);
+      } else if (def.wrap) {
+        replacement = def.wrap + (sel || def.placeholder) + def.wrap;
+      } else if (def.prefix) {
+        replacement = def.prefix + (sel || def.placeholder);
+      }
+
+      textarea.focus();
+      document.execCommand('insertText', false, replacement);
+    });
+  });
+
+  // ── Prévisualisation ──────────────────────────────────────────
+  async function loadPreview() {
+    previewPane.innerHTML = '<p class="md-preview-placeholder"><i class="fas fa-spinner fa-spin"></i> Génération de l\'aperçu…</p>';
+    try {
+      const csrfToken = document.querySelector('input[name="_csrf"]').value;
+      const resp = await fetch('/admin/news/preview', {
+        method:  'POST',
+        headers: {
+          'Content-Type':   'application/x-www-form-urlencoded',
+          'X-CSRF-Token':   csrfToken,
+        },
+        body: 'contenu=' + encodeURIComponent(textarea.value),
+      });
+      const data = await resp.json();
+      previewPane.innerHTML = data.html || '<p class="md-preview-placeholder">Aucun contenu.</p>';
+    } catch (e) {
+      previewPane.innerHTML = '<p class="md-preview-placeholder text-danger">Erreur lors du chargement de l\'aperçu.</p>';
+    }
+  }
+
+  btnPreview.addEventListener('click', async () => {
+    isPreviewing = !isPreviewing;
+    if (isPreviewing) {
+      textarea.style.display    = 'none';
+      previewPane.style.display = 'block';
+      btnPreview.innerHTML      = '<i class="fas fa-pen"></i> Éditer';
+      await loadPreview();
+    } else {
+      previewPane.style.display = 'none';
+      textarea.style.display    = 'block';
+      btnPreview.innerHTML      = '<i class="fas fa-eye"></i> Aperçu';
+      textarea.focus();
+    }
+  });
+})();
+</script>
+
+<%- include('../../partials/foot') %>

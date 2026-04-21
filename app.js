@@ -127,6 +127,7 @@ app.use('/',        require('./routes/index'));
 app.use('/auth',    require('./routes/auth'));
 app.use('/profile', require('./routes/profile'));
 app.use('/admin',   require('./routes/admin'));
+app.use('/news',    require('./routes/news'));
 
 // ─── Page 404 ─────────────────────────────────────────────────────────────
 

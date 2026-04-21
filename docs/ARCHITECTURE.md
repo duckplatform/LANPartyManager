@@ -12,35 +12,44 @@ LANPartyManager/
 │
 ├── config/
 │   ├── database.js           # Pool de connexion MySQL (mysql2/promise)
-│   └── logger.js             # Configuration du logger Winston
+│   ├── logger.js             # Configuration du logger Winston
+│   └── markdown.js           # Utilitaire de rendu Markdown sécurisé (marked + sanitize-html)
 │
 ├── middleware/
 │   ├── auth.js               # requireAuth, requireAdmin, injectLocals
 │   └── rateLimiter.js        # Rate limiting global et auth (express-rate-limit)
 │
 ├── models/
-│   └── User.js               # CRUD utilisateur + bcrypt
+│   ├── User.js               # CRUD utilisateur + bcrypt
+│   └── Announcement.js       # CRUD annonces (blog/news)
 │
 ├── routes/
-│   ├── index.js              # GET / (page d'accueil)
+│   ├── index.js              # GET / (page d'accueil + dernières annonces)
 │   ├── auth.js               # GET/POST /auth/login, register, logout
 │   ├── profile.js            # GET/POST /profile, /profile/password
-│   └── admin.js              # GET /admin, actions admin
+│   ├── admin.js              # GET /admin, gestion users + annonces
+│   └── news.js               # GET /news, GET /news/:id (public)
 │
 ├── views/
 │   ├── partials/
 │   │   ├── head.ejs          # Début de page HTML (doctype, head, header, flash)
 │   │   ├── foot.ejs          # Fin de page HTML (footer, scripts)
-│   │   ├── header.ejs        # Barre de navigation
+│   │   ├── header.ejs        # Barre de navigation (avec lien Actualités)
 │   │   ├── footer.ejs        # Pied de page
 │   │   └── flash.ejs         # Messages flash (succès/erreur/info)
-│   ├── index.ejs             # Page d'accueil
+│   ├── index.ejs             # Page d'accueil (avec dernières annonces)
 │   ├── profile.ejs           # Page profil utilisateur
 │   ├── auth/
 │   │   ├── login.ejs         # Formulaire de connexion
 │   │   └── register.ejs      # Formulaire d'inscription
+│   ├── news/
+│   │   ├── index.ejs         # Liste des annonces publiées (/news)
+│   │   └── show.ejs          # Détail d'une annonce (/news/:id)
 │   ├── admin/
-│   │   └── dashboard.ejs     # Panneau d'administration
+│   │   ├── dashboard.ejs     # Panneau d'administration
+│   │   └── news/
+│   │       ├── index.ejs     # Gestion des annonces (admin)
+│   │       └── form.ejs      # Formulaire création/modification
 │   └── errors/
 │       ├── 404.ejs           # Page 404
 │       └── 500.ejs           # Page 500
@@ -50,9 +59,12 @@ LANPartyManager/
 │   └── js/main.js            # JavaScript frontend (menu, flash, tabs, pwd toggle)
 │
 ├── database/
-│   └── install.sql           # Script SQL d'installation (table + compte admin)
+│   ├── install.sql           # Script SQL d'installation (tables + compte admin)
+│   └── migrations/
+│       └── 001_add_announcements.sql  # Migration : ajout table announcements
 │
 ├── tests/
+│   ├── announcement.test.js  # Tests unitaires modèle Announcement
 │   ├── middleware.test.js    # Tests unitaires middleware
 │   ├── routes.test.js        # Tests d'intégration routes
 │   └── user.test.js          # Tests unitaires modèle User
@@ -80,6 +92,7 @@ LANPartyManager/
 | Sécurité headers | helmet |
 | Rate limiting | express-rate-limit |
 | Validation | express-validator |
+| Rendu Markdown | marked + sanitize-html (XSS safe) |
 | Logging | winston (console + fichiers rotatifs) |
 | HTTP log | morgan → winston |
 
@@ -96,6 +109,17 @@ LANPartyManager/
 | email | VARCHAR(255) UNIQUE | Adresse e-mail (login) |
 | password | VARCHAR(255) | Mot de passe haché (bcrypt 12 rounds) |
 | is_admin | TINYINT(1) DEFAULT 0 | 1 = admin, 0 = membre |
+| created_at | DATETIME | Date de création |
+| updated_at | DATETIME | Date de dernière modification |
+
+**Table `announcements`**
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
+| titre | VARCHAR(255) | Titre de l'annonce |
+| contenu | LONGTEXT | Contenu en syntaxe Markdown |
+| statut | ENUM('publie','brouillon') | Statut de publication |
 | created_at | DATETIME | Date de création |
 | updated_at | DATETIME | Date de dernière modification |
 
@@ -126,7 +150,9 @@ LANPartyManager/
 2. Créez une nouvelle base de données (ex : `lanpartymanager`)
 3. Sélectionnez la base, allez dans **Importer**
 4. Importez le fichier `database/install.sql`
-5. Vérifiez la création de la table `users` et du compte admin
+5. Vérifiez la création des tables `users` et `announcements`, et du compte admin
+
+> **Mise à jour d'une installation existante** : si vous avez déjà une installation de la version précédente, importez uniquement `database/migrations/001_add_announcements.sql` pour ajouter la table `announcements` sans perdre vos données.
 
 ### 2. Application
 

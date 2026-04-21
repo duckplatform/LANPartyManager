@@ -1,0 +1,56 @@
+<%- include('../partials/head') %>
+
+<!-- ═══════════════════ EN-TÊTE PAGE NEWS ═══════════════════ -->
+<section class="news-hero">
+  <div class="container">
+    <div class="news-hero-inner">
+      <div class="news-hero-icon"><i class="fas fa-newspaper"></i></div>
+      <div>
+        <h1 class="news-hero-title">Actualités</h1>
+        <p class="news-hero-subtitle">Restez informé des dernières nouvelles de l'association.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ LISTE DES ANNONCES ═══════════════════ -->
+<section class="section news-section">
+  <div class="container">
+
+    <% if (announcements.length === 0) { %>
+      <div class="news-empty">
+        <div class="news-empty-icon"><i class="fas fa-inbox"></i></div>
+        <h2>Aucune annonce pour le moment</h2>
+        <p>Revenez bientôt, nous publierons prochainement nos actualités !</p>
+      </div>
+    <% } else { %>
+      <div class="news-list">
+        <% announcements.forEach(function(a) { %>
+          <article class="news-card">
+            <div class="news-card-meta">
+              <span class="news-card-date">
+                <i class="fas fa-calendar-alt"></i>
+                <%= new Date(a.created_at).toLocaleDateString('fr-FR', {
+                  day:   'numeric',
+                  month: 'long',
+                  year:  'numeric'
+                }) %>
+              </span>
+            </div>
+            <h2 class="news-card-title">
+              <a href="/news/<%= a.id %>"><%= a.titre %></a>
+            </h2>
+            <div class="news-card-footer">
+              <a href="/news/<%= a.id %>" class="btn btn--ghost btn--sm">
+                <i class="fas fa-arrow-right"></i> Lire la suite
+              </a>
+            </div>
+          </article>
+        <% }); %>
+      </div>
+    <% } %>
+
+  </div>
+</section>
+
+<%- include('../partials/foot') %>

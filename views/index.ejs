@@ -93,4 +93,45 @@
 </section>
 <% } %>
 
+<!-- ═══════════════════ DERNIÈRES ANNONCES ═══════════════════ -->
+<% if (latestAnnouncements && latestAnnouncements.length > 0) { %>
+<section class="section news-home-section">
+  <div class="container">
+    <div class="news-home-header">
+      <h2 class="section-title">
+        <i class="fas fa-newspaper"></i> Dernières actualités
+      </h2>
+      <a href="/news" class="btn btn--ghost btn--sm news-all-link">
+        Toutes les actualités <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+    <div class="news-home-grid">
+      <% latestAnnouncements.forEach(function(a) { %>
+        <article class="news-home-card">
+          <div class="news-card-meta">
+            <span class="news-card-date">
+              <i class="fas fa-calendar-alt"></i>
+              <%= new Date(a.created_at).toLocaleDateString('fr-FR', {
+                day:   'numeric',
+                month: 'long',
+                year:  'numeric'
+              }) %>
+            </span>
+          </div>
+          <h3 class="news-home-card-title">
+            <a href="/news/<%= a.id %>"><%= a.titre %></a>
+          </h3>
+          <div class="news-home-card-excerpt markdown-body">
+            <%- a.contenuHtml %>
+          </div>
+          <a href="/news/<%= a.id %>" class="btn btn--ghost btn--sm news-read-more">
+            Lire la suite <i class="fas fa-arrow-right"></i>
+          </a>
+        </article>
+      <% }); %>
+    </div>
+  </div>
+</section>
+<% } %>
+
 <%- include('partials/foot') %>
