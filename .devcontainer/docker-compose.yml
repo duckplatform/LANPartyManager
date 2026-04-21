@@ -15,7 +15,10 @@ services:
 
   # ── Conteneur de développement principal ────────────────────
   app:
-    image: mcr.microsoft.com/devcontainers/javascript-node:20
+    # Build depuis le Dockerfile local qui installe le client MySQL
+    build:
+      context: .
+      dockerfile: Dockerfile
     volumes:
       # Monte le dépôt dans /workspace (cache activé pour les perfs)
       - ..:/workspace:cached

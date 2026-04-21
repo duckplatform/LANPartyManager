@@ -8,21 +8,11 @@
 
   "name": "LANPartyManager — Codespace",
 
-  // ─── Image et Services Docker Compose ───────────────────────────────────────
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  // ─── Services Docker Compose ───────────────────────────────────────────────
+  // L'image app est définie dans .devcontainer/Dockerfile (Node.js 20 + mysql-client)
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspace",
-
-  // ─── Features (outils + services) ──────────────────────────────────────────
-  "features": {
-    // Docker dans le Codespace (Docker-in-Docker) pour docker-compose
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    // Utilitaires CLI supplémentaires (curl, etc.)
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "installZsh": false
-    }
-  },
 
   // ─── Initialisation (exécuté UNE seule fois à la création) ────────────────
   // 1. Installe les dépendances npm (dev inclus pour nodemon/mocha)

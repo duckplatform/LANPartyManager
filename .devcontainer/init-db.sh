@@ -29,18 +29,6 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# ── 0. Installation de mysql-client si nécessaire ──────────────
-echo ""
-echo "📦 Vérification de mysql-client..."
-if ! command -v mysql &> /dev/null; then
-  echo "   📥 Installation de mysql-client..."
-  apt-get update -qq > /dev/null 2>&1
-  apt-get install -y -qq mysql-client > /dev/null 2>&1
-  echo -e "${GREEN}   ✔ mysql-client installé.${NC}"
-else
-  echo -e "${GREEN}   ✔ mysql-client disponible.${NC}"
-fi
-
 # ── Alias mysql avec MYSQL_PWD (évite d'exposer le mot de passe ─
 # dans la liste des processus ou l'historique shell)
 mysql_cmd() {
