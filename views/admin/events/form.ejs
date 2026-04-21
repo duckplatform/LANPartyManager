@@ -97,26 +97,31 @@
       <!-- ── Barre latérale ── -->
       <aside class="news-form-sidebar">
 
-        <!-- Statut actif -->
+        <!-- Statut -->
         <div class="card sidebar-card">
           <div class="card-header">
-            <h2><i class="fas fa-toggle-on"></i> Visibilité</h2>
+            <h2><i class="fas fa-tag"></i> Statut</h2>
           </div>
           <div class="card-body">
             <div class="form-group">
-              <label class="form-label" style="display:flex;align-items:center;gap:.5rem;cursor:pointer;">
-                <input
-                  type="checkbox"
-                  name="actif"
-                  value="1"
-                  <%= (event && event.actif) ? 'checked' : '' %>
-                  style="width:1.2rem;height:1.2rem;"
-                />
-                Événement actif (affiché sur le site)
+              <label class="form-label" for="statut">
+                <i class="fas fa-toggle-on"></i> État de l'événement
               </label>
+              <select id="statut" name="statut" class="form-input" required>
+                <option value="planifie"  <%= (!event || event.statut === 'planifie')  ? 'selected' : '' %>>
+                  📅 Planifié — inscriptions ouvertes
+                </option>
+                <option value="en_cours" <%= (event && event.statut === 'en_cours') ? 'selected' : '' %>>
+                  ▶ En cours — inscriptions fermées
+                </option>
+                <option value="termine"  <%= (event && event.statut === 'termine')  ? 'selected' : '' %>>
+                  ✅ Terminé — événement archivé
+                </option>
+              </select>
               <span class="form-hint">
-                Un seul événement peut être actif à la fois.<br />
-                Activer cet événement désactivera les autres.
+                <strong>Planifié</strong> : l'événement est affiché sur le site et les inscriptions sont ouvertes jusqu'à la date de début.<br />
+                <strong>En cours</strong> : l'événement est affiché, les inscriptions sont fermées.<br />
+                <strong>Terminé</strong> : l'événement n'est plus mis en avant.
               </span>
             </div>
 
@@ -145,8 +150,8 @@
           <div class="card-body">
             <p class="form-hint">
               <i class="fas fa-clock"></i>
-              Les inscriptions sont automatiquement <strong>bloquées 24 h avant</strong>
-              le début de l'événement.
+              Les inscriptions sont automatiquement <strong>fermées à l'heure de début</strong>
+              de l'événement, ou dès que le statut passe à « En cours » ou « Terminé ».
             </p>
             <% if (event && event.id) { %>
               <div style="margin-top: var(--space-sm);">

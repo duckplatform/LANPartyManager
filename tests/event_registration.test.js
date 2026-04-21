@@ -49,7 +49,7 @@ describe('EventRegistration Model', function () {
   describe('findByUser()', function () {
     it('doit retourner toutes les inscriptions d\'un utilisateur', async function () {
       const fakeRows = [
-        { id: 1, event_id: 10, user_id: 5, nom: 'LAN Spring', date_heure: new Date(), lieu: 'Paris', actif: 1, created_at: new Date() },
+        { id: 1, event_id: 10, user_id: 5, nom: 'LAN Spring', date_heure: new Date(), lieu: 'Paris', statut: 'planifie', created_at: new Date() },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -57,6 +57,9 @@ describe('EventRegistration Model', function () {
       expect(result).to.deep.equal(fakeRows);
       const args = poolStub.execute.firstCall.args[1];
       expect(args[0]).to.equal(5);
+      // Vérifie que la requête sélectionne statut et non actif
+      const query = poolStub.execute.firstCall.args[0];
+      expect(query).to.include('e.statut');
     });
   });
 
@@ -128,25 +131,29 @@ describe('EventRegistration Model', function () {
   // ── isRegistrationOpen ────────────────────────────────────────────────────
 
   describe('isRegistrationOpen()', function () {
-    it('doit retourner true si l\'événement est dans plus de 24 h', function () {
-      const event = { date_heure: new Date(Date.now() + 48 * 3600 * 1000) };
+    it('doit retourner true si statut planifie et événement dans le futur', function () {
+      const event = { statut: 'planifie', date_heure: new Date(Date.now() + 48 * 3600 * 1000) };
       expect(EventRegistration.isRegistrationOpen(event)).to.be.true;
     });
 
-    it('doit retourner false si l\'événement est dans moins de 24 h', function () {
-      const event = { date_heure: new Date(Date.now() + 12 * 3600 * 1000) };
+    it('doit retourner false si statut planifie mais date passée', function () {
+      const event = { statut: 'planifie', date_heure: new Date(Date.now() - 1000) };
       expect(EventRegistration.isRegistrationOpen(event)).to.be.false;
     });
 
-    it('doit retourner false si l\'événement est déjà passé', function () {
-      const event = { date_heure: new Date(Date.now() - 1000) };
+    it('doit retourner false si statut en_cours (même si date future)', function () {
+      const event = { statut: 'en_cours', date_heure: new Date(Date.now() + 48 * 3600 * 1000) };
       expect(EventRegistration.isRegistrationOpen(event)).to.be.false;
     });
 
-    it('doit retourner false exactement 24 h avant', function () {
-      // Exactement à la limite (cutoff = Date.now + 24h → now < now, soit false)
-      const event = { date_heure: new Date(Date.now() + 24 * 3600 * 1000) };
-      // now < (event - 24h) === now < now => false
+    it('doit retourner false si statut termine', function () {
+      const event = { statut: 'termine', date_heure: new Date(Date.now() - 1000) };
+      expect(EventRegistration.isRegistrationOpen(event)).to.be.false;
+    });
+
+    it('doit retourner false exactement à l\'heure de début (statut planifie)', function () {
+      // now >= date_heure → false
+      const event = { statut: 'planifie', date_heure: new Date(Date.now()) };
       expect(EventRegistration.isRegistrationOpen(event)).to.be.false;
     });
   });

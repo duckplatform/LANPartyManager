@@ -79,11 +79,13 @@ CREATE TABLE IF NOT EXISTS `events` (
   `nom`        VARCHAR(255)     NOT NULL COMMENT 'Nom de l''événement',
   `date_heure` DATETIME         NOT NULL COMMENT 'Date et heure de début de l''événement',
   `lieu`       VARCHAR(255)     NOT NULL COMMENT 'Lieu de l''événement',
-  `actif`      TINYINT(1)       NOT NULL DEFAULT 0 COMMENT '1 = actif / affiché, 0 = inactif',
+  `statut`     ENUM('planifie','en_cours','termine')
+               NOT NULL DEFAULT 'planifie'
+               COMMENT 'Statut de l''événement : planifie | en_cours | termine',
   `created_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_events_actif`      (`actif`),
+  KEY `idx_events_statut`     (`statut`),
   KEY `idx_events_date_heure` (`date_heure`)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4

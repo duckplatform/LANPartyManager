@@ -40,7 +40,7 @@ const EventRegistration = {
   async findByUser(userId) {
     const [rows] = await db.pool.execute(
       `SELECT er.id, er.event_id, er.user_id, er.created_at,
-              e.nom, e.date_heure, e.lieu, e.actif
+              e.nom, e.date_heure, e.lieu, e.statut
          FROM event_registrations er
          JOIN events e ON e.id = er.event_id
         WHERE er.user_id = ?
@@ -120,15 +120,13 @@ const EventRegistration = {
 
   /**
    * Vérifie si les inscriptions sont encore ouvertes pour un événement.
-   * Les inscriptions sont bloquées 24 h avant le début.
-   * @param {Object} event - objet événement avec date_heure
+   * Les inscriptions sont ouvertes tant que l'événement est 'planifie'
+   * et que sa date de début n'est pas encore atteinte.
+   * @param {Object} event - objet événement avec statut et date_heure
    * @returns {boolean}
    */
   isRegistrationOpen(event) {
-    const now        = new Date();
-    const eventDate  = new Date(event.date_heure);
-    const cutoffMs   = 24 * 60 * 60 * 1000; // 24 heures en ms
-    return now < new Date(eventDate.getTime() - cutoffMs);
+    return event.statut === 'planifie' && new Date() < new Date(event.date_heure);
   },
 };
 

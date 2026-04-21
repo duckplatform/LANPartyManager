@@ -3,10 +3,13 @@
 /**
  * Modèle Événement
  * CRUD sur la table `events`
- * Contrainte : un seul événement peut être actif simultanément.
+ * Statuts possibles : 'planifie' | 'en_cours' | 'termine'
  */
 
 const db = require('../config/database');
+
+/** Valeurs autorisées pour le champ statut */
+const STATUTS_VALIDES = ['planifie', 'en_cours', 'termine'];
 
 const Event = {
 
@@ -16,7 +19,7 @@ const Event = {
    */
   async findAll() {
     const [rows] = await db.pool.execute(
-      `SELECT id, nom, date_heure, lieu, actif, created_at, updated_at
+      `SELECT id, nom, date_heure, lieu, statut, created_at, updated_at
          FROM events
          ORDER BY date_heure DESC`
     );
@@ -38,19 +41,19 @@ const Event = {
 
   /**
    * Retourne l'événement le plus pertinent à afficher sur la page d'accueil :
-   *   1. L'événement explicitement actif (actif = 1) si un tel événement existe.
-   *   2. Sinon, le prochain événement à venir ou en cours (le plus proche dans le
-   *      futur), afin que les événements créés soient toujours mis en avant même
-   *      si l'administrateur n'a pas coché la case « actif ».
+   *   1. Un événement avec statut 'en_cours' (priorité maximale).
+   *   2. Sinon, le prochain événement 'planifie' (le plus proche dans le futur).
+   * Les événements 'termine' ne sont jamais mis en avant.
    * @returns {Promise<Object|null>}
    */
   async findActive() {
     const [rows] = await db.pool.execute(
       `SELECT *
          FROM events
-        WHERE actif = 1
-           OR date_heure >= NOW()
-        ORDER BY actif DESC, date_heure ASC
+        WHERE statut IN ('planifie', 'en_cours')
+        ORDER BY
+          CASE statut WHEN 'en_cours' THEN 0 ELSE 1 END ASC,
+          date_heure ASC
         LIMIT 1`
     );
     return rows[0] || null;
@@ -58,40 +61,32 @@ const Event = {
 
   /**
    * Crée un nouvel événement.
-   * Si actif = true, tous les autres événements sont d'abord désactivés
-   * (contrainte : un seul actif simultanément).
-   * @param {{ nom: string, date_heure: string, lieu: string, actif?: boolean }} data
+   * @param {{ nom: string, date_heure: string, lieu: string, statut?: string }} data
    * @returns {Promise<number>} ID du nouvel événement
    */
-  async create({ nom, date_heure, lieu, actif = false }) {
-    if (actif) {
-      await db.pool.execute('UPDATE events SET actif = 0');
-    }
+  async create({ nom, date_heure, lieu, statut = 'planifie' }) {
+    const statutFinal = STATUTS_VALIDES.includes(statut) ? statut : 'planifie';
     const [result] = await db.pool.execute(
-      `INSERT INTO events (nom, date_heure, lieu, actif)
+      `INSERT INTO events (nom, date_heure, lieu, statut)
        VALUES (?, ?, ?, ?)`,
-      [nom.trim(), date_heure, lieu.trim(), actif ? 1 : 0]
+      [nom.trim(), date_heure, lieu.trim(), statutFinal]
     );
     return result.insertId;
   },
 
   /**
    * Met à jour un événement.
-   * Si actif = true, les autres événements sont désactivés.
    * @param {number} id
-   * @param {{ nom: string, date_heure: string, lieu: string, actif?: boolean }} data
+   * @param {{ nom: string, date_heure: string, lieu: string, statut?: string }} data
    * @returns {Promise<boolean>}
    */
-  async update(id, { nom, date_heure, lieu, actif = false }) {
-    if (actif) {
-      // Désactive tous les autres événements sauf celui-ci
-      await db.pool.execute('UPDATE events SET actif = 0 WHERE id != ?', [id]);
-    }
+  async update(id, { nom, date_heure, lieu, statut = 'planifie' }) {
+    const statutFinal = STATUTS_VALIDES.includes(statut) ? statut : 'planifie';
     const [result] = await db.pool.execute(
       `UPDATE events
-          SET nom = ?, date_heure = ?, lieu = ?, actif = ?, updated_at = NOW()
+          SET nom = ?, date_heure = ?, lieu = ?, statut = ?, updated_at = NOW()
         WHERE id = ?`,
-      [nom.trim(), date_heure, lieu.trim(), actif ? 1 : 0, id]
+      [nom.trim(), date_heure, lieu.trim(), statutFinal, id]
     );
     return result.affectedRows > 0;
   },
@@ -103,7 +98,7 @@ const Event = {
    */
   async findAllWithRegistrationCount() {
     const [rows] = await db.pool.execute(
-      `SELECT e.id, e.nom, e.date_heure, e.lieu, e.actif,
+      `SELECT e.id, e.nom, e.date_heure, e.lieu, e.statut,
               e.created_at, e.updated_at,
               COUNT(er.id) AS registrationCount
          FROM events e
@@ -137,6 +132,9 @@ const Event = {
     );
     return rows[0].total;
   },
+
+  /** Liste des valeurs de statut autorisées (utile pour les vues/formulaires) */
+  STATUTS_VALIDES,
 };
 
 module.exports = Event;

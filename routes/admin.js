@@ -282,6 +282,8 @@ const eventValidation = [
     .trim()
     .notEmpty().withMessage('Le lieu est obligatoire.')
     .isLength({ max: 255 }).withMessage('Le lieu ne peut pas dépasser 255 caractères.'),
+  body('statut')
+    .isIn(['planifie', 'en_cours', 'termine']).withMessage('Statut invalide.'),
 ];
 
 // ─── GET /admin/events ────────────────────────────────────────────────────
@@ -331,8 +333,8 @@ router.post('/events', eventValidation, async (req, res) => {
 
   try {
     const { nom, date_heure, lieu } = req.body;
-    const actif = req.body.actif === '1';
-    const id = await Event.create({ nom, date_heure, lieu, actif });
+    const statut = req.body.statut;
+    const id = await Event.create({ nom, date_heure, lieu, statut });
     logger.info(`[ADMIN/EVENTS] Événement #${id} créé par l'utilisateur #${req.session.userId}`);
     req.flash('success', `L'événement "${nom}" a été créé.`);
     return res.redirect('/admin/events');
@@ -397,8 +399,8 @@ router.post('/events/:id', eventValidation, async (req, res) => {
     }
 
     const { nom, date_heure, lieu } = req.body;
-    const actif = req.body.actif === '1';
-    await Event.update(id, { nom, date_heure, lieu, actif });
+    const statut = req.body.statut;
+    await Event.update(id, { nom, date_heure, lieu, statut });
     logger.info(`[ADMIN/EVENTS] Événement #${id} modifié par l'utilisateur #${req.session.userId}`);
     req.flash('success', `L'événement "${nom}" a été mis à jour.`);
     return res.redirect('/admin/events');

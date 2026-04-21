@@ -40,11 +40,14 @@
       </div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon stat-icon--<%= event.actif ? 'admin' : 'member' %>">
-        <i class="fas fa-<%= event.actif ? 'circle-check' : 'circle-xmark' %>"></i>
+      <div class="stat-icon stat-icon--<%= event.statut === 'en_cours' ? 'member' : event.statut === 'planifie' ? 'admin' : 'news' %>">
+        <i class="fas fa-<%= event.statut === 'en_cours' ? 'circle-play' : event.statut === 'planifie' ? 'calendar-check' : 'circle-check' %>"></i>
       </div>
       <div class="stat-info">
-        <span class="stat-number"><%= event.actif ? 'Actif' : 'Inactif' %></span>
+        <span class="stat-number"><%=
+          event.statut === 'planifie' ? 'Planifié' :
+          event.statut === 'en_cours' ? 'En cours' : 'Terminé'
+        %></span>
         <span class="stat-label">Statut événement</span>
       </div>
     </div>

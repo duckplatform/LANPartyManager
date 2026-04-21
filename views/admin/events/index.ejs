@@ -62,10 +62,12 @@
                   </td>
                   <td><%= ev.lieu %></td>
                   <td>
-                    <% if (ev.actif) { %>
-                      <span class="badge badge--published"><i class="fas fa-circle-check"></i> Actif</span>
+                    <% if (ev.statut === 'planifie') { %>
+                      <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> Planifié</span>
+                    <% } else if (ev.statut === 'en_cours') { %>
+                      <span class="badge badge--member"><i class="fas fa-circle-play"></i> En cours</span>
                     <% } else { %>
-                      <span class="badge badge--draft"><i class="fas fa-circle-xmark"></i> Inactif</span>
+                      <span class="badge badge--draft"><i class="fas fa-circle-check"></i> Terminé</span>
                     <% } %>
                   </td>
                   <td class="text-center">

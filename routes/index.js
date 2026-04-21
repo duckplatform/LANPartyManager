@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
       a.contenuHtml = renderMarkdown(a.contenu);
     });
 
-    // Données supplémentaires pour l'événement actif
+    // Données supplémentaires pour l'événement mis en avant
     let isRegistered      = false;
     let registrationOpen  = false;
     let registrationCount = 0;
@@ -35,11 +35,10 @@ router.get('/', async (req, res) => {
     if (activeEvent) {
       registrationOpen  = EventRegistration.isRegistrationOpen(activeEvent);
       registrationCount = await EventRegistration.countByEvent(activeEvent.id);
-      eventIsLive       = new Date(activeEvent.date_heure) <= new Date();
-      // Deadline = début événement - 24 h, au format ISO pour le JS client
-      registrationDeadlineISO = new Date(
-        new Date(activeEvent.date_heure).getTime() - 24 * 60 * 60 * 1000
-      ).toISOString();
+      // Considéré "en cours" si le statut est 'en_cours' ou si la date est atteinte
+      eventIsLive       = activeEvent.statut === 'en_cours' || new Date(activeEvent.date_heure) <= new Date();
+      // Deadline = début de l'événement (les inscriptions ferment à l'heure de début)
+      registrationDeadlineISO = new Date(activeEvent.date_heure).toISOString();
 
       if (req.session && req.session.userId) {
         isRegistered = await EventRegistration.isRegistered(activeEvent.id, req.session.userId);

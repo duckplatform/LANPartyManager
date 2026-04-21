@@ -33,14 +33,16 @@ describe('Event Model', function () {
   describe('findAll()', function () {
     it('doit retourner tous les événements', async function () {
       const fakeRows = [
-        { id: 1, nom: 'LAN Spring', date_heure: new Date(), lieu: 'Paris', actif: 1 },
-        { id: 2, nom: 'LAN Summer', date_heure: new Date(), lieu: 'Lyon',  actif: 0 },
+        { id: 1, nom: 'LAN Spring', date_heure: new Date(), lieu: 'Paris', statut: 'planifie' },
+        { id: 2, nom: 'LAN Summer', date_heure: new Date(), lieu: 'Lyon',  statut: 'termine'  },
       ];
       poolStub.execute.resolves([fakeRows]);
 
       const result = await Event.findAll();
       expect(result).to.deep.equal(fakeRows);
       expect(poolStub.execute.calledOnce).to.be.true;
+      const query = poolStub.execute.firstCall.args[0];
+      expect(query).to.include('statut');
     });
   });
 
@@ -48,7 +50,7 @@ describe('Event Model', function () {
 
   describe('findById()', function () {
     it('doit retourner un événement si trouvé', async function () {
-      const fakeEvent = { id: 1, nom: 'LAN Test', date_heure: new Date(), lieu: 'Paris', actif: 1 };
+      const fakeEvent = { id: 1, nom: 'LAN Test', date_heure: new Date(), lieu: 'Paris', statut: 'planifie' };
       poolStub.execute.resolves([[fakeEvent]]);
 
       const result = await Event.findById(1);
@@ -65,27 +67,26 @@ describe('Event Model', function () {
   // ── findActive ────────────────────────────────────────────────────────────
 
   describe('findActive()', function () {
-    it('doit retourner l\'événement explicitement actif (actif=1)', async function () {
-      const fakeEvent = { id: 1, nom: 'LAN Active', date_heure: new Date(), lieu: 'Paris', actif: 1 };
-      poolStub.execute.resolves([[fakeEvent]]);
+    it('doit prioritiser l\'événement en_cours', async function () {
+      const live = { id: 1, nom: 'LAN Live', date_heure: new Date(), lieu: 'Paris', statut: 'en_cours' };
+      poolStub.execute.resolves([[live]]);
 
       const result = await Event.findActive();
-      expect(result).to.deep.equal(fakeEvent);
+      expect(result).to.deep.equal(live);
       const query = poolStub.execute.firstCall.args[0];
-      expect(query).to.include('actif = 1');
+      expect(query).to.include('en_cours');
+      expect(query).to.include('planifie');
     });
 
-    it('doit retourner le prochain événement à venir si aucun n\'est actif', async function () {
-      const upcoming = { id: 2, nom: 'LAN Upcoming', date_heure: new Date(Date.now() + 86400000), lieu: 'Lyon', actif: 0 };
+    it('doit retourner un événement planifie si aucun n\'est en_cours', async function () {
+      const upcoming = { id: 2, nom: 'LAN Upcoming', date_heure: new Date(Date.now() + 86400000), lieu: 'Lyon', statut: 'planifie' };
       poolStub.execute.resolves([[upcoming]]);
 
       const result = await Event.findActive();
       expect(result).to.deep.equal(upcoming);
-      const query = poolStub.execute.firstCall.args[0];
-      expect(query).to.include('date_heure >= NOW()');
     });
 
-    it('doit retourner null si aucun événement actif ou à venir', async function () {
+    it('doit retourner null si aucun événement planifie ou en_cours', async function () {
       poolStub.execute.resolves([[]]);
       const result = await Event.findActive();
       expect(result).to.be.null;
@@ -96,42 +97,51 @@ describe('Event Model', function () {
 
   describe('create()', function () {
     it('doit créer un événement et retourner son ID', async function () {
-      // Stub pour UPDATE actif=0 + INSERT
-      poolStub.execute.onFirstCall().resolves([{ affectedRows: 0 }]);
-      poolStub.execute.onSecondCall().resolves([{ insertId: 42 }]);
+      poolStub.execute.resolves([{ insertId: 42 }]);
 
       const id = await Event.create({
         nom:        'LAN Hiver',
         date_heure: '2025-12-20 18:00:00',
         lieu:       'Salle des fêtes',
-        actif:      true,
+        statut:     'planifie',
       });
 
       expect(id).to.equal(42);
-      // Vérifie que la désactivation des autres événements est faite en premier
-      const firstQuery = poolStub.execute.firstCall.args[0];
-      expect(firstQuery).to.include('UPDATE events SET actif = 0');
-    });
-
-    it('ne doit pas désactiver les autres si actif = false', async function () {
-      poolStub.execute.resolves([{ insertId: 5 }]);
-
-      await Event.create({
-        nom:        'LAN Inactif',
-        date_heure: '2025-01-01 10:00:00',
-        lieu:       'Quelque part',
-        actif:      false,
-      });
-
-      // Une seule requête : l'INSERT
       expect(poolStub.execute.calledOnce).to.be.true;
       const query = poolStub.execute.firstCall.args[0];
       expect(query).to.include('INSERT INTO events');
     });
 
+    it('doit utiliser "planifie" par défaut si statut absent', async function () {
+      poolStub.execute.resolves([{ insertId: 5 }]);
+
+      await Event.create({
+        nom:        'LAN Défaut',
+        date_heure: '2025-01-01 10:00:00',
+        lieu:       'Quelque part',
+      });
+
+      const args = poolStub.execute.firstCall.args[1];
+      expect(args[3]).to.equal('planifie');
+    });
+
+    it('doit rejeter un statut invalide et utiliser "planifie"', async function () {
+      poolStub.execute.resolves([{ insertId: 7 }]);
+
+      await Event.create({
+        nom:        'LAN Invalide',
+        date_heure: '2025-01-01 10:00:00',
+        lieu:       'Quelque part',
+        statut:     'inexistant',
+      });
+
+      const args = poolStub.execute.firstCall.args[1];
+      expect(args[3]).to.equal('planifie');
+    });
+
     it('doit trim le nom et le lieu', async function () {
       poolStub.execute.resolves([{ insertId: 1 }]);
-      await Event.create({ nom: '  LAN  ', date_heure: '2025-01-01', lieu: '  Paris  ', actif: false });
+      await Event.create({ nom: '  LAN  ', date_heure: '2025-01-01', lieu: '  Paris  ' });
       const args = poolStub.execute.firstCall.args[1];
       expect(args[0]).to.equal('LAN');
       expect(args[2]).to.equal('Paris');
@@ -142,22 +152,25 @@ describe('Event Model', function () {
 
   describe('update()', function () {
     it('doit retourner true si la mise à jour réussit', async function () {
-      // UPDATE actif=0 + UPDATE événement
-      poolStub.execute.onFirstCall().resolves([{ affectedRows: 1 }]);
-      poolStub.execute.onSecondCall().resolves([{ affectedRows: 1 }]);
+      poolStub.execute.resolves([{ affectedRows: 1 }]);
 
       const result = await Event.update(1, {
         nom:        'LAN Modifié',
         date_heure: '2025-06-15 14:00:00',
         lieu:       'Lyon',
-        actif:      true,
+        statut:     'en_cours',
       });
       expect(result).to.be.true;
+      // Une seule requête UPDATE
+      expect(poolStub.execute.calledOnce).to.be.true;
+      const query = poolStub.execute.firstCall.args[0];
+      expect(query).to.include('UPDATE events');
+      expect(query).to.include('statut');
     });
 
     it('doit retourner false si aucune ligne affectée', async function () {
       poolStub.execute.resolves([{ affectedRows: 0 }]);
-      const result = await Event.update(999, { nom: 'X', date_heure: '2025-01-01', lieu: 'Y', actif: false });
+      const result = await Event.update(999, { nom: 'X', date_heure: '2025-01-01', lieu: 'Y', statut: 'planifie' });
       expect(result).to.be.false;
     });
   });

@@ -193,14 +193,14 @@ router.post('/events/:id/register', requireAuth, async (req, res) => {
 
   try {
     const event = await Event.findById(eventId);
-    if (!event || !event.actif) {
-      req.flash('error', 'Événement introuvable ou inactif.');
+    if (!event || event.statut === 'termine') {
+      req.flash('error', 'Événement introuvable ou terminé.');
       return res.redirect('/profile');
     }
 
-    // Vérifie le délai de 24h
+    // Vérifie si les inscriptions sont ouvertes (statut planifie + avant la date de début)
     if (!EventRegistration.isRegistrationOpen(event)) {
-      req.flash('error', 'Les inscriptions sont closes (moins de 24 h avant l\'événement).');
+      req.flash('error', 'Les inscriptions sont closes (l\'événement a déjà commencé ou n\'est plus disponible).');
       return res.redirect('/profile');
     }
 
@@ -234,9 +234,9 @@ router.post('/events/:id/unregister', requireAuth, async (req, res) => {
       return res.redirect('/profile');
     }
 
-    // Vérifie le délai de 24h (on ne peut pas se désinscrire non plus)
+    // Vérifie si les inscriptions sont ouvertes (statut planifie + avant la date de début)
     if (!EventRegistration.isRegistrationOpen(event)) {
-      req.flash('error', 'Les désinscriptions sont closes (moins de 24 h avant l\'événement).');
+      req.flash('error', 'Les désinscriptions sont closes (l\'événement a déjà commencé ou n\'est plus disponible).');
       return res.redirect('/profile');
     }
 

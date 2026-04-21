@@ -48,13 +48,13 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.headers).to.have.property('x-frame-options');
     });
 
-    it('doit afficher la section événement quand un événement est actif (actif=1)', async function () {
+    it('doit afficher la section événement quand un événement est planifié (statut planifie)', async function () {
       const fakeEvent = {
         id:         1,
         nom:        'LAN Printemps 2026',
         date_heure: new Date(Date.now() + 7 * 24 * 3600 * 1000), // dans 7 jours
         lieu:       'Salle des fêtes',
-        actif:      1,
+        statut:     'planifie',
       };
       // Appel 1 : Announcement.findLatestPublished → []
       // Appel 2 : Event.findActive → [fakeEvent]
@@ -71,17 +71,17 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.text).to.include('Salle des fêtes');
     });
 
-    it('doit afficher la section événement pour un événement à venir (actif=0)', async function () {
-      const upcomingEvent = {
+    it('doit afficher la section événement pour un événement en cours (statut en_cours)', async function () {
+      const liveEvent = {
         id:         2,
         nom:        'LAN Été 2026',
-        date_heure: new Date(Date.now() + 14 * 24 * 3600 * 1000), // dans 14 jours
+        date_heure: new Date(Date.now() - 3600 * 1000), // commencé il y a 1h
         lieu:       'Paris',
-        actif:      0,
+        statut:     'en_cours',
       };
       poolStub.execute
         .onCall(0).resolves([[]])
-        .onCall(1).resolves([[upcomingEvent]])
+        .onCall(1).resolves([[liveEvent]])
         .onCall(2).resolves([[{ total: 0 }]]);
 
       const res = await request(app).get('/');

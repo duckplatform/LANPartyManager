@@ -148,7 +148,7 @@
   <!-- Panneau : Événements -->
   <div id="tab-events" class="tab-panel<%= (typeof activeTab !== 'undefined' && activeTab === 'events') ? ' active' : '' %>" role="tabpanel">
 
-    <!-- Événement actif -->
+    <!-- Événement à venir ou en cours -->
     <% if (activeEvent) { %>
     <div class="card" style="margin-bottom: var(--space-md);">
       <div class="card-header">
@@ -181,7 +181,7 @@
               </button>
             </form>
           <% } else { %>
-            <p class="form-hint"><i class="fas fa-lock"></i> Les inscriptions sont closes (moins de 24 h avant l'événement).</p>
+            <p class="form-hint"><i class="fas fa-lock"></i> Les inscriptions sont closes (l'événement a déjà commencé ou n'est plus disponible).</p>
           <% } %>
         <% } else if (registrationOpen) { %>
           <form action="/profile/events/<%= activeEvent.id %>/register" method="POST">
@@ -191,7 +191,7 @@
             </button>
           </form>
         <% } else { %>
-          <p class="form-hint"><i class="fas fa-lock"></i> Les inscriptions sont closes (moins de 24 h avant l'événement).</p>
+          <p class="form-hint"><i class="fas fa-lock"></i> Les inscriptions sont closes (l'événement a déjà commencé ou n'est plus disponible).</p>
         <% } %>
       </div>
     </div>
@@ -199,7 +199,7 @@
     <div class="card" style="margin-bottom: var(--space-md);">
       <div class="card-body">
         <p class="text-muted text-center">
-          <i class="fas fa-calendar-xmark"></i> Aucun événement actif pour le moment.
+          <i class="fas fa-calendar-xmark"></i> Aucun événement en cours ou à venir pour le moment.
         </p>
       </div>
     </div>
@@ -238,10 +238,12 @@
                     </td>
                     <td><%= r.lieu %></td>
                     <td>
-                      <% if (r.actif) { %>
-                        <span class="badge badge--published"><i class="fas fa-circle-check"></i> Actif</span>
+                      <% if (r.statut === 'planifie') { %>
+                        <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> Planifié</span>
+                      <% } else if (r.statut === 'en_cours') { %>
+                        <span class="badge badge--member"><i class="fas fa-circle-play"></i> En cours</span>
                       <% } else { %>
-                        <span class="badge badge--draft"><i class="fas fa-circle-xmark"></i> Inactif</span>
+                        <span class="badge badge--draft"><i class="fas fa-circle-check"></i> Terminé</span>
                       <% } %>
                     </td>
                     <td class="td-date">
