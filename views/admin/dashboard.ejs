@@ -42,6 +42,13 @@
         <span class="stat-label">Annonces</span>
       </div>
     </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--total"><i class="fas fa-calendar-days"></i></div>
+      <div class="stat-info">
+        <span class="stat-number"><%= totalEvents %></span>
+        <span class="stat-label">Événements</span>
+      </div>
+    </div>
   </div>
 
   <!-- Accès rapide aux sections -->
@@ -53,6 +60,14 @@
     <a href="/admin/news/create" class="admin-quick-btn">
       <i class="fas fa-plus-circle"></i>
       <span>Nouvelle annonce</span>
+    </a>
+    <a href="/admin/events" class="admin-quick-btn">
+      <i class="fas fa-calendar-days"></i>
+      <span>Gérer les événements</span>
+    </a>
+    <a href="/admin/events/create" class="admin-quick-btn">
+      <i class="fas fa-calendar-plus"></i>
+      <span>Nouvel événement</span>
     </a>
   </div>
 

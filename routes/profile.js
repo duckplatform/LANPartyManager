@@ -7,9 +7,30 @@
 const express   = require('express');
 const { body, validationResult } = require('express-validator');
 const router    = express.Router();
-const User      = require('../models/User');
+const User              = require('../models/User');
+const Event             = require('../models/Event');
+const EventRegistration = require('../models/EventRegistration');
 const logger    = require('../config/logger');
 const { requireAuth } = require('../middleware/auth');
+
+// ─── Aide : charge les données événement pour le rendu du profil ───────────
+
+async function loadEventData(userId) {
+  const [activeEvent, userRegistrations] = await Promise.all([
+    Event.findActive(),
+    EventRegistration.findByUser(userId),
+  ]);
+
+  let isRegistered     = false;
+  let registrationOpen = false;
+
+  if (activeEvent) {
+    registrationOpen = EventRegistration.isRegistrationOpen(activeEvent);
+    isRegistered     = await EventRegistration.isRegistered(activeEvent.id, userId);
+  }
+
+  return { activeEvent, userRegistrations, isRegistered, registrationOpen };
+}
 
 // ─── GET /profile ──────────────────────────────────────────────────────────
 
@@ -20,11 +41,15 @@ router.get('/', requireAuth, async (req, res) => {
       req.session.destroy(() => {});
       return res.redirect('/auth/login');
     }
+
+    const eventData = await loadEventData(req.session.userId);
+
     res.render('profile', {
       title:     'Mon profil',
       pageClass: 'page-profile',
       user,
       errors:    [],
+      ...eventData,
     });
   } catch (err) {
     logger.error('[PROFILE] Erreur chargement profil :', err);
@@ -55,11 +80,15 @@ router.post('/', requireAuth, updateRules, async (req, res) => {
   const user   = await User.findById(req.session.userId).catch(() => null);
 
   if (!errors.isEmpty()) {
+    const eventData = await loadEventData(req.session.userId).catch(() => ({
+      activeEvent: null, userRegistrations: [], isRegistered: false, registrationOpen: false,
+    }));
     return res.render('profile', {
       title:     'Mon profil',
       pageClass: 'page-profile',
       user:      { ...user, ...req.body },
       errors:    errors.array(),
+      ...eventData,
     });
   }
 
@@ -68,11 +97,15 @@ router.post('/', requireAuth, updateRules, async (req, res) => {
 
     // Vérification d'unicité e-mail
     if (await User.emailExists(email, req.session.userId)) {
+      const eventData = await loadEventData(req.session.userId).catch(() => ({
+        activeEvent: null, userRegistrations: [], isRegistered: false, registrationOpen: false,
+      }));
       return res.render('profile', {
         title:     'Mon profil',
         pageClass: 'page-profile',
         user:      { ...user, ...req.body },
         errors:    [{ msg: 'Cette adresse e-mail est déjà utilisée.' }],
+        ...eventData,
       });
     }
 
@@ -109,12 +142,16 @@ router.post('/password', requireAuth, passwordRules, async (req, res) => {
   const user   = await User.findById(req.session.userId).catch(() => null);
 
   if (!errors.isEmpty()) {
+    const eventData = await loadEventData(req.session.userId).catch(() => ({
+      activeEvent: null, userRegistrations: [], isRegistered: false, registrationOpen: false,
+    }));
     return res.render('profile', {
       title:     'Mon profil',
       pageClass: 'page-profile',
       user,
       errors:    errors.array(),
       activeTab: 'password',
+      ...eventData,
     });
   }
 
@@ -124,12 +161,16 @@ router.post('/password', requireAuth, passwordRules, async (req, res) => {
     const isValid = await User.verifyPassword(req.body.current_password, userWithPass.password);
 
     if (!isValid) {
+      const eventData = await loadEventData(req.session.userId).catch(() => ({
+        activeEvent: null, userRegistrations: [], isRegistered: false, registrationOpen: false,
+      }));
       return res.render('profile', {
         title:     'Mon profil',
         pageClass: 'page-profile',
         user,
         errors:    [{ msg: 'Mot de passe actuel incorrect.' }],
         activeTab: 'password',
+        ...eventData,
       });
     }
 
@@ -142,6 +183,75 @@ router.post('/password', requireAuth, passwordRules, async (req, res) => {
     req.flash('error', 'Erreur lors du changement de mot de passe.');
     return res.redirect('/profile');
   }
+});
+
+// ─── POST /profile/events/:id/register ────────────────────────────────────
+// Inscription d'un utilisateur à un événement depuis son profil
+
+router.post('/events/:id/register', requireAuth, async (req, res) => {
+  const eventId = parseInt(req.params.id, 10);
+
+  try {
+    const event = await Event.findById(eventId);
+    if (!event || event.statut === 'termine') {
+      req.flash('error', 'Événement introuvable ou terminé.');
+      return res.redirect('/profile');
+    }
+
+    // Vérifie si les inscriptions sont ouvertes (statut planifie + avant la date de début)
+    if (!EventRegistration.isRegistrationOpen(event)) {
+      req.flash('error', 'Les inscriptions sont closes (l\'événement a déjà commencé ou n\'est plus disponible).');
+      return res.redirect('/profile');
+    }
+
+    // Vérifie si déjà inscrit
+    const alreadyRegistered = await EventRegistration.isRegistered(eventId, req.session.userId);
+    if (alreadyRegistered) {
+      req.flash('error', 'Vous êtes déjà inscrit à cet événement.');
+      return res.redirect('/profile');
+    }
+
+    await EventRegistration.create(eventId, req.session.userId);
+    logger.info(`[PROFILE] Utilisateur #${req.session.userId} s'est inscrit à l'événement #${eventId}`);
+    req.flash('success', `Vous êtes inscrit à l'événement "${event.nom}" !`);
+  } catch (err) {
+    logger.error(`[PROFILE] Erreur inscription événement #${eventId} :`, err);
+    req.flash('error', 'Erreur lors de l\'inscription à l\'événement.');
+  }
+  return res.redirect('/profile');
+});
+
+// ─── POST /profile/events/:id/unregister ──────────────────────────────────
+// Désinscription d'un utilisateur d'un événement depuis son profil
+
+router.post('/events/:id/unregister', requireAuth, async (req, res) => {
+  const eventId = parseInt(req.params.id, 10);
+
+  try {
+    const event = await Event.findById(eventId);
+    if (!event) {
+      req.flash('error', 'Événement introuvable.');
+      return res.redirect('/profile');
+    }
+
+    // Vérifie si les inscriptions sont ouvertes (statut planifie + avant la date de début)
+    if (!EventRegistration.isRegistrationOpen(event)) {
+      req.flash('error', 'Les désinscriptions sont closes (l\'événement a déjà commencé ou n\'est plus disponible).');
+      return res.redirect('/profile');
+    }
+
+    const deleted = await EventRegistration.delete(eventId, req.session.userId);
+    if (deleted) {
+      logger.info(`[PROFILE] Utilisateur #${req.session.userId} s'est désinscrit de l'événement #${eventId}`);
+      req.flash('success', `Votre inscription à l'événement "${event.nom}" a été annulée.`);
+    } else {
+      req.flash('error', 'Inscription introuvable.');
+    }
+  } catch (err) {
+    logger.error(`[PROFILE] Erreur désinscription événement #${eventId} :`, err);
+    req.flash('error', 'Erreur lors de la désinscription.');
+  }
+  return res.redirect('/profile');
 });
 
 module.exports = router;

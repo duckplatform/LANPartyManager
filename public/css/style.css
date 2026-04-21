@@ -1289,3 +1289,191 @@ h1, h2, h3, h4, h5, h6 {
   .hero-actions { flex-direction: column; }
   .hero-actions .btn { width: 100%; justify-content: center; }
 }
+
+/* ================================================================
+   SECTION ÉVÉNEMENT ACTIF (page d'accueil)
+   ================================================================ */
+
+.event-highlight-section {
+  padding: var(--space-2xl) 0;
+}
+
+.event-highlight-card {
+  background: linear-gradient(135deg, var(--color-bg-elevated) 0%, #1e1b4b 100%);
+  border: 1px solid var(--color-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  box-shadow: var(--shadow-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.event-highlight-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+}
+
+.event-highlight-badge {
+  margin-bottom: var(--space-md);
+}
+
+.event-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.event-status--upcoming {
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.event-status--live {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+  animation: pulse-live 2s ease-in-out infinite;
+}
+
+@keyframes pulse-live {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50%       { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+}
+
+.event-highlight-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-xl);
+  flex-wrap: wrap;
+}
+
+.event-highlight-info {
+  flex: 1;
+  min-width: 280px;
+}
+
+.event-highlight-title {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  color: var(--color-text);
+  margin-bottom: var(--space-md);
+}
+
+.event-highlight-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+  color: var(--color-text-soft);
+  font-size: 0.95rem;
+}
+
+.event-highlight-meta span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.event-highlight-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-sm);
+  min-width: 220px;
+}
+
+/* Compte à rebours */
+.event-countdown-wrap {
+  margin-top: var(--space-md);
+}
+
+.event-countdown-label {
+  font-size: 0.85rem;
+  color: var(--color-text-soft);
+  margin-bottom: var(--space-sm);
+}
+
+.event-countdown {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs) var(--space-md);
+  min-width: 60px;
+}
+
+.countdown-num {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.countdown-lbl {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 2px;
+}
+
+.countdown-sep {
+  font-family: var(--font-heading);
+  font-size: 1.4rem;
+  color: var(--color-text-muted);
+  line-height: 1;
+  padding-bottom: 0.8rem;
+}
+
+.event-registrations-closed {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-top: var(--space-md);
+}
+
+/* Badge inscrit */
+.event-registered-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid var(--color-success);
+  border-radius: var(--radius-md);
+  color: var(--color-success);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .event-highlight-body { flex-direction: column; }
+  .event-highlight-actions { align-items: flex-start; width: 100%; }
+  .event-highlight-title { font-size: 1.3rem; }
+  .event-countdown { flex-wrap: wrap; }
+  .countdown-unit { min-width: 50px; }
+  .countdown-num { font-size: 1.2rem; }
+}

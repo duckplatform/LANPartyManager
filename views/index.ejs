@@ -36,6 +36,142 @@
   </div>
 </section>
 
+<!-- ═══════════════════ ÉVÉNEMENT ACTIF ═══════════════════ -->
+<% if (activeEvent) { %>
+<section class="section event-highlight-section">
+  <div class="container">
+    <div class="event-highlight-card">
+      <div class="event-highlight-badge">
+        <% if (eventIsLive) { %>
+          <span class="event-status-badge event-status--live">
+            <i class="fas fa-circle-play"></i> En cours
+          </span>
+        <% } else { %>
+          <span class="event-status-badge event-status--upcoming">
+            <i class="fas fa-calendar-check"></i> Prochain événement
+          </span>
+        <% } %>
+      </div>
+
+      <div class="event-highlight-body">
+        <div class="event-highlight-info">
+          <h2 class="event-highlight-title">
+            <i class="fas fa-gamepad"></i> <%= activeEvent.nom %>
+          </h2>
+          <div class="event-highlight-meta">
+            <span>
+              <i class="fas fa-calendar-alt"></i>
+              <%= new Date(activeEvent.date_heure).toLocaleDateString('fr-FR', {
+                weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+              }) %>
+              à
+              <%= new Date(activeEvent.date_heure).toLocaleTimeString('fr-FR', {
+                hour: '2-digit', minute: '2-digit'
+              }) %>
+            </span>
+            <span>
+              <i class="fas fa-location-dot"></i> <%= activeEvent.lieu %>
+            </span>
+            <span>
+              <i class="fas fa-users"></i> <%= registrationCount %> inscrit<%= registrationCount !== 1 ? 's' : '' %>
+            </span>
+          </div>
+
+          <!-- Chrono inscriptions -->
+          <% if (registrationOpen) { %>
+            <div class="event-countdown-wrap">
+              <p class="event-countdown-label">
+                <i class="fas fa-hourglass-half"></i> Inscriptions ouvertes — fermeture dans :
+              </p>
+              <div class="event-countdown" id="eventCountdown"
+                   data-deadline="<%= registrationDeadlineISO %>">
+                <div class="countdown-unit"><span class="countdown-num" id="cd-days">--</span><span class="countdown-lbl">jours</span></div>
+                <span class="countdown-sep">:</span>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-hours">--</span><span class="countdown-lbl">heures</span></div>
+                <span class="countdown-sep">:</span>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-minutes">--</span><span class="countdown-lbl">min</span></div>
+                <span class="countdown-sep">:</span>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-seconds">--</span><span class="countdown-lbl">sec</span></div>
+              </div>
+            </div>
+          <% } else { %>
+            <p class="event-registrations-closed">
+              <i class="fas fa-lock"></i> Les inscriptions sont closes.
+            </p>
+          <% } %>
+        </div>
+
+        <!-- Actions -->
+        <div class="event-highlight-actions">
+          <% if (!currentUser) { %>
+            <a href="/auth/register" class="btn btn--primary">
+              <i class="fas fa-user-plus"></i> Créer un compte pour s'inscrire
+            </a>
+          <% } else if (isRegistered) { %>
+            <div class="event-registered-badge">
+              <i class="fas fa-circle-check"></i> Vous êtes inscrit !
+            </div>
+            <% if (registrationOpen) { %>
+              <form action="/profile/events/<%= activeEvent.id %>/unregister" method="POST">
+                <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                <button type="submit" class="btn btn--ghost btn--sm"
+                        onclick="return confirm('Annuler votre inscription ?')">
+                  <i class="fas fa-user-minus"></i> Se désinscrire
+                </button>
+              </form>
+            <% } %>
+          <% } else if (registrationOpen) { %>
+            <form action="/profile/events/<%= activeEvent.id %>/register" method="POST">
+              <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+              <button type="submit" class="btn btn--primary">
+                <i class="fas fa-user-plus"></i> S'inscrire à l'événement
+              </button>
+            </form>
+          <% } else { %>
+            <p class="text-muted">
+              <i class="fas fa-lock"></i> Inscriptions closes.
+            </p>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ── Compte à rebours inscriptions ── */
+(function () {
+  'use strict';
+  const el = document.getElementById('eventCountdown');
+  if (!el) return;
+
+  const deadline = new Date(el.dataset.deadline).getTime();
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function tick() {
+    const diff = deadline - Date.now();
+    if (diff <= 0) {
+      el.innerHTML = '<span class="event-registrations-closed"><i class="fas fa-lock"></i> Inscriptions closes</span>';
+      return;
+    }
+    const days    = Math.floor(diff / 86400000);
+    const hours   = Math.floor((diff % 86400000) / 3600000);
+    const minutes = Math.floor((diff % 3600000)  / 60000);
+    const seconds = Math.floor((diff % 60000)    / 1000);
+
+    document.getElementById('cd-days').textContent    = days;
+    document.getElementById('cd-hours').textContent   = pad(hours);
+    document.getElementById('cd-minutes').textContent = pad(minutes);
+    document.getElementById('cd-seconds').textContent = pad(seconds);
+
+    setTimeout(tick, 1000);
+  }
+  tick();
+})();
+</script>
+<% } %>
+
 <!-- ═══════════════════ FEATURES ═══════════════════ -->
 <section class="section features-section">
   <div class="container">
@@ -135,3 +271,4 @@
 <% } %>
 
 <%- include('partials/foot') %>
+

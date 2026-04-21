@@ -47,6 +47,55 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.headers).to.have.property('x-content-type-options');
       expect(res.headers).to.have.property('x-frame-options');
     });
+
+    it('doit afficher la section événement quand un événement est planifié (statut planifie)', async function () {
+      const fakeEvent = {
+        id:         1,
+        nom:        'LAN Printemps 2026',
+        date_heure: new Date(Date.now() + 7 * 24 * 3600 * 1000), // dans 7 jours
+        lieu:       'Salle des fêtes',
+        statut:     'planifie',
+      };
+      // Appel 1 : Announcement.findLatestPublished → []
+      // Appel 2 : Event.findActive → [fakeEvent]
+      // Appel 3 : EventRegistration.countByEvent → [{total:5}]
+      poolStub.execute
+        .onCall(0).resolves([[]])
+        .onCall(1).resolves([[fakeEvent]])
+        .onCall(2).resolves([[{ total: 5 }]]);
+
+      const res = await request(app).get('/');
+      expect(res.status).to.equal(200);
+      expect(res.text).to.include('event-highlight-section');
+      expect(res.text).to.include('LAN Printemps 2026');
+      expect(res.text).to.include('Salle des fêtes');
+    });
+
+    it('doit afficher la section événement pour un événement en cours (statut en_cours)', async function () {
+      const liveEvent = {
+        id:         2,
+        nom:        'LAN Été 2026',
+        date_heure: new Date(Date.now() - 3600 * 1000), // commencé il y a 1h
+        lieu:       'Paris',
+        statut:     'en_cours',
+      };
+      poolStub.execute
+        .onCall(0).resolves([[]])
+        .onCall(1).resolves([[liveEvent]])
+        .onCall(2).resolves([[{ total: 0 }]]);
+
+      const res = await request(app).get('/');
+      expect(res.status).to.equal(200);
+      expect(res.text).to.include('event-highlight-section');
+      expect(res.text).to.include('LAN Été 2026');
+    });
+
+    it('ne doit pas afficher la section événement quand aucun événement n\'existe', async function () {
+      // Tous les appels retournent une liste vide (comportement par défaut)
+      const res = await request(app).get('/');
+      expect(res.status).to.equal(200);
+      expect(res.text).to.not.include('event-highlight-section');
+    });
   });
 
   // ── Page de connexion ──────────────────────────────────────────────────

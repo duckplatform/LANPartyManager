@@ -1,0 +1,140 @@
+<%- include('../../partials/head') %>
+
+<div class="container admin-container">
+
+  <!-- En-tête admin -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-users"></i> Inscrits — <%= event.nom %>
+      </h1>
+      <p class="admin-subtitle">
+        <i class="fas fa-calendar-alt"></i>
+        <%= new Date(event.date_heure).toLocaleDateString('fr-FR', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        }) %>
+        à
+        <%= new Date(event.date_heure).toLocaleTimeString('fr-FR', {
+          hour: '2-digit', minute: '2-digit'
+        }) %>
+        &nbsp;—&nbsp;<i class="fas fa-location-dot"></i> <%= event.lieu %>
+      </p>
+    </div>
+    <div class="admin-header-actions">
+      <a href="/admin/events" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Liste des événements
+      </a>
+      <a href="/admin/events/<%= event.id %>/edit" class="btn btn--warning btn--sm">
+        <i class="fas fa-edit"></i> Modifier l'événement
+      </a>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="stats-grid" style="margin-bottom: var(--space-lg);">
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--total"><i class="fas fa-users"></i></div>
+      <div class="stat-info">
+        <span class="stat-number"><%= registrations.length %></span>
+        <span class="stat-label">Inscrits</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--<%= event.statut === 'en_cours' ? 'member' : event.statut === 'planifie' ? 'admin' : 'news' %>">
+        <i class="fas fa-<%= event.statut === 'en_cours' ? 'circle-play' : event.statut === 'planifie' ? 'calendar-check' : 'circle-check' %>"></i>
+      </div>
+      <div class="stat-info">
+        <span class="stat-number"><%=
+          event.statut === 'planifie' ? 'Planifié' :
+          event.statut === 'en_cours' ? 'En cours' : 'Terminé'
+        %></span>
+        <span class="stat-label">Statut événement</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon stat-icon--news"><i class="fas fa-clock"></i></div>
+      <div class="stat-info">
+        <span class="stat-number"><%= registrationOpen ? 'Ouvertes' : 'Fermées' %></span>
+        <span class="stat-label">Inscriptions</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des inscrits -->
+  <div class="card admin-users-card">
+    <div class="card-header admin-card-header">
+      <h2><i class="fas fa-list"></i> Liste des inscrits (<%= registrations.length %>)</h2>
+    </div>
+    <div class="card-body">
+
+      <!-- Ajout manuel -->
+      <div style="margin-bottom: var(--space-md);">
+        <form action="/admin/events/<%= event.id %>/registrations" method="POST" class="inline-form" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+          <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+          <select name="user_id" class="form-input" style="max-width:280px;" required>
+            <option value="">— Sélectionner un membre —</option>
+            <% availableUsers.forEach(function(u) { %>
+              <option value="<%= u.id %>"><%= u.pseudo %> (<%= u.email %>)</option>
+            <% }); %>
+          </select>
+          <button type="submit" class="btn btn--primary btn--sm">
+            <i class="fas fa-plus"></i> Inscrire ce membre
+          </button>
+        </form>
+      </div>
+
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Pseudo</th>
+              <th>Nom complet</th>
+              <th>Email</th>
+              <th>Inscrit le</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (registrations.length === 0) { %>
+              <tr>
+                <td colspan="6" class="table-empty">
+                  <i class="fas fa-inbox"></i> Aucun inscrit pour le moment.
+                </td>
+              </tr>
+            <% } else { %>
+              <% registrations.forEach(function(r) { %>
+                <tr>
+                  <td class="td-id"><%= r.id %></td>
+                  <td>
+                    <span class="user-pseudo">
+                      <i class="fas fa-circle-user"></i> <%= r.pseudo %>
+                    </span>
+                  </td>
+                  <td><%= r.prenom %> <%= r.nom %></td>
+                  <td><a href="mailto:<%= r.email %>" class="link-muted"><%= r.email %></a></td>
+                  <td class="td-date">
+                    <%= new Date(r.created_at).toLocaleDateString('fr-FR') %>
+                  </td>
+                  <td class="td-actions">
+                    <form action="/admin/events/<%= event.id %>/registrations/<%= r.id %>/delete" method="POST" class="inline-form">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                      <button type="submit"
+                              class="btn btn--xs btn--danger"
+                              onclick="return confirm('Désinscrire <%= r.pseudo %> de cet événement ?')">
+                        <i class="fas fa-user-minus"></i> Désinscrire
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<%- include('../../partials/foot') %>
