@@ -42,8 +42,7 @@
   <div class="container">
     <div class="event-highlight-card">
       <div class="event-highlight-badge">
-        <% const now = new Date(); const evDate = new Date(activeEvent.date_heure); %>
-        <% if (evDate <= now) { %>
+        <% if (eventIsLive) { %>
           <span class="event-status-badge event-status--live">
             <i class="fas fa-circle-play"></i> En cours
           </span>
@@ -85,7 +84,7 @@
                 <i class="fas fa-hourglass-half"></i> Inscriptions ouvertes — fermeture dans :
               </p>
               <div class="event-countdown" id="eventCountdown"
-                   data-deadline="<%= new Date(new Date(activeEvent.date_heure).getTime() - 24 * 60 * 60 * 1000).toISOString() %>">
+                   data-deadline="<%= registrationDeadlineISO %>">
                 <div class="countdown-unit"><span class="countdown-num" id="cd-days">--</span><span class="countdown-lbl">jours</span></div>
                 <span class="countdown-sep">:</span>
                 <div class="countdown-unit"><span class="countdown-num" id="cd-hours">--</span><span class="countdown-lbl">heures</span></div>

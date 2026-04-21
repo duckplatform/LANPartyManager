@@ -29,10 +29,17 @@ router.get('/', async (req, res) => {
     let isRegistered      = false;
     let registrationOpen  = false;
     let registrationCount = 0;
+    let eventIsLive       = false;
+    let registrationDeadlineISO = null;
 
     if (activeEvent) {
       registrationOpen  = EventRegistration.isRegistrationOpen(activeEvent);
       registrationCount = await EventRegistration.countByEvent(activeEvent.id);
+      eventIsLive       = new Date(activeEvent.date_heure) <= new Date();
+      // Deadline = début événement - 24 h, au format ISO pour le JS client
+      registrationDeadlineISO = new Date(
+        new Date(activeEvent.date_heure).getTime() - 24 * 60 * 60 * 1000
+      ).toISOString();
 
       if (req.session && req.session.userId) {
         isRegistered = await EventRegistration.isRegistered(activeEvent.id, req.session.userId);
@@ -47,6 +54,8 @@ router.get('/', async (req, res) => {
       isRegistered,
       registrationOpen,
       registrationCount,
+      eventIsLive,
+      registrationDeadlineISO,
     });
   } catch (err) {
     logger.error('[HOME] Erreur chargement page d\'accueil :', err);
@@ -59,6 +68,8 @@ router.get('/', async (req, res) => {
       isRegistered:        false,
       registrationOpen:    false,
       registrationCount:   0,
+      eventIsLive:         false,
+      registrationDeadlineISO: null,
     });
   }
 });

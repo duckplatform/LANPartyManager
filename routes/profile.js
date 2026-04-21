@@ -13,6 +13,25 @@ const EventRegistration = require('../models/EventRegistration');
 const logger    = require('../config/logger');
 const { requireAuth } = require('../middleware/auth');
 
+// ─── Aide : charge les données événement pour le rendu du profil ───────────
+
+async function loadEventData(userId) {
+  const [activeEvent, userRegistrations] = await Promise.all([
+    Event.findActive(),
+    EventRegistration.findByUser(userId),
+  ]);
+
+  let isRegistered     = false;
+  let registrationOpen = false;
+
+  if (activeEvent) {
+    registrationOpen = EventRegistration.isRegistrationOpen(activeEvent);
+    isRegistered     = await EventRegistration.isRegistered(activeEvent.id, userId);
+  }
+
+  return { activeEvent, userRegistrations, isRegistered, registrationOpen };
+}
+
 // ─── GET /profile ──────────────────────────────────────────────────────────
 
 router.get('/', requireAuth, async (req, res) => {
@@ -23,28 +42,14 @@ router.get('/', requireAuth, async (req, res) => {
       return res.redirect('/auth/login');
     }
 
-    const [activeEvent, userRegistrations] = await Promise.all([
-      Event.findActive(),
-      EventRegistration.findByUser(req.session.userId),
-    ]);
-
-    let isRegistered     = false;
-    let registrationOpen = false;
-
-    if (activeEvent) {
-      registrationOpen = EventRegistration.isRegistrationOpen(activeEvent);
-      isRegistered     = await EventRegistration.isRegistered(activeEvent.id, req.session.userId);
-    }
+    const eventData = await loadEventData(req.session.userId);
 
     res.render('profile', {
       title:     'Mon profil',
       pageClass: 'page-profile',
       user,
       errors:    [],
-      activeEvent,
-      isRegistered,
-      registrationOpen,
-      userRegistrations,
+      ...eventData,
     });
   } catch (err) {
     logger.error('[PROFILE] Erreur chargement profil :', err);
@@ -75,26 +80,15 @@ router.post('/', requireAuth, updateRules, async (req, res) => {
   const user   = await User.findById(req.session.userId).catch(() => null);
 
   if (!errors.isEmpty()) {
-    // Charge les données événement pour le rendu du profil
-    const activeEvent = await Event.findActive().catch(() => null);
-    let isRegistered = false;
-    let registrationOpen = false;
-    let userRegistrations = [];
-    if (activeEvent) {
-      registrationOpen = EventRegistration.isRegistrationOpen(activeEvent);
-      isRegistered     = await EventRegistration.isRegistered(activeEvent.id, req.session.userId).catch(() => false);
-    }
-    userRegistrations = await EventRegistration.findByUser(req.session.userId).catch(() => []);
-
+    const eventData = await loadEventData(req.session.userId).catch(() => ({
+      activeEvent: null, userRegistrations: [], isRegistered: false, registrationOpen: false,
+    }));
     return res.render('profile', {
       title:     'Mon profil',
       pageClass: 'page-profile',
       user:      { ...user, ...req.body },
       errors:    errors.array(),
-      activeEvent,
-      isRegistered,
-      registrationOpen,
-      userRegistrations,
+      ...eventData,
     });
   }
 
@@ -103,25 +97,15 @@ router.post('/', requireAuth, updateRules, async (req, res) => {
 
     // Vérification d'unicité e-mail
     if (await User.emailExists(email, req.session.userId)) {
-      const activeEvent = await Event.findActive().catch(() => null);
-      let isRegistered = false;
-      let registrationOpen = false;
-      let userRegistrations = [];
-      if (activeEvent) {
-        registrationOpen = EventRegistration.isRegistrationOpen(activeEvent);
-        isRegistered     = await EventRegistration.isRegistered(activeEvent.id, req.session.userId).catch(() => false);
-      }
-      userRegistrations = await EventRegistration.findByUser(req.session.userId).catch(() => []);
-
+      const eventData = await loadEventData(req.session.userId).catch(() => ({
+        activeEvent: null, userRegistrations: [], isRegistered: false, registrationOpen: false,
+      }));
       return res.render('profile', {
         title:     'Mon profil',
         pageClass: 'page-profile',
         user:      { ...user, ...req.body },
         errors:    [{ msg: 'Cette adresse e-mail est déjà utilisée.' }],
-        activeEvent,
-        isRegistered,
-        registrationOpen,
-        userRegistrations,
+        ...eventData,
       });
     }
 
@@ -158,26 +142,16 @@ router.post('/password', requireAuth, passwordRules, async (req, res) => {
   const user   = await User.findById(req.session.userId).catch(() => null);
 
   if (!errors.isEmpty()) {
-    const activeEvent = await Event.findActive().catch(() => null);
-    let isRegistered = false;
-    let registrationOpen = false;
-    let userRegistrations = [];
-    if (activeEvent) {
-      registrationOpen = EventRegistration.isRegistrationOpen(activeEvent);
-      isRegistered     = await EventRegistration.isRegistered(activeEvent.id, req.session.userId).catch(() => false);
-    }
-    userRegistrations = await EventRegistration.findByUser(req.session.userId).catch(() => []);
-
+    const eventData = await loadEventData(req.session.userId).catch(() => ({
+      activeEvent: null, userRegistrations: [], isRegistered: false, registrationOpen: false,
+    }));
     return res.render('profile', {
       title:     'Mon profil',
       pageClass: 'page-profile',
       user,
       errors:    errors.array(),
       activeTab: 'password',
-      activeEvent,
-      isRegistered,
-      registrationOpen,
-      userRegistrations,
+      ...eventData,
     });
   }
 
@@ -187,26 +161,16 @@ router.post('/password', requireAuth, passwordRules, async (req, res) => {
     const isValid = await User.verifyPassword(req.body.current_password, userWithPass.password);
 
     if (!isValid) {
-      const activeEvent = await Event.findActive().catch(() => null);
-      let isRegistered = false;
-      let registrationOpen = false;
-      let userRegistrations = [];
-      if (activeEvent) {
-        registrationOpen = EventRegistration.isRegistrationOpen(activeEvent);
-        isRegistered     = await EventRegistration.isRegistered(activeEvent.id, req.session.userId).catch(() => false);
-      }
-      userRegistrations = await EventRegistration.findByUser(req.session.userId).catch(() => []);
-
+      const eventData = await loadEventData(req.session.userId).catch(() => ({
+        activeEvent: null, userRegistrations: [], isRegistered: false, registrationOpen: false,
+      }));
       return res.render('profile', {
         title:     'Mon profil',
         pageClass: 'page-profile',
         user,
         errors:    [{ msg: 'Mot de passe actuel incorrect.' }],
         activeTab: 'password',
-        activeEvent,
-        isRegistered,
-        registrationOpen,
-        userRegistrations,
+        ...eventData,
       });
     }
 

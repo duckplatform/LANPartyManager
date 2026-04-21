@@ -288,14 +288,7 @@ const eventValidation = [
 
 router.get('/events', async (req, res) => {
   try {
-    const events = await Event.findAll();
-
-    // Enrichit chaque événement avec son nombre d'inscrits
-    await Promise.all(
-      events.map(async (ev) => {
-        ev.registrationCount = await EventRegistration.countByEvent(ev.id);
-      })
-    );
+    const events = await Event.findAllWithRegistrationCount();
 
     res.render('admin/events/index', {
       title:     'Gestion des événements',
@@ -313,10 +306,11 @@ router.get('/events', async (req, res) => {
 
 router.get('/events/create', (req, res) => {
   res.render('admin/events/form', {
-    title:     'Nouvel événement',
-    pageClass: 'page-admin',
-    event:     null,
-    errors:    [],
+    title:            'Nouvel événement',
+    pageClass:        'page-admin',
+    event:            null,
+    dateHeureLocal:   '',
+    errors:           [],
   });
 });
 
@@ -327,10 +321,11 @@ router.post('/events', eventValidation, async (req, res) => {
 
   if (!errors.isEmpty()) {
     return res.status(422).render('admin/events/form', {
-      title:     'Nouvel événement',
-      pageClass: 'page-admin',
-      event:     req.body,
-      errors:    errors.array(),
+      title:          'Nouvel événement',
+      pageClass:      'page-admin',
+      event:          req.body,
+      dateHeureLocal: req.body.date_heure || '',
+      errors:         errors.array(),
     });
   }
 
@@ -358,11 +353,18 @@ router.get('/events/:id/edit', async (req, res) => {
       req.flash('error', 'Événement introuvable.');
       return res.redirect('/admin/events');
     }
+    // Formate la date pour l'input datetime-local (sans offset TZ)
+    const d = new Date(event.date_heure);
+    const dateHeureLocal = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+
     res.render('admin/events/form', {
-      title:     `Modifier : ${event.nom}`,
-      pageClass: 'page-admin',
+      title:          `Modifier : ${event.nom}`,
+      pageClass:      'page-admin',
       event,
-      errors:    [],
+      dateHeureLocal,
+      errors:         [],
     });
   } catch (err) {
     logger.error(`[ADMIN/EVENTS] Erreur chargement événement #${id} :`, err);
@@ -379,10 +381,11 @@ router.post('/events/:id', eventValidation, async (req, res) => {
 
   if (!errors.isEmpty()) {
     return res.status(422).render('admin/events/form', {
-      title:     'Modifier l\'événement',
-      pageClass: 'page-admin',
-      event:     { id, ...req.body },
-      errors:    errors.array(),
+      title:          'Modifier l\'événement',
+      pageClass:      'page-admin',
+      event:          { id, ...req.body },
+      dateHeureLocal: req.body.date_heure || '',
+      errors:         errors.array(),
     });
   }
 

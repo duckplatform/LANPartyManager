@@ -88,6 +88,24 @@ const Event = {
   },
 
   /**
+   * Retourne tous les événements avec leur nombre d'inscrits,
+   * en une seule requête SQL (évite le problème N+1).
+   * @returns {Promise<Array>}
+   */
+  async findAllWithRegistrationCount() {
+    const [rows] = await db.pool.execute(
+      `SELECT e.id, e.nom, e.date_heure, e.lieu, e.actif,
+              e.created_at, e.updated_at,
+              COUNT(er.id) AS registrationCount
+         FROM events e
+         LEFT JOIN event_registrations er ON er.event_id = e.id
+         GROUP BY e.id
+         ORDER BY e.date_heure DESC`
+    );
+    return rows;
+  },
+
+  /**
    * Supprime un événement (et ses inscriptions via CASCADE)
    * @param {number} id
    * @returns {Promise<boolean>}

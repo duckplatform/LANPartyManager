@@ -69,7 +69,7 @@
             id="date_heure"
             name="date_heure"
             class="form-input"
-            value="<%= (event && event.date_heure) ? (new Date(new Date(event.date_heure).getTime() - new Date(event.date_heure).getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : '' %>"
+            value="<%= dateHeureLocal || '' %>"
             required
           />
         </div>
