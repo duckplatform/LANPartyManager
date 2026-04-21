@@ -224,8 +224,17 @@
         replacement = def.prefix + (sel || def.placeholder);
       }
 
+      // Insertion directe dans le textarea (sans execCommand obsolète)
+      const before  = textarea.value.slice(0, start);
+      const after   = textarea.value.slice(end);
+      textarea.value = before + replacement + after;
+      // Repositionne le curseur après l'insertion
+      const newPos = start + replacement.length;
+      textarea.selectionStart = newPos;
+      textarea.selectionEnd   = newPos;
       textarea.focus();
-      document.execCommand('insertText', false, replacement);
+      // Déclenche l'événement input pour les éventuels listeners
+      textarea.dispatchEvent(new Event('input'));
     });
   });
 
