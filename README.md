@@ -12,6 +12,7 @@
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Démarrage](#démarrage)
+- [GitHub Codespaces](#github-codespaces)
 - [Tests](#tests)
 - [Mise à jour](#mise-à-jour)
 
@@ -151,6 +152,32 @@ NODE_ENV=production npm start
 | `admin@lanparty.local`  | `Admin@LAN2024!`  |
 
 > ⚠️ **Changer immédiatement ce mot de passe après la première connexion.**
+
+---
+
+## GitHub Codespaces
+
+Le projet inclut une configuration prête à l'emploi dans `.devcontainer/`.
+
+### Ce qui est automatisé
+
+- Démarrage d'un conteneur Node.js (service `app`)
+- Démarrage d'un service MySQL 8 (`mysql`)
+- Création/ajustement du fichier `.env` pour Codespaces
+- Installation des dépendances (`npm ci`)
+- Initialisation de la base via `database/schema.sql`
+
+### Utilisation
+
+1. Ouvrir le dépôt dans GitHub Codespaces
+2. Attendre la fin de la phase `postCreate` (installation)
+3. Lancer l'application :
+
+```bash
+npm run dev
+```
+
+4. Ouvrir le port `3000` (auto-preview activé)
 
 ---
 
