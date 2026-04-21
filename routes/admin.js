@@ -29,7 +29,6 @@ router.get('/', async (req, res) => {
     res.render('admin/dashboard', {
       title:               'Administration',
       pageClass:           'page-admin',
-      csrfToken:           req.csrfToken(),
       users,
       totalUsers,
       totalAnnouncements,
@@ -124,7 +123,6 @@ router.get('/news', async (req, res) => {
     res.render('admin/news/index', {
       title:         'Gestion des annonces',
       pageClass:     'page-admin',
-      csrfToken:     req.csrfToken(),
       announcements,
     });
   } catch (err) {
@@ -140,7 +138,6 @@ router.get('/news/create', (req, res) => {
   res.render('admin/news/form', {
     title:        'Nouvelle annonce',
     pageClass:    'page-admin',
-    csrfToken:    req.csrfToken(),
     announcement: null,
     errors:       [],
   });
@@ -155,7 +152,6 @@ router.post('/news', announcementValidation, async (req, res) => {
     return res.status(422).render('admin/news/form', {
       title:        'Nouvelle annonce',
       pageClass:    'page-admin',
-      csrfToken:    req.csrfToken(),
       announcement: req.body,
       errors:       errors.array(),
     });
@@ -187,7 +183,6 @@ router.get('/news/:id/edit', async (req, res) => {
     res.render('admin/news/form', {
       title:        `Modifier : ${announcement.titre}`,
       pageClass:    'page-admin',
-      csrfToken:    req.csrfToken(),
       announcement,
       errors:       [],
     });
@@ -208,7 +203,6 @@ router.post('/news/:id', announcementValidation, async (req, res) => {
     return res.status(422).render('admin/news/form', {
       title:        'Modifier l\'annonce',
       pageClass:    'page-admin',
-      csrfToken:    req.csrfToken(),
       announcement: { id, ...req.body },
       errors:       errors.array(),
     });
