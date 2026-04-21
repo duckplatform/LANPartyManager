@@ -105,6 +105,12 @@ app.use((req, res, next) => {
 
 app.use(globalLimiter);
 
+// ─── Protection CSRF globale ───────────────────────────────────────────────
+// csrf-sync valide uniquement les méthodes non-sûres (POST/PUT/PATCH/DELETE)
+// Les requêtes GET/HEAD/OPTIONS sont automatiquement exemptées
+
+app.use(csrfSynchronisedProtection);
+
 // ─── Injection des variables locales dans les vues ────────────────────────
 
 app.use(injectLocals);
@@ -112,10 +118,9 @@ app.use(injectLocals);
 // ─── Routes ───────────────────────────────────────────────────────────────
 
 app.use('/',        require('./routes/index'));
-// Routes CSRF-protégées (formulaires POST)
-app.use('/auth',    csrfSynchronisedProtection, require('./routes/auth'));
-app.use('/profile', csrfSynchronisedProtection, require('./routes/profile'));
-app.use('/admin',   csrfSynchronisedProtection, require('./routes/admin'));
+app.use('/auth',    require('./routes/auth'));
+app.use('/profile', require('./routes/profile'));
+app.use('/admin',   require('./routes/admin'));
 
 // ─── Page 404 ─────────────────────────────────────────────────────────────
 

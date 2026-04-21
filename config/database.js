@@ -24,6 +24,13 @@ const pool = mysql.createPool({
   timezone: 'Z',
 });
 
+// Avertissement si les valeurs par défaut sont utilisées en production
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DB_NAME) {
+    console.warn('[DB] ⚠️  Variables d\'environnement DB manquantes — utilisation des valeurs par défaut non sécurisées !');
+  }
+}
+
 /**
  * Teste la connexion à la base de données au démarrage
  * @returns {Promise<void>}
