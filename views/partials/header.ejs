@@ -18,6 +18,10 @@
           <i class="fas fa-home"></i> Accueil
         </a></li>
 
+        <li><a href="/news" class="nav-link<%= (typeof pageClass !== 'undefined' && pageClass === 'page-news') ? ' active' : '' %>">
+          <i class="fas fa-newspaper"></i> Actualités
+        </a></li>
+
         <% if (currentUser) { %>
           <!-- Utilisateur connecté -->
           <li><a href="/profile" class="nav-link<%= (typeof pageClass !== 'undefined' && pageClass === 'page-profile') ? ' active' : '' %>">

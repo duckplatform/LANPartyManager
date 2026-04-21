@@ -24,6 +24,13 @@ const User = require('../models/User');
 
 describe('User Model', function () {
 
+  // Réassigne notre stub avant chaque test (d'autres fichiers de test peuvent
+  // avoir remplacé dbModule.pool entre deux suites de tests)
+  beforeEach(function () {
+    dbModule.pool = poolStub;
+    poolStub.execute.reset();
+  });
+
   afterEach(function () {
     poolStub.execute.reset();
   });

@@ -1,0 +1,45 @@
+<%- include('../partials/head') %>
+
+<!-- ═══════════════════ DÉTAIL ANNONCE ═══════════════════ -->
+<section class="section news-section">
+  <div class="container news-detail-container">
+
+    <!-- Bouton retour -->
+    <a href="/news" class="news-back-link">
+      <i class="fas fa-arrow-left"></i> Retour aux actualités
+    </a>
+
+    <article class="news-detail-card">
+      <!-- En-tête -->
+      <header class="news-detail-header">
+        <div class="news-card-meta">
+          <span class="news-card-date">
+            <i class="fas fa-calendar-alt"></i>
+            <%= new Date(announcement.created_at).toLocaleDateString('fr-FR', {
+              weekday: 'long',
+              day:     'numeric',
+              month:   'long',
+              year:    'numeric'
+            }) %>
+          </span>
+        </div>
+        <h1 class="news-detail-title"><%= announcement.titre %></h1>
+      </header>
+
+      <!-- Contenu Markdown rendu -->
+      <div class="news-detail-body markdown-body">
+        <%- announcement.contenuHtml %>
+      </div>
+    </article>
+
+    <!-- Navigation -->
+    <div class="news-detail-footer">
+      <a href="/news" class="btn btn--ghost">
+        <i class="fas fa-arrow-left"></i> Toutes les actualités
+      </a>
+    </div>
+
+  </div>
+</section>
+
+<%- include('../partials/foot') %>

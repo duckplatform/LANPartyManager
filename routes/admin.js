@@ -5,10 +5,13 @@
  * Accessible uniquement aux utilisateurs avec is_admin = true
  */
 
-const express = require('express');
-const router  = express.Router();
-const User    = require('../models/User');
-const logger  = require('../config/logger');
+const express      = require('express');
+const router       = express.Router();
+const { body, validationResult } = require('express-validator');
+const User         = require('../models/User');
+const Announcement = require('../models/Announcement');
+const { renderMarkdown } = require('../config/markdown');
+const logger       = require('../config/logger');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 // Toutes les routes admin nécessitent auth + admin
@@ -18,18 +21,19 @@ router.use(requireAuth, requireAdmin);
 
 router.get('/', async (req, res) => {
   try {
-    const [users, totalUsers] = await Promise.all([
+    const [users, totalUsers, totalAnnouncements] = await Promise.all([
       User.findAll(),
       User.count(),
+      Announcement.count(),
     ]);
     res.render('admin/dashboard', {
-      title:      'Administration',
-      pageClass:  'page-admin',
-      csrfToken:  req.csrfToken(),
+      title:               'Administration',
+      pageClass:           'page-admin',
       users,
       totalUsers,
+      totalAnnouncements,
       stats: {
-        admins: users.filter(u => u.is_admin).length,
+        admins:  users.filter(u => u.is_admin).length,
         members: users.filter(u => !u.is_admin).length,
       },
     });
@@ -95,4 +99,167 @@ router.post('/users/:id/delete', async (req, res) => {
   return res.redirect('/admin');
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// GESTION DES ANNONCES (BLOG/NEWS)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Règles de validation communes aux formulaires d'annonces
+const announcementValidation = [
+  body('titre')
+    .trim()
+    .notEmpty().withMessage('Le titre est obligatoire.')
+    .isLength({ max: 255 }).withMessage('Le titre ne peut pas dépasser 255 caractères.'),
+  body('contenu')
+    .notEmpty().withMessage('Le contenu est obligatoire.'),
+  body('statut')
+    .isIn(['publie', 'brouillon']).withMessage('Statut invalide.'),
+];
+
+// ─── GET /admin/news ──────────────────────────────────────────────────────
+
+router.get('/news', async (req, res) => {
+  try {
+    const announcements = await Announcement.findAll();
+    res.render('admin/news/index', {
+      title:         'Gestion des annonces',
+      pageClass:     'page-admin',
+      announcements,
+    });
+  } catch (err) {
+    logger.error('[ADMIN/NEWS] Erreur chargement liste :', err);
+    req.flash('error', 'Erreur lors du chargement des annonces.');
+    return res.redirect('/admin');
+  }
+});
+
+// ─── GET /admin/news/create ───────────────────────────────────────────────
+
+router.get('/news/create', (req, res) => {
+  res.render('admin/news/form', {
+    title:        'Nouvelle annonce',
+    pageClass:    'page-admin',
+    announcement: null,
+    errors:       [],
+  });
+});
+
+// ─── POST /admin/news ─────────────────────────────────────────────────────
+
+router.post('/news', announcementValidation, async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(422).render('admin/news/form', {
+      title:        'Nouvelle annonce',
+      pageClass:    'page-admin',
+      announcement: req.body,
+      errors:       errors.array(),
+    });
+  }
+
+  try {
+    const { titre, contenu, statut } = req.body;
+    const id = await Announcement.create({ titre, contenu, statut });
+    logger.info(`[ADMIN/NEWS] Annonce #${id} créée par l'utilisateur #${req.session.userId} (statut: ${statut})`);
+    req.flash('success', `L'annonce "${titre}" a été créée.`);
+    return res.redirect('/admin/news');
+  } catch (err) {
+    logger.error('[ADMIN/NEWS] Erreur création :', err);
+    req.flash('error', 'Erreur lors de la création de l\'annonce.');
+    return res.redirect('/admin/news/create');
+  }
+});
+
+// ─── GET /admin/news/:id/edit ─────────────────────────────────────────────
+
+router.get('/news/:id/edit', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const announcement = await Announcement.findById(id);
+    if (!announcement) {
+      req.flash('error', 'Annonce introuvable.');
+      return res.redirect('/admin/news');
+    }
+    res.render('admin/news/form', {
+      title:        `Modifier : ${announcement.titre}`,
+      pageClass:    'page-admin',
+      announcement,
+      errors:       [],
+    });
+  } catch (err) {
+    logger.error(`[ADMIN/NEWS] Erreur chargement annonce #${id} :`, err);
+    req.flash('error', 'Erreur lors du chargement de l\'annonce.');
+    return res.redirect('/admin/news');
+  }
+});
+
+// ─── POST /admin/news/:id ─────────────────────────────────────────────────
+
+router.post('/news/:id', announcementValidation, async (req, res) => {
+  const id     = parseInt(req.params.id, 10);
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    return res.status(422).render('admin/news/form', {
+      title:        'Modifier l\'annonce',
+      pageClass:    'page-admin',
+      announcement: { id, ...req.body },
+      errors:       errors.array(),
+    });
+  }
+
+  try {
+    const existing = await Announcement.findById(id);
+    if (!existing) {
+      req.flash('error', 'Annonce introuvable.');
+      return res.redirect('/admin/news');
+    }
+
+    const { titre, contenu, statut } = req.body;
+    await Announcement.update(id, { titre, contenu, statut });
+    logger.info(`[ADMIN/NEWS] Annonce #${id} modifiée par l'utilisateur #${req.session.userId}`);
+    req.flash('success', `L'annonce "${titre}" a été mise à jour.`);
+    return res.redirect('/admin/news');
+  } catch (err) {
+    logger.error(`[ADMIN/NEWS] Erreur modification annonce #${id} :`, err);
+    req.flash('error', 'Erreur lors de la mise à jour de l\'annonce.');
+    return res.redirect(`/admin/news/${id}/edit`);
+  }
+});
+
+// ─── POST /admin/news/:id/delete ──────────────────────────────────────────
+
+router.post('/news/:id/delete', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const announcement = await Announcement.findById(id);
+    if (!announcement) {
+      req.flash('error', 'Annonce introuvable.');
+      return res.redirect('/admin/news');
+    }
+    await Announcement.delete(id);
+    logger.info(`[ADMIN/NEWS] Annonce #${id} supprimée par l'utilisateur #${req.session.userId}`);
+    req.flash('success', `L'annonce "${announcement.titre}" a été supprimée.`);
+  } catch (err) {
+    logger.error(`[ADMIN/NEWS] Erreur suppression annonce #${id} :`, err);
+    req.flash('error', 'Erreur lors de la suppression de l\'annonce.');
+  }
+  return res.redirect('/admin/news');
+});
+
+// ─── POST /admin/news/:id/preview ────────────────────────────────────────
+// Endpoint AJAX : retourne le HTML rendu depuis un fragment Markdown
+
+router.post('/news/preview', async (req, res) => {
+  try {
+    const { contenu } = req.body;
+    const html = renderMarkdown(contenu || '');
+    return res.json({ html });
+  } catch (err) {
+    logger.error('[ADMIN/NEWS] Erreur prévisualisation :', err);
+    return res.status(500).json({ html: '' });
+  }
+});
+
 module.exports = router;
+

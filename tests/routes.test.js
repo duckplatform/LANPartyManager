@@ -23,6 +23,15 @@ const app = require('../app');
 
 describe('Routes - Tests d\'intégration', function () {
 
+  // Avant chaque test de routes, on réassigne notre stub (d'autres fichiers de
+  // test chargés après peuvent avoir remplacé dbModule.pool) et on configure
+  // un comportement par défaut : retourne un tableau vide pour tout SELECT.
+  beforeEach(function () {
+    dbModule.pool = poolStub;
+    poolStub.execute.reset();
+    poolStub.execute.resolves([[]]); // résultat par défaut : liste vide
+  });
+
   // ── Page d'accueil ─────────────────────────────────────────────────────
 
   describe('GET /', function () {
@@ -89,6 +98,31 @@ describe('Routes - Tests d\'intégration', function () {
       const res = await request(app).get('/cette-page-nexiste-pas-du-tout');
       expect(res.status).to.equal(404);
       expect(res.text).to.include('404');
+    });
+  });
+
+  // ── Page Actualités (news) ─────────────────────────────────────────────
+
+  describe('GET /news', function () {
+    it('doit retourner 200 et inclure la page actualités', async function () {
+      const res = await request(app).get('/news');
+      expect(res.status).to.equal(200);
+      expect(res.headers['content-type']).to.match(/text\/html/);
+      expect(res.text).to.include('Actualités');
+    });
+  });
+
+  describe('GET /news/:id (annonce inexistante)', function () {
+    it('doit retourner 404 pour un ID inexistant', async function () {
+      const res = await request(app).get('/news/99999');
+      expect(res.status).to.equal(404);
+    });
+  });
+
+  describe('GET /news/:id (ID invalide)', function () {
+    it('doit retourner 404 pour un ID non numérique', async function () {
+      const res = await request(app).get('/news/abc');
+      expect(res.status).to.equal(404);
     });
   });
 

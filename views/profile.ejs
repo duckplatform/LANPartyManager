@@ -22,8 +22,8 @@
             role="tab" data-tab="tab-info" aria-selected="<%= (typeof activeTab === 'undefined' || activeTab === 'info') ? 'true' : 'false' %>">
       <i class="fas fa-user-pen"></i> Informations
     </button>
-    <button class="tab-btn<%= activeTab === 'password' ? ' active' : '' %>"
-            role="tab" data-tab="tab-password" aria-selected="<%= activeTab === 'password' ? 'true' : 'false' %>">
+    <button class="tab-btn<%= (typeof activeTab !== 'undefined' && activeTab === 'password') ? ' active' : '' %>"
+            role="tab" data-tab="tab-password" aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'password') ? 'true' : 'false' %>">
       <i class="fas fa-key"></i> Mot de passe
     </button>
   </div>
@@ -87,7 +87,7 @@
   </div>
 
   <!-- Panneau : Mot de passe -->
-  <div id="tab-password" class="tab-panel<%= activeTab === 'password' ? ' active' : '' %>" role="tabpanel">
+  <div id="tab-password" class="tab-panel<%= (typeof activeTab !== 'undefined' && activeTab === 'password') ? ' active' : '' %>" role="tabpanel">
     <div class="card">
       <div class="card-header">
         <h2><i class="fas fa-key"></i> Changer mon mot de passe</h2>
