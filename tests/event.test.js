@@ -65,7 +65,7 @@ describe('Event Model', function () {
   // ── findActive ────────────────────────────────────────────────────────────
 
   describe('findActive()', function () {
-    it('doit retourner l\'événement actif', async function () {
+    it('doit retourner l\'événement explicitement actif (actif=1)', async function () {
       const fakeEvent = { id: 1, nom: 'LAN Active', date_heure: new Date(), lieu: 'Paris', actif: 1 };
       poolStub.execute.resolves([[fakeEvent]]);
 
@@ -75,7 +75,17 @@ describe('Event Model', function () {
       expect(query).to.include('actif = 1');
     });
 
-    it('doit retourner null si aucun événement actif', async function () {
+    it('doit retourner le prochain événement à venir si aucun n\'est actif', async function () {
+      const upcoming = { id: 2, nom: 'LAN Upcoming', date_heure: new Date(Date.now() + 86400000), lieu: 'Lyon', actif: 0 };
+      poolStub.execute.resolves([[upcoming]]);
+
+      const result = await Event.findActive();
+      expect(result).to.deep.equal(upcoming);
+      const query = poolStub.execute.firstCall.args[0];
+      expect(query).to.include('date_heure >= NOW()');
+    });
+
+    it('doit retourner null si aucun événement actif ou à venir', async function () {
       poolStub.execute.resolves([[]]);
       const result = await Event.findActive();
       expect(result).to.be.null;

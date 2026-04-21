@@ -37,12 +37,21 @@ const Event = {
   },
 
   /**
-   * Retourne l'événement actif (actif = 1), s'il existe
+   * Retourne l'événement le plus pertinent à afficher sur la page d'accueil :
+   *   1. L'événement explicitement actif (actif = 1) si un tel événement existe.
+   *   2. Sinon, le prochain événement à venir ou en cours (le plus proche dans le
+   *      futur), afin que les événements créés soient toujours mis en avant même
+   *      si l'administrateur n'a pas coché la case « actif ».
    * @returns {Promise<Object|null>}
    */
   async findActive() {
     const [rows] = await db.pool.execute(
-      'SELECT * FROM events WHERE actif = 1 LIMIT 1'
+      `SELECT *
+         FROM events
+        WHERE actif = 1
+           OR date_heure >= NOW()
+        ORDER BY actif DESC, date_heure ASC
+        LIMIT 1`
     );
     return rows[0] || null;
   },
