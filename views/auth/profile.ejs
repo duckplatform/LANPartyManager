@@ -41,7 +41,7 @@
           <i class="fas fa-user-edit"></i> Modifier le profil
         </div>
         <div class="card-body">
-          <form action="/profile/update" method="POST" novalidate>
+          <form action="<%= basePath %>/profile/update" method="POST" novalidate>
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
             <div class="form-row">
@@ -93,7 +93,7 @@
           <i class="fas fa-key"></i> Changer le mot de passe
         </div>
         <div class="card-body">
-          <form action="/profile/change-password" method="POST" novalidate>
+          <form action="<%= basePath %>/profile/change-password" method="POST" novalidate>
             <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
             <div class="form-group">
@@ -140,7 +140,7 @@
 
     <% if (user.role === 'admin') { %>
     <div class="profile-admin-link">
-      <a href="/admin" class="btn btn-outline-admin">
+      <a href="<%= basePath %>/admin" class="btn btn-outline-admin">
         <i class="fas fa-shield-alt"></i> Accéder au panneau d'administration
       </a>
     </div>

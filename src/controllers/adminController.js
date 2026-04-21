@@ -4,6 +4,7 @@
  */
 const User = require('../models/User');
 const logger = require('../config/logger');
+const { BASE_PATH } = require('../config/appConfig');
 const { body } = require('express-validator');
 const { getValidationErrors } = require('../middleware/validation');
 
@@ -29,7 +30,7 @@ const adminController = {
     } catch (err) {
       logger.error('Erreur tableau de bord admin', { error: err.message });
       req.flash('errors', ['Impossible de charger le tableau de bord.']);
-      res.redirect('/');
+      res.redirect(BASE_PATH + '/');
     }
   },
 
@@ -49,7 +50,7 @@ const adminController = {
     } catch (err) {
       logger.error('Erreur liste utilisateurs admin', { error: err.message });
       req.flash('errors', ['Impossible de charger la liste des utilisateurs.']);
-      res.redirect('/admin');
+      res.redirect(BASE_PATH + '/admin');
     }
   },
 
@@ -61,7 +62,7 @@ const adminController = {
       const targetUser = await User.findById(parseInt(req.params.id));
       if (!targetUser) {
         req.flash('errors', ['Utilisateur introuvable.']);
-        return res.redirect('/admin/users');
+        return res.redirect(BASE_PATH + '/admin/users');
       }
       res.render('admin/edit-user', {
         title: `Éditer ${targetUser.nickname} - Administration`,
@@ -73,7 +74,7 @@ const adminController = {
     } catch (err) {
       logger.error('Erreur affichage édition utilisateur', { error: err.message });
       req.flash('errors', ['Impossible de charger l\'utilisateur.']);
-      res.redirect('/admin/users');
+      res.redirect(BASE_PATH + '/admin/users');
     }
   },
 
@@ -84,7 +85,7 @@ const adminController = {
     const errors = getValidationErrors(req);
     if (errors.length > 0) {
       req.flash('errors', errors);
-      return res.redirect(`/admin/users/${req.params.id}/edit`);
+      return res.redirect(`${BASE_PATH}/admin/users/${req.params.id}/edit`);
     }
 
     const targetId = parseInt(req.params.id);
@@ -95,7 +96,7 @@ const adminController = {
       const emailTaken = await User.emailExists(email, targetId);
       if (emailTaken) {
         req.flash('errors', ['Cet email est déjà utilisé par un autre compte.']);
-        return res.redirect(`/admin/users/${targetId}/edit`);
+        return res.redirect(`${BASE_PATH}/admin/users/${targetId}/edit`);
       }
 
       await User.update(targetId, { firstName, lastName, nickname, email });
@@ -110,11 +111,11 @@ const adminController = {
         targetId,
       });
       req.flash('success', 'Utilisateur mis à jour avec succès.');
-      res.redirect('/admin/users');
+      res.redirect(BASE_PATH + '/admin/users');
     } catch (err) {
       logger.error('Erreur mise à jour utilisateur admin', { error: err.message });
       req.flash('errors', ['Impossible de mettre à jour l\'utilisateur.']);
-      res.redirect(`/admin/users/${targetId}/edit`);
+      res.redirect(`${BASE_PATH}/admin/users/${targetId}/edit`);
     }
   },
 
@@ -128,13 +129,13 @@ const adminController = {
       // Empêcher la suppression de son propre compte
       if (targetId === req.session.userId) {
         req.flash('errors', ['Vous ne pouvez pas supprimer votre propre compte.']);
-        return res.redirect('/admin/users');
+        return res.redirect(BASE_PATH + '/admin/users');
       }
 
       const targetUser = await User.findById(targetId);
       if (!targetUser) {
         req.flash('errors', ['Utilisateur introuvable.']);
-        return res.redirect('/admin/users');
+        return res.redirect(BASE_PATH + '/admin/users');
       }
 
       await User.delete(targetId);
@@ -144,11 +145,11 @@ const adminController = {
         deletedUserId: targetId,
       });
       req.flash('success', 'Utilisateur supprimé avec succès.');
-      res.redirect('/admin/users');
+      res.redirect(BASE_PATH + '/admin/users');
     } catch (err) {
       logger.error('Erreur suppression utilisateur admin', { error: err.message });
       req.flash('errors', ['Impossible de supprimer l\'utilisateur.']);
-      res.redirect('/admin/users');
+      res.redirect(BASE_PATH + '/admin/users');
     }
   },
 

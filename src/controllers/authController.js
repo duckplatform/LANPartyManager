@@ -4,6 +4,7 @@
  */
 const User = require('../models/User');
 const logger = require('../config/logger');
+const { BASE_PATH } = require('../config/appConfig');
 const {
   registerValidation,
   loginValidation,
@@ -35,7 +36,7 @@ const authController = {
     if (errors.length > 0) {
       req.flash('errors', errors);
       req.flash('formData', { ...req.body, password: '', confirmPassword: '' });
-      return res.redirect('/auth/register');
+      return res.redirect(BASE_PATH + '/auth/register');
     }
 
     const { firstName, lastName, nickname, email, password } = req.body;
@@ -46,7 +47,7 @@ const authController = {
       if (emailTaken) {
         req.flash('errors', ['Cette adresse email est déjà utilisée.']);
         req.flash('formData', { firstName, lastName, nickname, email });
-        return res.redirect('/auth/register');
+        return res.redirect(BASE_PATH + '/auth/register');
       }
 
       const newUser = await User.create({ firstName, lastName, nickname, email, password });
@@ -58,11 +59,11 @@ const authController = {
 
       req.flash('success', `Bienvenue ${newUser.nickname} ! Votre compte a été créé avec succès.`);
       logger.info('Nouvel utilisateur inscrit', { userId: newUser.id, email });
-      res.redirect('/profile');
+      res.redirect(BASE_PATH + '/profile');
     } catch (err) {
       logger.error('Erreur lors de l\'inscription', { error: err.message });
       req.flash('errors', ['Une erreur est survenue. Veuillez réessayer.']);
-      res.redirect('/auth/register');
+      res.redirect(BASE_PATH + '/auth/register');
     }
   },
 
@@ -89,7 +90,7 @@ const authController = {
     if (errors.length > 0) {
       req.flash('errors', errors);
       req.flash('formData', { email: req.body.email });
-      return res.redirect('/auth/login');
+      return res.redirect(BASE_PATH + '/auth/login');
     }
 
     const { email, password } = req.body;
@@ -99,7 +100,7 @@ const authController = {
       if (!user) {
         req.flash('errors', ['Email ou mot de passe incorrect.']);
         req.flash('formData', { email });
-        return res.redirect('/auth/login');
+        return res.redirect(BASE_PATH + '/auth/login');
       }
 
       const passwordValid = await User.verifyPassword(password, user.password);
@@ -107,7 +108,7 @@ const authController = {
         req.flash('errors', ['Email ou mot de passe incorrect.']);
         req.flash('formData', { email });
         logger.warn('Tentative de connexion échouée', { email });
-        return res.redirect('/auth/login');
+        return res.redirect(BASE_PATH + '/auth/login');
       }
 
       // Régénérer la session pour prévenir la fixation de session
@@ -115,7 +116,7 @@ const authController = {
         if (err) {
           logger.error('Erreur régénération session', { error: err.message });
           req.flash('errors', ['Erreur de session. Veuillez réessayer.']);
-          return res.redirect('/auth/login');
+          return res.redirect(BASE_PATH + '/auth/login');
         }
         const { password: _pwd, ...safeUser } = user;
         req.session.userId = user.id;
@@ -124,12 +125,12 @@ const authController = {
 
         logger.info('Utilisateur connecté', { userId: user.id, email });
         req.flash('success', `Bienvenue ${user.nickname} !`);
-        res.redirect(user.role === 'admin' ? '/admin' : '/profile');
+        res.redirect(user.role === 'admin' ? BASE_PATH + '/admin' : BASE_PATH + '/profile');
       });
     } catch (err) {
       logger.error('Erreur lors de la connexion', { error: err.message });
       req.flash('errors', ['Une erreur est survenue. Veuillez réessayer.']);
-      res.redirect('/auth/login');
+      res.redirect(BASE_PATH + '/auth/login');
     }
   },
 
@@ -147,7 +148,7 @@ const authController = {
         logger.info('Utilisateur déconnecté', { userId });
       }
       res.clearCookie('connect.sid');
-      res.redirect('/');
+      res.redirect(BASE_PATH + '/');
     });
   },
 
@@ -161,7 +162,7 @@ const authController = {
       const user = await User.findById(req.session.userId);
       if (!user) {
         req.session.destroy();
-        return res.redirect('/auth/login');
+        return res.redirect(BASE_PATH + '/auth/login');
       }
       res.render('auth/profile', {
         title: 'Mon Profil - LAN Party Manager',
@@ -172,7 +173,7 @@ const authController = {
     } catch (err) {
       logger.error('Erreur affichage profil', { error: err.message });
       req.flash('errors', ['Impossible de charger le profil.']);
-      res.redirect('/');
+      res.redirect(BASE_PATH + '/');
     }
   },
 
@@ -183,7 +184,7 @@ const authController = {
     const errors = getValidationErrors(req);
     if (errors.length > 0) {
       req.flash('errors', errors);
-      return res.redirect('/profile');
+      return res.redirect(BASE_PATH + '/profile');
     }
 
     const { firstName, lastName, nickname, email } = req.body;
@@ -194,7 +195,7 @@ const authController = {
       const emailTaken = await User.emailExists(email, userId);
       if (emailTaken) {
         req.flash('errors', ['Cette adresse email est déjà utilisée par un autre compte.']);
-        return res.redirect('/profile');
+        return res.redirect(BASE_PATH + '/profile');
       }
 
       const updatedUser = await User.update(userId, { firstName, lastName, nickname, email });
@@ -203,11 +204,11 @@ const authController = {
       req.session.user = updatedUser;
 
       req.flash('success', 'Profil mis à jour avec succès.');
-      res.redirect('/profile');
+      res.redirect(BASE_PATH + '/profile');
     } catch (err) {
       logger.error('Erreur mise à jour profil', { error: err.message, userId });
       req.flash('errors', ['Impossible de mettre à jour le profil.']);
-      res.redirect('/profile');
+      res.redirect(BASE_PATH + '/profile');
     }
   },
 
@@ -218,7 +219,7 @@ const authController = {
     const errors = getValidationErrors(req);
     if (errors.length > 0) {
       req.flash('errors', errors);
-      return res.redirect('/profile');
+      return res.redirect(BASE_PATH + '/profile');
     }
 
     const { currentPassword, newPassword } = req.body;
@@ -230,16 +231,16 @@ const authController = {
 
       if (!validPassword) {
         req.flash('errors', ['Le mot de passe actuel est incorrect.']);
-        return res.redirect('/profile');
+        return res.redirect(BASE_PATH + '/profile');
       }
 
       await User.updatePassword(userId, newPassword);
       req.flash('success', 'Mot de passe changé avec succès.');
-      res.redirect('/profile');
+      res.redirect(BASE_PATH + '/profile');
     } catch (err) {
       logger.error('Erreur changement mot de passe', { error: err.message, userId });
       req.flash('errors', ['Impossible de changer le mot de passe.']);
-      res.redirect('/profile');
+      res.redirect(BASE_PATH + '/profile');
     }
   },
 };

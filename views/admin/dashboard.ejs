@@ -63,7 +63,7 @@
 
     <!-- Navigation admin -->
     <div class="admin-nav">
-      <a href="/admin/users" class="admin-nav-card">
+      <a href="<%= basePath %>/admin/users" class="admin-nav-card">
         <i class="fas fa-users-cog"></i>
         <span>Gérer les utilisateurs</span>
         <i class="fas fa-chevron-right arrow"></i>
@@ -74,7 +74,7 @@
     <div class="card">
       <div class="card-header">
         <i class="fas fa-user-clock"></i> Derniers inscrits
-        <a href="/admin/users" class="btn btn-sm btn-outline" style="float:right;">Voir tous</a>
+        <a href="<%= basePath %>/admin/users" class="btn btn-sm btn-outline" style="float:right;">Voir tous</a>
       </div>
       <div class="card-body">
         <% if (recentUsers.length === 0) { %>

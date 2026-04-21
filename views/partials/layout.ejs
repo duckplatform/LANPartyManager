@@ -22,13 +22,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <!-- CSS principal -->
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="<%= basePath %>/css/style.css">
 </head>
 <body>
   <!-- Navigation -->
   <nav class="navbar">
     <div class="container navbar-inner">
-      <a class="navbar-brand" href="/">
+      <a class="navbar-brand" href="<%= basePath %>/">
         <i class="fas fa-gamepad"></i>
         <span>LAN<span class="brand-accent">Party</span></span>
       </a>
@@ -38,21 +38,21 @@
       </button>
 
       <ul class="navbar-menu" id="navMenu">
-        <li><a href="/" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'home' ? 'active' : '' %>">
+        <li><a href="<%= basePath %>/" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'home' ? 'active' : '' %>">
           <i class="fas fa-home"></i> Accueil
         </a></li>
 
         <% if (user) { %>
-          <li><a href="/profile" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'profile' ? 'active' : '' %>">
+          <li><a href="<%= basePath %>/profile" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'profile' ? 'active' : '' %>">
             <i class="fas fa-user"></i> Mon Profil
           </a></li>
           <% if (user.role === 'admin') { %>
-            <li><a href="/admin" class="nav-link nav-link-admin <%= typeof activePage !== 'undefined' && activePage === 'admin' ? 'active' : '' %>">
+            <li><a href="<%= basePath %>/admin" class="nav-link nav-link-admin <%= typeof activePage !== 'undefined' && activePage === 'admin' ? 'active' : '' %>">
               <i class="fas fa-shield-alt"></i> Administration
             </a></li>
           <% } %>
           <li>
-            <form action="/auth/logout" method="POST" style="display:inline;">
+            <form action="<%= basePath %>/auth/logout" method="POST" style="display:inline;">
               <input type="hidden" name="_csrf" value="<%= csrfToken %>">
               <button type="submit" class="btn btn-outline-danger btn-sm">
                 <i class="fas fa-sign-out-alt"></i> Déconnexion
@@ -60,10 +60,10 @@
             </form>
           </li>
         <% } else { %>
-          <li><a href="/auth/login" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'login' ? 'active' : '' %>">
+          <li><a href="<%= basePath %>/auth/login" class="nav-link <%= typeof activePage !== 'undefined' && activePage === 'login' ? 'active' : '' %>">
             <i class="fas fa-sign-in-alt"></i> Connexion
           </a></li>
-          <li><a href="/auth/register" class="btn btn-primary btn-sm">
+          <li><a href="<%= basePath %>/auth/register" class="btn btn-primary btn-sm">
             <i class="fas fa-user-plus"></i> Inscription
           </a></li>
         <% } %>
@@ -105,6 +105,6 @@
     </div>
   </footer>
 
-  <script src="/js/main.js"></script>
+  <script src="<%= basePath %>/js/main.js"></script>
 </body>
 </html>

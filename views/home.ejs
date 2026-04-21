@@ -17,18 +17,18 @@
     </p>
     <div class="hero-actions">
       <% if (!user) { %>
-        <a href="/auth/register" class="btn btn-primary btn-lg">
+        <a href="<%= basePath %>/auth/register" class="btn btn-primary btn-lg">
           <i class="fas fa-user-plus"></i> Rejoindre l'association
         </a>
-        <a href="/auth/login" class="btn btn-outline btn-lg">
+        <a href="<%= basePath %>/auth/login" class="btn btn-outline btn-lg">
           <i class="fas fa-sign-in-alt"></i> Se connecter
         </a>
       <% } else { %>
-        <a href="/profile" class="btn btn-primary btn-lg">
+        <a href="<%= basePath %>/profile" class="btn btn-primary btn-lg">
           <i class="fas fa-user"></i> Mon profil
         </a>
         <% if (user.role === 'admin') { %>
-          <a href="/admin" class="btn btn-outline btn-lg">
+          <a href="<%= basePath %>/admin" class="btn btn-outline btn-lg">
             <i class="fas fa-shield-alt"></i> Administration
           </a>
         <% } %>
@@ -89,7 +89,7 @@
     <div class="cta-box">
       <h2>Prêt à rejoindre l'aventure ?</h2>
       <p>Créez votre compte gratuitement et rejoignez notre communauté de joueurs.</p>
-      <a href="/auth/register" class="btn btn-primary btn-lg">
+      <a href="<%= basePath %>/auth/register" class="btn btn-primary btn-lg">
         <i class="fas fa-rocket"></i> Créer mon compte
       </a>
     </div>

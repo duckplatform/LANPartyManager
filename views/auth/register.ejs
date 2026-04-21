@@ -21,7 +21,7 @@
         </div>
       <% } %>
 
-      <form action="/auth/register" method="POST" class="auth-form" novalidate>
+      <form action="<%= basePath %>/auth/register" method="POST" class="auth-form" novalidate>
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
 
         <div class="form-row">
@@ -143,7 +143,7 @@
       </form>
 
       <div class="auth-footer">
-        <p>Déjà membre ? <a href="/auth/login">Se connecter</a></p>
+        <p>Déjà membre ? <a href="<%= basePath %>/auth/login">Se connecter</a></p>
       </div>
     </div>
   </div>

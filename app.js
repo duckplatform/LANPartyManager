@@ -21,13 +21,13 @@ const { doubleCsrf } = require('csrf-csrf');
 const expressLayouts = require('express-ejs-layouts');
 const logger = require('./src/config/logger');
 const { testConnection } = require('./src/config/database');
+const { APP_URL, BASE_PATH } = require('./src/config/appConfig');
 
 // ─── Initialisation ──────────────────────────────────────────────────────────
 const app = express();
 const PORT = process.env.PORT || 3000;
-// URL publique de l'application (sans slash final), utilisée pour les liens
-// canoniques, les meta og:url, et les logs de démarrage.
-const APP_URL = (process.env.APP_URL || `http://localhost:${PORT}`).replace(/\/$/, '');
+// APP_URL et BASE_PATH sont calculés dans src/config/appConfig.js à partir de
+// la variable d'environnement APP_URL (voir .env.example pour la documentation).
 
 // ─── Sécurité : Helmet (en-têtes HTTP sécurisés) ─────────────────────────────
 app.use(
@@ -130,6 +130,7 @@ app.use((req, res, next) => {
   res.locals.error = req.flash('error');
   // Expose l'URL de base et le chemin courant pour les liens canoniques
   res.locals.appUrl = APP_URL;
+  res.locals.basePath = BASE_PATH;
   res.locals.currentPath = req.path;
   next();
 });
