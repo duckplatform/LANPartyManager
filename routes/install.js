@@ -9,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
 const { body, validationResult } = require('express-validator');
+const dotenv = require('dotenv');
 const { installLimiter } = require('../middleware/security');
 const { resetInstallCache } = require('../middleware/install');
 const logger = require('../config/logger');
@@ -215,7 +216,7 @@ router.post('/step3', installLimiter, async (req, res) => {
     );
     await conn.end();
 
-    // Écrire le fichier .env si non existant
+    // Écrire le fichier .env (créé si inexistant, mis à jour sinon)
     const envContent = `NODE_ENV=production
 PORT=3000
 SESSION_SECRET=${generateSecret()}
@@ -227,11 +228,26 @@ DB_NAME=${db_name}
 APP_NAME=LAN Party Manager
 `;
     try {
-      if (!fs.existsSync(path.join(__dirname, '..', '.env'))) {
-        fs.writeFileSync(path.join(__dirname, '..', '.env'), envContent);
-      }
+      fs.writeFileSync(path.join(__dirname, '..', '.env'), envContent);
+      // Recharger dotenv pour que les prochaines lectures de process.env soient à jour
+      dotenv.config({ override: true });
     } catch (e) {
       logger.warn('Impossible d\'écrire .env:', e.message);
+    }
+
+    // Réinitialiser le pool MySQL avec la nouvelle configuration
+    // → l'application est opérationnelle immédiatement, sans redémarrage
+    try {
+      const db = require('../config/database');
+      await db.reinitPool({
+        host: db_host,
+        port: parseInt(db_port),
+        user: db_user,
+        password: db_password || '',
+        database: db_name
+      });
+    } catch (poolErr) {
+      logger.warn('Échec de la réinitialisation du pool MySQL:', poolErr.message);
     }
 
     resetInstallCache();
