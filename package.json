@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "mocha tests/**/*.test.js --timeout 10000 --exit"
+    "test": "NODE_ENV=test mocha tests/**/*.test.js --timeout 10000 --exit"
   },
   "keywords": [
     "lan",

@@ -33,6 +33,12 @@ const ENV  = process.env.NODE_ENV || 'development';
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+// ─── Proxy inverse (Apache cPanel) ────────────────────────────────────────
+// Nécessaire pour que express-session (cookie secure) et express-rate-limit
+// lisent correctement l'IP et le protocole réels du client derrière Apache.
+
+app.set('trust proxy', 1);
+
 // ─── Sécurité : Helmet (headers HTTP) ─────────────────────────────────────
 
 app.use(helmet({
@@ -166,8 +172,11 @@ async function startServer() {
   }
 }
 
-// Ne démarre pas le serveur si le module est importé (tests)
-if (require.main === module) {
+// Démarre le serveur sauf pendant les tests automatisés.
+// En production cPanel (Phusion Passenger), le fichier est chargé via require()
+// et non exécuté directement, donc require.main !== module. On utilise
+// NODE_ENV=test dans les tests pour éviter de démarrer le serveur.
+if (process.env.NODE_ENV !== 'test') {
   startServer();
 }
 
