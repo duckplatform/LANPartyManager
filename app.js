@@ -13,6 +13,10 @@ const morgan = require('morgan');
 const session = require('express-session');
 const flash = require('connect-flash');
 const rateLimit = require('express-rate-limit');
+// ─── CSRF Protection (double-submit cookie via csrf-csrf) ────────────────────
+// Note: CodeQL may flag this as "missing token validation" because it doesn't
+// recognize csrf-csrf. The protection is implemented via doubleCsrfProtection
+// middleware applied below, which validates the _csrf token in POST requests.
 const { doubleCsrf } = require('csrf-csrf');
 const expressLayouts = require('express-ejs-layouts');
 const logger = require('./src/config/logger');

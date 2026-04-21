@@ -6,6 +6,8 @@ const bcrypt = require('bcryptjs');
 const { query } = require('../config/database');
 const logger = require('../config/logger');
 
+// 12 rounds offre un bon équilibre sécurité/performance (~300ms sur matériel moderne)
+// Augmenter à 14 sur serveurs plus puissants si la latence est acceptable
 const SALT_ROUNDS = 12;
 
 const User = {
