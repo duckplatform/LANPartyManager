@@ -288,6 +288,8 @@ router.get('/badge', requireAuth, async (req, res) => {
       pageClass: 'page-badge',
       user,
       qrDataUrl,
+      backUrl:   '/profile',
+      backLabel: 'Retour au profil',
     });
   } catch (err) {
     logger.error('[PROFILE] Erreur chargement badge de membre :', err);

@@ -8,6 +8,7 @@
 const request = require('supertest');
 const { expect } = require('chai');
 const sinon = require('sinon');
+const QRCode = require('qrcode');
 
 // ── Mock de la base de données avant l'import de l'app ────────────────────
 
@@ -18,6 +19,17 @@ dbModule.pool = poolStub;
 dbModule.testConnection = async () => {};
 
 const app = require('../app');
+const adminRouter = require('../routes/admin');
+const battlesRouter = require('../routes/battles');
+const Battle = require('../models/Battle');
+const EventRegistration = require('../models/EventRegistration');
+const Game = require('../models/Game');
+const User = require('../models/User');
+
+function getRouteHandler(router, method, path, stackIndex = 0) {
+  const layer = router.stack.find((entry) => entry.route && entry.route.path === path && entry.route.methods[method]);
+  return layer && layer.route.stack[stackIndex] ? layer.route.stack[stackIndex].handle : null;
+}
 
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -271,6 +283,196 @@ describe('Routes - Tests d\'intégration', function () {
 
       expect(res.status).to.equal(200);
       expect(res.text).to.include('8 caract');
+    });
+  });
+
+  describe('GET /admin/users/:id/badge (handler)', function () {
+    let findByIdStub;
+    let ensureBadgeTokenStub;
+    let qrCodeStub;
+
+    beforeEach(function () {
+      findByIdStub = sinon.stub(User, 'findById');
+      ensureBadgeTokenStub = sinon.stub(User, 'ensureBadgeToken');
+      qrCodeStub = sinon.stub(QRCode, 'toDataURL');
+    });
+
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('doit rendre le badge utilisateur depuis l\'administration', async function () {
+      const handler = getRouteHandler(adminRouter, 'get', '/users/:id/badge');
+      const user = {
+        id: 7,
+        nom: 'Dupont',
+        prenom: 'Jean',
+        pseudo: 'JD',
+        email: 'jd@test.com',
+        is_admin: 0,
+        is_moderator: 0,
+        badge_token: '550e8400-e29b-41d4-a716-446655440000',
+        created_at: new Date('2026-04-01T10:00:00Z'),
+      };
+      const req = {
+        params: { id: '7' },
+        session: { userId: 1 },
+        flash: sinon.stub(),
+      };
+      const res = {
+        render: sinon.stub(),
+        redirect: sinon.stub(),
+      };
+
+      findByIdStub.resolves(user);
+      qrCodeStub.resolves('data:image/png;base64,abc');
+
+      await handler(req, res);
+
+      expect(findByIdStub.calledOnceWithExactly(7)).to.be.true;
+      expect(ensureBadgeTokenStub.notCalled).to.be.true;
+      expect(qrCodeStub.calledOnce).to.be.true;
+      expect(qrCodeStub.firstCall.args[0]).to.equal(user.badge_token);
+      expect(res.render.calledOnce).to.be.true;
+      expect(res.render.firstCall.args[0]).to.equal('badge');
+      expect(res.render.firstCall.args[1]).to.include({
+        user,
+        qrDataUrl: 'data:image/png;base64,abc',
+        backUrl: '/admin',
+        backLabel: 'Retour a l\'administration',
+      });
+    });
+
+    it('doit générer un badge_token manquant avant rendu', async function () {
+      const handler = getRouteHandler(adminRouter, 'get', '/users/:id/badge');
+      const user = {
+        id: 8,
+        nom: 'Martin',
+        prenom: 'Alice',
+        pseudo: 'Alicat',
+        email: 'alice@test.com',
+        is_admin: 0,
+        is_moderator: 0,
+        badge_token: '',
+        created_at: new Date('2026-04-02T10:00:00Z'),
+      };
+      const req = {
+        params: { id: '8' },
+        session: { userId: 1 },
+        flash: sinon.stub(),
+      };
+      const res = {
+        render: sinon.stub(),
+        redirect: sinon.stub(),
+      };
+
+      findByIdStub.resolves(user);
+      ensureBadgeTokenStub.resolves('550e8400-e29b-41d4-a716-446655440001');
+      qrCodeStub.resolves('data:image/png;base64,generated');
+
+      await handler(req, res);
+
+      expect(ensureBadgeTokenStub.calledOnceWithExactly(8)).to.be.true;
+      expect(qrCodeStub.calledOnceWithExactly('550e8400-e29b-41d4-a716-446655440001', sinon.match.object)).to.be.true;
+      expect(res.render.calledOnce).to.be.true;
+      expect(res.render.firstCall.args[1].user.badge_token).to.equal('550e8400-e29b-41d4-a716-446655440001');
+    });
+  });
+
+  describe('POST /battles/events/:id/store (handler)', function () {
+    let battleCreateStub;
+    let gameFindByIdStub;
+    let userFindByBadgeTokenStub;
+    let registrationIsRegisteredStub;
+
+    beforeEach(function () {
+      battleCreateStub = sinon.stub(Battle, 'create');
+      gameFindByIdStub = sinon.stub(Game, 'findById');
+      userFindByBadgeTokenStub = sinon.stub(User, 'findByBadgeToken');
+      registrationIsRegisteredStub = sinon.stub(EventRegistration, 'isRegistered');
+    });
+
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('doit refuser un joueur non inscrit a l\'evenement', async function () {
+      const handler = getRouteHandler(battlesRouter, 'post', '/events/:id/store', 2);
+      const req = {
+        params: { id: '3' },
+        body: {
+          game_id: '1',
+          badge_token: [
+            '550e8400-e29b-41d4-a716-446655440000',
+            '550e8400-e29b-41d4-a716-446655440001',
+          ],
+          equipe: ['1', '2'],
+        },
+        flash: sinon.stub(),
+        session: { userId: 99 },
+      };
+      const res = {
+        redirect: sinon.stub(),
+      };
+
+      gameFindByIdStub.resolves({ id: 1, nom: 'Street Fighter 6', type_rencontre: '1v1' });
+      userFindByBadgeTokenStub
+        .onFirstCall().resolves({ id: 10, pseudo: 'Player1' })
+        .onSecondCall().resolves({ id: 11, pseudo: 'Player2' });
+      registrationIsRegisteredStub
+        .onFirstCall().resolves(true)
+        .onSecondCall().resolves(false);
+
+      await handler(req, res);
+
+      expect(gameFindByIdStub.calledOnceWithExactly(1)).to.be.true;
+      expect(userFindByBadgeTokenStub.calledTwice).to.be.true;
+      expect(registrationIsRegisteredStub.firstCall.args).to.deep.equal([3, 10]);
+      expect(registrationIsRegisteredStub.secondCall.args).to.deep.equal([3, 11]);
+      expect(battleCreateStub.notCalled).to.be.true;
+      expect(req.flash.calledOnceWithExactly('error', "Le joueur Player2 n'est pas inscrit a cet evenement.")).to.be.true;
+      expect(res.redirect.calledOnceWithExactly('/battles/events/3/create')).to.be.true;
+    });
+
+    it('doit creer la rencontre quand tous les joueurs sont inscrits', async function () {
+      const handler = getRouteHandler(battlesRouter, 'post', '/events/:id/store', 2);
+      const req = {
+        params: { id: '4' },
+        body: {
+          game_id: '2',
+          badge_token: [
+            '550e8400-e29b-41d4-a716-446655440002',
+            '550e8400-e29b-41d4-a716-446655440003',
+          ],
+          equipe: ['1', '2'],
+          notes: 'Finale',
+        },
+        flash: sinon.stub(),
+        session: { userId: 99 },
+      };
+      const res = {
+        redirect: sinon.stub(),
+      };
+
+      gameFindByIdStub.resolves({ id: 2, nom: 'Tekken 8', type_rencontre: '1v1' });
+      userFindByBadgeTokenStub
+        .onFirstCall().resolves({ id: 21, pseudo: 'Alpha' })
+        .onSecondCall().resolves({ id: 22, pseudo: 'Bravo' });
+      registrationIsRegisteredStub.resolves(true);
+      battleCreateStub.resolves(77);
+
+      await handler(req, res);
+
+      expect(registrationIsRegisteredStub.calledTwice).to.be.true;
+      expect(battleCreateStub.calledOnceWithExactly(
+        { event_id: 4, game_id: 2, notes: 'Finale' },
+        [
+          { user_id: 21, equipe: 1 },
+          { user_id: 22, equipe: 2 },
+        ]
+      )).to.be.true;
+      expect(req.flash.calledOnceWithExactly('success', 'Rencontre créée avec succès ! La salle sera attribuée automatiquement.')).to.be.true;
+      expect(res.redirect.calledOnceWithExactly('/battles/events/4')).to.be.true;
     });
   });
 

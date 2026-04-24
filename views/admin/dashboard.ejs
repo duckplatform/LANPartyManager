@@ -137,6 +137,10 @@
                     <%= new Date(u.created_at).toLocaleDateString('fr-FR') %>
                   </td>
                   <td class="td-actions">
+                    <a href="/admin/users/<%= u.id %>/badge" class="btn btn--xs btn--ghost" title="Voir le badge membre">
+                      <i class="fas fa-id-card"></i> Voir badge
+                    </a>
+
                     <% if (u.id !== currentUser.id) { %>
                       <!-- Toggle Admin -->
                       <form action="/admin/users/<%= u.id %>/toggle-admin" method="POST" class="inline-form">

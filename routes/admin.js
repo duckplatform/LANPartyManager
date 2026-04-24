@@ -8,6 +8,7 @@
 const express      = require('express');
 const router       = express.Router();
 const { body, validationResult } = require('express-validator');
+const QRCode            = require('qrcode');
 const User              = require('../models/User');
 const Announcement      = require('../models/Announcement');
 const Event             = require('../models/Event');
@@ -49,6 +50,51 @@ router.get('/', async (req, res) => {
     logger.error('[ADMIN] Erreur chargement dashboard :', err);
     req.flash('error', 'Erreur lors du chargement du panneau d\'administration.');
     return res.redirect('/');
+  }
+});
+
+// ─── GET /admin/users/:id/badge ───────────────────────────────────────────
+
+router.get('/users/:id/badge', async (req, res) => {
+  const targetId = parseInt(req.params.id, 10);
+
+  if (!Number.isInteger(targetId) || targetId <= 0) {
+    req.flash('error', 'Utilisateur introuvable.');
+    return res.redirect('/admin');
+  }
+
+  try {
+    let user = await User.findById(targetId);
+
+    if (!user) {
+      req.flash('error', 'Utilisateur introuvable.');
+      return res.redirect('/admin');
+    }
+
+    if (!user.badge_token) {
+      user.badge_token = await User.ensureBadgeToken(user.id);
+    }
+
+    const qrDataUrl = await QRCode.toDataURL(user.badge_token, {
+      width:  300,
+      margin: 2,
+      color: { dark: '#0f172a', light: '#ffffff' },
+    });
+
+    logger.info(`[ADMIN] Utilisateur #${req.session.userId} consulte le badge du membre #${targetId}`);
+
+    return res.render('badge', {
+      title:     `Badge membre - ${user.pseudo}`,
+      pageClass: 'page-badge',
+      user,
+      qrDataUrl,
+      backUrl:   '/admin',
+      backLabel: 'Retour a l\'administration',
+    });
+  } catch (err) {
+    logger.error(`[ADMIN] Erreur chargement badge utilisateur #${targetId} :`, err);
+    req.flash('error', 'Erreur lors du chargement du badge utilisateur.');
+    return res.redirect('/admin');
   }
 });
 

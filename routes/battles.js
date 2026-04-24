@@ -25,6 +25,7 @@ const Game   = require('../models/Game');
 const Room   = require('../models/Room');
 const Event  = require('../models/Event');
 const User   = require('../models/User');
+const EventRegistration = require('../models/EventRegistration');
 const logger = require('../config/logger');
 const { requireAuth, requireModerator } = require('../middleware/auth');
 
@@ -296,6 +297,12 @@ router.post(
         const user = await User.findByBadgeToken(token);
         if (!user) {
           req.flash('error', `Badge inconnu pour le joueur ${i + 1}. Vérifiez le QR code.`);
+          return res.redirect(`/battles/events/${eventId}/create`);
+        }
+
+        const isRegistered = await EventRegistration.isRegistered(eventId, user.id);
+        if (!isRegistered) {
+          req.flash('error', `Le joueur ${user.pseudo} n'est pas inscrit a cet evenement.`);
           return res.redirect(`/battles/events/${eventId}/create`);
         }
 
