@@ -136,6 +136,69 @@ LANPartyManager/
 
 ---
 
+## Développement avec GitHub Codespace
+
+Le dépôt inclut une configuration `.devcontainer/` clé-en-main pour GitHub Codespace.
+L'environnement complet (Node.js 20 + MySQL 8.0) est provisionné automatiquement.
+
+### Démarrage rapide
+
+1. Ouvrez le dépôt sur GitHub
+2. Cliquez sur **Code → Codespaces → Create codespace on \<branch\>**
+3. Attendez la fin du provisionnement (~2–3 min pour la première fois)
+4. L'application démarre automatiquement et le port **3000 est exposé en public**
+5. Cliquez sur l'URL affichée dans l'onglet **Ports** pour accéder à l'application
+
+### Ce qui est provisionné automatiquement
+
+| Étape | Déclencheur | Action |
+|-------|-------------|--------|
+| Création du Codespace | `postCreateCommand` | `npm install` + initialisation du schéma MySQL (`database/install.sql`) |
+| Chaque ouverture | `postStartCommand` | Démarrage de `node app.js` en arrière-plan |
+| Port 3000 | `portsAttributes` | Visibilité **public** (aucune action manuelle requise) |
+
+### Identifiants admin par défaut (Codespace)
+
+| Variable | Valeur |
+|----------|--------|
+| Email | `admin@lanparty.local` |
+| Mot de passe | `Admin1234` |
+
+> ⚠️ Ces identifiants ne sont valables qu'en développement Codespace.
+
+### Variables d'environnement injectées (Codespace)
+
+Définies dans `.devcontainer/docker-compose.yml` :
+
+| Variable | Valeur Codespace |
+|----------|-----------------|
+| `DB_HOST` | `mysql` (nom du service Docker) |
+| `DB_USER` | `lanparty` |
+| `DB_PASSWORD` | `lanparty_dev` |
+| `DB_NAME` | `lanpartymanager` |
+| `NODE_ENV` | `development` |
+| `PORT` | `3000` |
+| `SESSION_SECRET` | `codespace-session-secret-not-for-production` |
+| `LOG_LEVEL` | `debug` |
+
+### Commandes utiles en Codespace
+
+```bash
+# Consulter les logs de l'application
+tail -f /tmp/app.log
+
+# Redémarrer l'application
+bash .devcontainer/start-app.sh
+
+# Exécuter les tests
+npm test
+
+# Se connecter à MySQL (le mot de passe est demandé interactivement)
+MYSQL_PWD=lanparty_dev mysql -h mysql -u lanparty lanpartymanager
+```
+
+---
+
 ## Installation
 
 ### Prérequis

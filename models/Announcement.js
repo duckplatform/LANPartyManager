@@ -31,13 +31,20 @@ const Announcement = {
    * @returns {Promise<Array>}
    */
   async findLatestPublished(limit = 3) {
-    const [rows] = await db.pool.execute(
+    // Certains environnements MySQL échouent avec LIMIT paramétré en prepared statement.
+    // On normalise donc la valeur et on l'injecte en entier borné.
+    const safeLimit = Math.min(50, Math.max(1, parseInt(limit, 10) || 3));
+
+    const runQuery = typeof db.pool.query === 'function'
+      ? db.pool.query.bind(db.pool)
+      : db.pool.execute.bind(db.pool);
+
+    const [rows] = await runQuery(
       `SELECT id, titre, contenu, created_at
          FROM announcements
          WHERE statut = 'publie'
          ORDER BY created_at DESC
-         LIMIT ?`,
-      [limit]
+         LIMIT ${safeLimit}`
     );
     return rows;
   },
