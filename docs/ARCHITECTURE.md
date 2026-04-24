@@ -23,6 +23,9 @@ LANPartyManager/
 │   ├── User.js               # CRUD utilisateur + bcrypt
 │   └── Announcement.js       # CRUD annonces (blog/news)
 │
+├── services/
+│   └── discord.js            # Notifications Discord (REST, embeds, sans WebSocket)
+│
 ├── routes/
 │   ├── index.js              # GET / (page d'accueil + dernières annonces)
 │   ├── auth.js               # GET/POST /auth/login, register, logout
@@ -65,6 +68,9 @@ LANPartyManager/
 │
 ├── tests/
 │   ├── announcement.test.js  # Tests unitaires modèle Announcement
+│   ├── discord.test.js       # Tests unitaires service Discord
+│   ├── event.test.js         # Tests unitaires modèle Event
+│   ├── event_registration.test.js  # Tests unitaires modèle EventRegistration
 │   ├── middleware.test.js    # Tests unitaires middleware
 │   ├── routes.test.js        # Tests d'intégration routes
 │   └── user.test.js          # Tests unitaires modèle User
@@ -95,6 +101,7 @@ LANPartyManager/
 | Rendu Markdown | marked + sanitize-html (XSS safe) |
 | Logging | winston (console + fichiers rotatifs) |
 | HTTP log | morgan → winston |
+| Notifications Discord | discord.js v14 (REST uniquement, sans WebSocket) |
 
 ### Modèle de données
 
@@ -122,6 +129,23 @@ LANPartyManager/
 | statut | ENUM('publie','brouillon') | Statut de publication |
 | created_at | DATETIME | Date de création |
 | updated_at | DATETIME | Date de dernière modification |
+
+### Intégration Discord
+
+Le service `services/discord.js` envoie des notifications formatées (Discord Embeds) sur des canaux Discord configurés lors des événements métier suivants :
+
+| Déclencheur | Canal | Message |
+|-------------|-------|---------|
+| Création d'un événement | `DISCORD_CHANNEL_EVENTS` | Embed bleu avec nom, date, lieu |
+| Passage d'un événement en statut `en_cours` | `DISCORD_CHANNEL_EVENTS` | Embed vert + mention `@everyone` |
+| Passage d'un événement en statut `termine` | `DISCORD_CHANNEL_EVENTS` | Embed rouge |
+| Publication d'une actualité (création ou mise à jour vers `publie`) | `DISCORD_CHANNEL_NEWS` | Embed jaune avec résumé et lien |
+
+**Caractéristiques techniques :**
+- Utilise l'API REST Discord via `discord.js` v14 (pas de connexion WebSocket permanente)
+- Les erreurs Discord ne sont jamais propagées à l'application (dégradation gracieuse)
+- Toutes les actions sont journalisées via Winston (`[DISCORD]`)
+- Si `DISCORD_BOT_TOKEN` est absent, les notifications sont silencieusement ignorées
 
 ### Flux de sécurité
 
@@ -240,8 +264,22 @@ Configurez ces variables dans l'interface cPanel → **Node.js Selector** :
 | `NODE_ENV` | Environnement | `production` |
 | `PORT` | Port d'écoute (optionnel) | `3000` |
 | `LOG_LEVEL` | Niveau de log (optionnel) | `info` |
+| `APP_URL` | URL publique du site (pour les liens Discord) | `https://monsite.example.com` |
+| `DISCORD_BOT_TOKEN` | Token du bot Discord (optionnel) | `MTxxxxxxxx.xxxxxx.xxxxxxxxxx` |
+| `DISCORD_CHANNEL_EVENTS` | ID du canal Discord pour les événements (optionnel) | `123456789012345678` |
+| `DISCORD_CHANNEL_NEWS` | ID du canal Discord pour les actualités (optionnel) | `987654321098765432` |
 
 > ⚠️ **`SESSION_SECRET`** doit être une chaîne longue et aléatoire (64+ caractères).
+
+> 💡 **Discord (optionnel)** : si `DISCORD_BOT_TOKEN` est absent, les notifications Discord sont simplement désactivées sans impact sur le reste de l'application.
+
+### Comment obtenir les paramètres Discord
+
+1. Créez un bot sur le [Discord Developer Portal](https://discord.com/developers/applications)
+2. Copiez le **Token** du bot → `DISCORD_BOT_TOKEN`
+3. Activez le mode développeur dans Discord (Paramètres → Avancés → Mode développeur)
+4. Clic droit sur un canal → **Copier l'identifiant** → `DISCORD_CHANNEL_EVENTS` ou `DISCORD_CHANNEL_NEWS`
+5. Invitez le bot sur votre serveur avec la permission **Envoyer des messages** (scope `bot` + permission `Send Messages`)
 
 ### 4. Démarrage
 
