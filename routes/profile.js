@@ -7,6 +7,7 @@
 const express   = require('express');
 const { body, validationResult } = require('express-validator');
 const router    = express.Router();
+const QRCode    = require('qrcode');
 const User              = require('../models/User');
 const Event             = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
@@ -252,6 +253,56 @@ router.post('/events/:id/unregister', requireAuth, async (req, res) => {
     req.flash('error', 'Erreur lors de la désinscription.');
   }
   return res.redirect('/profile');
+});
+
+// ─── GET /profile/events/:id/badge ────────────────────────────────────────
+// Affiche le badge électronique (billet QR) pour l'inscription à un événement
+
+router.get('/events/:id/badge', requireAuth, async (req, res) => {
+  const eventId = parseInt(req.params.id, 10);
+
+  try {
+    const [user, registration] = await Promise.all([
+      User.findById(req.session.userId),
+      EventRegistration.findByEventAndUser(eventId, req.session.userId),
+    ]);
+
+    if (!user) {
+      req.session.destroy(() => {});
+      return res.redirect('/auth/login');
+    }
+
+    if (!registration) {
+      req.flash('error', 'Vous n\'êtes pas inscrit à cet événement.');
+      return res.redirect('/profile');
+    }
+
+    // Génère le QR code (data URL PNG) encodant l'URL de vérification
+    const verifyUrl = `${req.protocol}://${req.get('host')}/moderator/verify/${registration.token}`;
+    const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
+      width:          300,
+      margin:         2,
+      color: {
+        dark:  '#0f172a',
+        light: '#ffffff',
+      },
+    });
+
+    logger.info(`[PROFILE] Utilisateur #${req.session.userId} consulte son badge pour l'événement #${eventId}`);
+
+    res.render('badge', {
+      title:        `Badge — ${registration.nom}`,
+      pageClass:    'page-badge',
+      user,
+      registration,
+      qrDataUrl,
+      verifyUrl,
+    });
+  } catch (err) {
+    logger.error(`[PROFILE] Erreur badge événement #${eventId} :`, err);
+    req.flash('error', 'Erreur lors du chargement du badge.');
+    return res.redirect('/profile');
+  }
 });
 
 module.exports = router;

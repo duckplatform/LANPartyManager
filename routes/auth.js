@@ -88,9 +88,10 @@ router.post('/login', authLimiter, loginRules, async (req, res) => {
         req.flash('error', 'Erreur interne. Veuillez réessayer.');
         return res.redirect('/auth/login');
       }
-      req.session.userId  = user.id;
-      req.session.pseudo  = user.pseudo;
-      req.session.isAdmin = !!user.is_admin;
+      req.session.userId       = user.id;
+      req.session.pseudo       = user.pseudo;
+      req.session.isAdmin      = !!user.is_admin;
+      req.session.isModerator  = !!user.is_moderator;
       logger.info(`[AUTH] Connexion réussie pour l'utilisateur #${user.id} (${user.email})`);
       req.flash('success', `Bienvenue, ${user.pseudo} !`);
       return res.redirect('/');
@@ -157,9 +158,10 @@ router.post('/register', authLimiter, registerRules, async (req, res) => {
         req.flash('error', 'Inscription réussie, veuillez vous connecter.');
         return res.redirect('/auth/login');
       }
-      req.session.userId  = newId;
-      req.session.pseudo  = pseudo;
-      req.session.isAdmin = false;
+      req.session.userId       = newId;
+      req.session.pseudo       = pseudo;
+      req.session.isAdmin      = false;
+      req.session.isModerator  = false;
       req.flash('success', 'Compte créé avec succès. Bienvenue !');
       return res.redirect('/');
     });

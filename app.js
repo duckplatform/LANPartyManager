@@ -153,11 +153,12 @@ app.use((req, res, next) => {
 
 // ─── Routes ───────────────────────────────────────────────────────────────
 
-app.use('/',        require('./routes/index'));
-app.use('/auth',    require('./routes/auth'));
-app.use('/profile', require('./routes/profile'));
-app.use('/admin',   require('./routes/admin'));
-app.use('/news',    require('./routes/news'));
+app.use('/',          require('./routes/index'));
+app.use('/auth',      require('./routes/auth'));
+app.use('/profile',   require('./routes/profile'));
+app.use('/admin',     require('./routes/admin'));
+app.use('/moderator', require('./routes/moderator'));
+app.use('/news',      require('./routes/news'));
 
 // ─── Page 404 ─────────────────────────────────────────────────────────────
 

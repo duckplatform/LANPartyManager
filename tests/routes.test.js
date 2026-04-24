@@ -211,6 +211,26 @@ describe('Routes - Tests d\'intégration', function () {
     });
   });
 
+  // ── Modérateur (non authentifié) ──────────────────────────────────────
+
+  describe('GET /moderator (sans authentification)', function () {
+    it('doit rediriger vers /auth/login', async function () {
+      const res = await request(app).get('/moderator');
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.include('/auth/login');
+    });
+  });
+
+  // ── Vérification billet (non authentifié) ─────────────────────────────
+
+  describe('GET /moderator/verify/:token (sans authentification)', function () {
+    it('doit rediriger vers /auth/login si non connecté', async function () {
+      const res = await request(app).get('/moderator/verify/550e8400-e29b-41d4-a716-446655440000');
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.include('/auth/login');
+    });
+  });
+
   // ── POST /auth/login - validation ─────────────────────────────────────
 
   describe('POST /auth/login (validation)', function () {

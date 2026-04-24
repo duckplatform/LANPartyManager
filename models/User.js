@@ -18,7 +18,7 @@ const User = {
    */
   async findById(id) {
     const [rows] = await db.pool.execute(
-      'SELECT id, nom, prenom, pseudo, email, is_admin, created_at, updated_at FROM users WHERE id = ?',
+      'SELECT id, nom, prenom, pseudo, email, is_admin, is_moderator, created_at, updated_at FROM users WHERE id = ?',
       [id]
     );
     return rows[0] || null;
@@ -39,15 +39,15 @@ const User = {
 
   /**
    * Crée un nouvel utilisateur (mot de passe haché automatiquement)
-   * @param {Object} data - { nom, prenom, pseudo, email, password, is_admin? }
+   * @param {Object} data - { nom, prenom, pseudo, email, password, is_admin?, is_moderator? }
    * @returns {Promise<number>} ID du nouvel utilisateur
    */
-  async create({ nom, prenom, pseudo, email, password, is_admin = false }) {
+  async create({ nom, prenom, pseudo, email, password, is_admin = false, is_moderator = false }) {
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const [result] = await db.pool.execute(
-      `INSERT INTO users (nom, prenom, pseudo, email, password, is_admin)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), hashedPassword, is_admin ? 1 : 0]
+      `INSERT INTO users (nom, prenom, pseudo, email, password, is_admin, is_moderator)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), hashedPassword, is_admin ? 1 : 0, is_moderator ? 1 : 0]
     );
     return result.insertId;
   },
@@ -98,7 +98,7 @@ const User = {
    */
   async findAll() {
     const [rows] = await db.pool.execute(
-      'SELECT id, nom, prenom, pseudo, email, is_admin, created_at, updated_at FROM users ORDER BY created_at DESC'
+      'SELECT id, nom, prenom, pseudo, email, is_admin, is_moderator, created_at, updated_at FROM users ORDER BY created_at DESC'
     );
     return rows;
   },
@@ -123,6 +123,20 @@ const User = {
     const [result] = await db.pool.execute(
       'UPDATE users SET is_admin = ?, updated_at = NOW() WHERE id = ?',
       [isAdmin ? 1 : 0, id]
+    );
+    return result.affectedRows > 0;
+  },
+
+  /**
+   * Met à jour le statut modérateur d'un utilisateur
+   * @param {number} id
+   * @param {boolean} isModerator
+   * @returns {Promise<boolean>}
+   */
+  async setModerator(id, isModerator) {
+    const [result] = await db.pool.execute(
+      'UPDATE users SET is_moderator = ?, updated_at = NOW() WHERE id = ?',
+      [isModerator ? 1 : 0, id]
     );
     return result.affectedRows > 0;
   },

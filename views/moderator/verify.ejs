@@ -1,0 +1,124 @@
+<%- include('../partials/head') %>
+
+<div class="container" style="max-width: 600px; padding-top: var(--space-xl);">
+
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-ticket"></i> Vérification de billet
+      </h1>
+    </div>
+    <div class="admin-header-actions">
+      <a href="/moderator" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Retour
+      </a>
+    </div>
+  </div>
+
+  <% if (error) { %>
+    <!-- Billet invalide / erreur -->
+    <div class="card" style="border: 2px solid var(--color-danger); margin-bottom: var(--space-lg);">
+      <div class="card-body" style="text-align: center; padding: var(--space-xl);">
+        <div style="font-size: 4rem; color: var(--color-danger); margin-bottom: var(--space-md);">
+          <i class="fas fa-circle-xmark"></i>
+        </div>
+        <h2 style="color: var(--color-danger); margin-bottom: var(--space-sm);">Billet invalide</h2>
+        <p class="text-muted"><%= error %></p>
+        <% if (token) { %>
+          <p class="text-muted" style="font-family: monospace; font-size: 0.8rem; margin-top: var(--space-sm);">
+            Token : <%= token %>
+          </p>
+        <% } %>
+      </div>
+    </div>
+
+  <% } else if (!registration) { %>
+    <!-- Token introuvable -->
+    <div class="card" style="border: 2px solid var(--color-danger); margin-bottom: var(--space-lg);">
+      <div class="card-body" style="text-align: center; padding: var(--space-xl);">
+        <div style="font-size: 4rem; color: var(--color-danger); margin-bottom: var(--space-md);">
+          <i class="fas fa-circle-xmark"></i>
+        </div>
+        <h2 style="color: var(--color-danger); margin-bottom: var(--space-sm);">Billet introuvable</h2>
+        <p class="text-muted">Ce billet n'existe pas ou a été annulé.</p>
+        <p class="text-muted" style="font-family: monospace; font-size: 0.8rem; margin-top: var(--space-sm);">
+          Token : <%= token %>
+        </p>
+      </div>
+    </div>
+
+  <% } else { %>
+    <!-- Billet valide -->
+    <div class="card" style="border: 2px solid var(--color-success); margin-bottom: var(--space-lg);">
+      <div class="card-header" style="background: rgba(16, 185, 129, 0.1); border-bottom: 1px solid var(--color-success);">
+        <div style="display:flex; align-items:center; gap: var(--space-sm);">
+          <span style="font-size: 2rem; color: var(--color-success);"><i class="fas fa-circle-check"></i></span>
+          <div>
+            <h2 style="color: var(--color-success); margin:0;">Billet valide</h2>
+            <p style="margin:0; font-size: 0.85rem; color: var(--color-text-muted);">
+              Billet authentifié avec succès
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+
+        <!-- Événement -->
+        <div class="verify-section">
+          <h3 class="verify-section-title"><i class="fas fa-calendar-star"></i> Événement</h3>
+          <p class="verify-event-name"><%= registration.event_nom %></p>
+          <p class="verify-detail">
+            <i class="fas fa-calendar-alt"></i>
+            <%= new Date(registration.date_heure).toLocaleDateString('fr-FR', {
+              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+            }) %>
+            à
+            <%= new Date(registration.date_heure).toLocaleTimeString('fr-FR', {
+              hour: '2-digit', minute: '2-digit'
+            }) %>
+          </p>
+          <p class="verify-detail">
+            <i class="fas fa-location-dot"></i> <%= registration.lieu %>
+          </p>
+          <div style="margin-top: var(--space-xs);">
+            <% if (registration.statut === 'planifie') { %>
+              <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> Planifié</span>
+            <% } else if (registration.statut === 'en_cours') { %>
+              <span class="badge badge--member"><i class="fas fa-circle-play"></i> En cours</span>
+            <% } else { %>
+              <span class="badge badge--draft"><i class="fas fa-circle-check"></i> Terminé</span>
+            <% } %>
+          </div>
+        </div>
+
+        <hr style="border-color: var(--color-border); margin: var(--space-md) 0;" />
+
+        <!-- Joueur -->
+        <div class="verify-section">
+          <h3 class="verify-section-title"><i class="fas fa-user"></i> Participant</h3>
+          <p class="verify-player-pseudo"><%= registration.pseudo %></p>
+          <p class="verify-detail"><%= registration.prenom %> <%= registration.nom %></p>
+          <p class="verify-detail"><a href="mailto:<%= registration.email %>" class="link-muted"><%= registration.email %></a></p>
+        </div>
+
+        <hr style="border-color: var(--color-border); margin: var(--space-md) 0;" />
+
+        <!-- Token -->
+        <div class="verify-section">
+          <h3 class="verify-section-title"><i class="fas fa-fingerprint"></i> Identifiant du billet</h3>
+          <p style="font-family: monospace; font-size: 0.8rem; color: var(--color-text-muted); word-break: break-all;">
+            <%= registration.token %>
+          </p>
+          <p class="verify-detail">
+            Inscrit le <%= new Date(registration.created_at).toLocaleDateString('fr-FR') %>
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+  <% } %>
+
+</div>
+
+<%- include('../partials/foot') %>

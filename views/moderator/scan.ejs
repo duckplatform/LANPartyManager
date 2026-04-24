@@ -1,0 +1,109 @@
+<%- include('../partials/head') %>
+
+<div class="container admin-container">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-qrcode"></i> Contrôle — <%= event.nom %>
+      </h1>
+      <p class="admin-subtitle">
+        <i class="fas fa-calendar-alt"></i>
+        <%= new Date(event.date_heure).toLocaleDateString('fr-FR', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        }) %>
+        à
+        <%= new Date(event.date_heure).toLocaleTimeString('fr-FR', {
+          hour: '2-digit', minute: '2-digit'
+        }) %>
+        &nbsp;—&nbsp;<i class="fas fa-location-dot"></i> <%= event.lieu %>
+      </p>
+    </div>
+    <div class="admin-header-actions">
+      <a href="/moderator" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Liste des événements
+      </a>
+    </div>
+  </div>
+
+  <!-- Vérification manuelle par token -->
+  <div class="card" style="margin-bottom: var(--space-lg);">
+    <div class="card-header">
+      <h2><i class="fas fa-search"></i> Vérifier un billet manuellement</h2>
+    </div>
+    <div class="card-body">
+      <p class="form-hint" style="margin-bottom: var(--space-md);">
+        Saisissez le token UUID du billet ou utilisez un lecteur QR code pour accéder directement à la page de vérification.
+      </p>
+      <form action="/moderator/verify" method="POST" class="inline-form" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+        <input type="text"
+               name="token"
+               class="form-input"
+               style="max-width: 380px; font-family: monospace;"
+               placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+               pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+               title="Format UUID attendu"
+               required />
+        <button type="submit" class="btn btn--primary btn--sm">
+          <i class="fas fa-check-circle"></i> Vérifier
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Liste des inscrits -->
+  <div class="card admin-users-card">
+    <div class="card-header admin-card-header">
+      <h2><i class="fas fa-list"></i> Liste des inscrits (<%= registrations.length %>)</h2>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Pseudo</th>
+              <th>Nom complet</th>
+              <th>Email</th>
+              <th>Inscrit le</th>
+              <th>Billet</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (registrations.length === 0) { %>
+              <tr>
+                <td colspan="5" class="table-empty">
+                  <i class="fas fa-inbox"></i> Aucun inscrit pour le moment.
+                </td>
+              </tr>
+            <% } else { %>
+              <% registrations.forEach(function(r) { %>
+                <tr>
+                  <td>
+                    <span class="user-pseudo">
+                      <i class="fas fa-circle-user"></i> <%= r.pseudo %>
+                    </span>
+                  </td>
+                  <td><%= r.prenom %> <%= r.nom %></td>
+                  <td><a href="mailto:<%= r.email %>" class="link-muted"><%= r.email %></a></td>
+                  <td class="td-date">
+                    <%= new Date(r.created_at).toLocaleDateString('fr-FR') %>
+                  </td>
+                  <td>
+                    <a href="/moderator/verify/<%= r.token %>" class="btn btn--xs btn--info" title="Vérifier le billet">
+                      <i class="fas fa-ticket"></i> Vérifier
+                    </a>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<%- include('../partials/foot') %>

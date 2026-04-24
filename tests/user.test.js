@@ -184,6 +184,27 @@ describe('User Model', function () {
     });
   });
 
+  // ── setModerator ────────────────────────────────────────────────────────
+
+  describe('setModerator()', function () {
+    it('doit accorder le rôle modérateur', async function () {
+      poolStub.execute.resolves([{ affectedRows: 1 }]);
+      const result = await User.setModerator(2, true);
+      expect(result).to.be.true;
+      const callArgs = poolStub.execute.firstCall.args[1];
+      expect(callArgs[0]).to.equal(1); // is_moderator = 1
+      expect(callArgs[1]).to.equal(2); // user id = 2
+    });
+
+    it('doit retirer le rôle modérateur', async function () {
+      poolStub.execute.resolves([{ affectedRows: 1 }]);
+      const result = await User.setModerator(2, false);
+      expect(result).to.be.true;
+      const callArgs = poolStub.execute.firstCall.args[1];
+      expect(callArgs[0]).to.equal(0); // is_moderator = 0
+    });
+  });
+
   // ── count ───────────────────────────────────────────────────────────────
 
   describe('count()', function () {

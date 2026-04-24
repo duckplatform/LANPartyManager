@@ -29,6 +29,13 @@
       </div>
     </div>
     <div class="stat-card">
+      <div class="stat-icon stat-icon--moderator"><i class="fas fa-user-shield"></i></div>
+      <div class="stat-info">
+        <span class="stat-number"><%= stats.moderators %></span>
+        <span class="stat-label">Modérateurs</span>
+      </div>
+    </div>
+    <div class="stat-card">
       <div class="stat-icon stat-icon--member"><i class="fas fa-user"></i></div>
       <div class="stat-info">
         <span class="stat-number"><%= stats.members %></span>
@@ -112,6 +119,8 @@
                   <td>
                     <% if (u.is_admin) { %>
                       <span class="badge badge--admin"><i class="fas fa-shield-halved"></i> Admin</span>
+                    <% } else if (u.is_moderator) { %>
+                      <span class="badge badge--moderator"><i class="fas fa-user-shield"></i> Modérateur</span>
                     <% } else { %>
                       <span class="badge badge--member"><i class="fas fa-user"></i> Membre</span>
                     <% } %>
@@ -129,9 +138,23 @@
                                 title="<%= u.is_admin ? 'Retirer les droits admin' : 'Promouvoir en admin' %>"
                                 onclick="return confirm('<%= u.is_admin ? 'Retirer les droits administrateur à ' + u.pseudo + ' ?' : 'Promouvoir ' + u.pseudo + ' en administrateur ?' %>')">
                           <i class="fas <%= u.is_admin ? 'fa-user-minus' : 'fa-user-shield' %>"></i>
-                          <%= u.is_admin ? 'Rétrograder' : 'Promouvoir' %>
+                          <%= u.is_admin ? 'Rétrograder Admin' : 'Promouvoir Admin' %>
                         </button>
                       </form>
+
+                      <!-- Toggle Modérateur -->
+                      <% if (!u.is_admin) { %>
+                      <form action="/admin/users/<%= u.id %>/toggle-moderator" method="POST" class="inline-form">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                        <button type="submit"
+                                class="btn btn--xs <%= u.is_moderator ? 'btn--warning' : 'btn--secondary' %>"
+                                title="<%= u.is_moderator ? 'Retirer le rôle modérateur' : 'Attribuer le rôle modérateur' %>"
+                                onclick="return confirm('<%= u.is_moderator ? 'Retirer le rôle modérateur de ' + u.pseudo + ' ?' : 'Attribuer le rôle modérateur à ' + u.pseudo + ' ?' %>')">
+                          <i class="fas <%= u.is_moderator ? 'fa-user-minus' : 'fa-user-check' %>"></i>
+                          <%= u.is_moderator ? 'Rétrograder Modo' : 'Promouvoir Modo' %>
+                        </button>
+                      </form>
+                      <% } %>
 
                       <!-- Supprimer -->
                       <form action="/admin/users/<%= u.id %>/delete" method="POST" class="inline-form">

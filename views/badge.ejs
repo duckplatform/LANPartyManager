@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %> | LANPartyManager</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/badge.css" />
+</head>
+<body class="page-badge">
+
+  <!-- Barre d'actions (masquée à l'impression) -->
+  <div class="badge-actions no-print">
+    <a href="/profile" class="btn btn--ghost btn--sm">
+      <i class="fas fa-arrow-left"></i> Retour au profil
+    </a>
+    <button onclick="window.print()" class="btn btn--primary btn--sm">
+      <i class="fas fa-print"></i> Imprimer / Sauvegarder en PDF
+    </button>
+  </div>
+
+  <!-- Badge électronique -->
+  <div class="badge-wrapper">
+    <div class="badge-card">
+
+      <!-- En-tête du badge -->
+      <div class="badge-header">
+        <div class="badge-logo">
+          <i class="fas fa-gamepad"></i>
+          <span>LAN<span class="badge-logo-accent">Party</span>Manager</span>
+        </div>
+        <div class="badge-tag">BILLET OFFICIEL</div>
+      </div>
+
+      <!-- Nom de l'événement -->
+      <div class="badge-event-name">
+        <%= registration.nom %>
+      </div>
+
+      <!-- Date et lieu -->
+      <div class="badge-event-details">
+        <span>
+          <i class="fas fa-calendar-alt"></i>
+          <%= new Date(registration.date_heure).toLocaleDateString('fr-FR', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+          }) %>
+          à
+          <%= new Date(registration.date_heure).toLocaleTimeString('fr-FR', {
+            hour: '2-digit', minute: '2-digit'
+          }) %>
+        </span>
+        <span>
+          <i class="fas fa-location-dot"></i>
+          <%= registration.lieu %>
+        </span>
+      </div>
+
+      <!-- Séparateur -->
+      <div class="badge-divider">
+        <span class="badge-divider-dot"></span>
+        <span class="badge-divider-line"></span>
+        <span class="badge-divider-dot"></span>
+      </div>
+
+      <!-- Infos joueur + QR Code -->
+      <div class="badge-body">
+        <div class="badge-player">
+          <div class="badge-player-avatar">
+            <i class="fas fa-circle-user"></i>
+          </div>
+          <div class="badge-player-info">
+            <div class="badge-player-pseudo"><%= user.pseudo %></div>
+            <div class="badge-player-name"><%= user.prenom %> <%= user.nom %></div>
+            <div class="badge-player-role">
+              <% if (user.is_admin) { %>
+                <span class="badge-role badge-role--admin"><i class="fas fa-shield-halved"></i> Administrateur</span>
+              <% } else if (user.is_moderator) { %>
+                <span class="badge-role badge-role--moderator"><i class="fas fa-user-shield"></i> Modérateur</span>
+              <% } else { %>
+                <span class="badge-role badge-role--member"><i class="fas fa-user"></i> Membre</span>
+              <% } %>
+            </div>
+          </div>
+        </div>
+
+        <div class="badge-qr">
+          <img src="<%= qrDataUrl %>" alt="QR Code de vérification" class="badge-qr-img" />
+          <p class="badge-qr-hint">Scanner pour vérifier</p>
+        </div>
+      </div>
+
+      <!-- Pied du badge -->
+      <div class="badge-footer">
+        <div class="badge-id">
+          <span class="badge-id-label">ID Billet</span>
+          <span class="badge-id-value"><%= registration.token %></span>
+        </div>
+        <div class="badge-registered-date">
+          <span>Inscrit le <%= new Date(registration.created_at).toLocaleDateString('fr-FR') %></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

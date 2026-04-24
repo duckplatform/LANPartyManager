@@ -30,15 +30,28 @@ function requireAdmin(req, res, next) {
 }
 
 /**
+ * Exige que l'utilisateur soit modérateur ou administrateur.
+ * Redirige vers la page d'accueil sinon.
+ */
+function requireModerator(req, res, next) {
+  if (req.session && req.session.userId && (req.session.isAdmin || req.session.isModerator)) {
+    return next();
+  }
+  req.flash('error', 'Accès refusé : droits modérateur requis.');
+  return res.redirect('/');
+}
+
+/**
  * Injecte les infos de session dans res.locals pour les vues.
  * Doit être enregistré avant les routes.
  */
 function injectLocals(req, res, next) {
   res.locals.currentUser = req.session.userId
     ? {
-        id:       req.session.userId,
-        pseudo:   req.session.pseudo,
-        isAdmin:  req.session.isAdmin,
+        id:          req.session.userId,
+        pseudo:      req.session.pseudo,
+        isAdmin:     req.session.isAdmin,
+        isModerator: req.session.isModerator,
       }
     : null;
   res.locals.flashSuccess = req.flash('success');
@@ -49,4 +62,4 @@ function injectLocals(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireAdmin, injectLocals };
+module.exports = { requireAuth, requireAdmin, requireModerator, injectLocals };
