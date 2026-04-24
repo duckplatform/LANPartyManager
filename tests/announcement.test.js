@@ -68,9 +68,9 @@ describe('Announcement Model', function () {
 
       const result = await Announcement.findLatestPublished(3);
       expect(result).to.deep.equal(fakeRows);
-      // Vérifie que la limite est bien passée en paramètre
-      const callArgs = poolStub.execute.firstCall.args[1];
-      expect(callArgs[0]).to.equal(3);
+      // Vérifie que la requête applique bien une limite numérique
+      const sql = poolStub.execute.firstCall.args[0];
+      expect(sql).to.include('LIMIT 3');
     });
   });
 
