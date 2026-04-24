@@ -6,12 +6,15 @@
  * Permet la vérification des billets électroniques à l'entrée des événements
  */
 
-const express      = require('express');
-const router       = express.Router();
+const express           = require('express');
+const router            = express.Router();
 const Event             = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
-const logger       = require('../config/logger');
+const logger            = require('../config/logger');
 const { requireAuth, requireModerator } = require('../middleware/auth');
+
+// Expression régulière de validation UUID v4 (même format que Node.js crypto.randomUUID)
+const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 // Toutes les routes modérateur nécessitent auth + (admin ou modérateur)
 router.use(requireAuth, requireModerator);
@@ -49,12 +52,10 @@ router.get('/events/:id/scan', async (req, res) => {
     const registrations = await EventRegistration.findByEvent(eventId);
 
     res.render('moderator/scan', {
-      title:         `Contrôle — ${event.nom}`,
-      pageClass:     'page-moderator',
+      title:        `Contrôle — ${event.nom}`,
+      pageClass:    'page-moderator',
       event,
       registrations,
-      scannedToken:  null,
-      verifyResult:  null,
     });
   } catch (err) {
     logger.error(`[MODERATOR] Erreur chargement scan événement #${eventId} :`, err);
@@ -65,15 +66,13 @@ router.get('/events/:id/scan', async (req, res) => {
 
 // ─── GET /moderator/verify/:token ─────────────────────────────────────────
 // Vérifie un billet via son token UUID (URL encodée dans le QR code)
-// Accessible sans session pour permettre la vérification via scan externe,
-// mais protégé par requireModerator pour afficher les détails complets.
+// Accessible uniquement aux administrateurs et modérateurs authentifiés
 
 router.get('/verify/:token', async (req, res) => {
   const { token } = req.params;
 
-  // Valide le format UUID (v4) pour éviter les injections
-  const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  if (!UUID_RE.test(token)) {
+  // Valide le format UUID v4 pour éviter les injections SQL/NoSQL
+  if (!UUID_V4_RE.test(token)) {
     return res.status(400).render('moderator/verify', {
       title:        'Vérification de billet',
       pageClass:    'page-moderator',

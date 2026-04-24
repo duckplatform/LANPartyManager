@@ -21,7 +21,9 @@ ALTER TABLE `event_registrations`
   ADD UNIQUE KEY `uq_er_token` (`token`);
 
 -- Génération d'un token UUID pour les inscriptions existantes
--- (nécessite MySQL 8.0+ pour UUID() intégré, sinon utiliser uuid())
+-- UUID() génère des UUID v1 (basés sur le temps) dans MySQL 5.0+
+-- Les nouvelles inscriptions utiliseront des UUID v4 générés par Node.js (crypto.randomUUID)
+-- Les anciens tokens v1 sont valides car le format CHAR(36) est compatible
 UPDATE `event_registrations`
   SET `token` = UUID()
   WHERE `token` = '' OR `token` IS NULL;

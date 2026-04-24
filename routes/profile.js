@@ -278,7 +278,11 @@ router.get('/events/:id/badge', requireAuth, async (req, res) => {
     }
 
     // Génère le QR code (data URL PNG) encodant l'URL de vérification
-    const verifyUrl = `${req.protocol}://${req.get('host')}/moderator/verify/${registration.token}`;
+    // Utilise APP_URL si défini (production), sinon construit l'URL depuis la requête
+    const baseUrl = process.env.APP_URL
+      ? process.env.APP_URL.replace(/\/$/, '')
+      : `${req.protocol}://${req.get('host')}`;
+    const verifyUrl = `${baseUrl}/moderator/verify/${registration.token}`;
     const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
       width:          300,
       margin:         2,
