@@ -30,6 +30,8 @@ describe('Routes - Tests d\'intégration', function () {
     dbModule.pool = poolStub;
     poolStub.execute.reset();
     poolStub.execute.resolves([[]]); // résultat par défaut : liste vide
+    app.locals.databaseReady = true;
+    app.locals.databaseError = null;
   });
 
   // ── Page d'accueil ─────────────────────────────────────────────────────
@@ -40,6 +42,16 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.status).to.equal(200);
       expect(res.headers['content-type']).to.match(/text\/html/);
       expect(res.text).to.include('LANPartyManager');
+    });
+
+    it('doit retourner 503 si la base de donnees est indisponible', async function () {
+      app.locals.databaseReady = false;
+
+      const res = await request(app).get('/');
+
+      expect(res.status).to.equal(503);
+      expect(res.text).to.include('503');
+      expect(res.text).to.include('Service temporairement indisponible');
     });
 
     it('doit inclure les en-têtes de sécurité Helmet', async function () {
@@ -158,6 +170,30 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.status).to.equal(200);
       expect(res.headers['content-type']).to.match(/text\/html/);
       expect(res.text).to.include('Actualités');
+    });
+  });
+
+  describe('GET /health', function () {
+    it('doit retourner 200 quand la base est disponible', async function () {
+      const res = await request(app).get('/health');
+
+      expect(res.status).to.equal(200);
+      expect(res.body).to.deep.equal({
+        status:   'ok',
+        database: 'up',
+      });
+    });
+
+    it('doit retourner 503 quand la base est indisponible', async function () {
+      app.locals.databaseReady = false;
+
+      const res = await request(app).get('/health');
+
+      expect(res.status).to.equal(503);
+      expect(res.body).to.deep.equal({
+        status:   'degraded',
+        database: 'down',
+      });
     });
   });
 
