@@ -28,18 +28,14 @@
   "forwardPorts": [3000, 3306, 8081],
   "portsAttributes": {
     "3000": {
-      // "public" = accessible sans authentification GitHub depuis n'importe quel navigateur
       "label": "LANPartyManager",
-      "onAutoForward": "openPreview",
       "visibility": "public"
     },
     "3306": {
-      // "private" = accessible seulement au sein du Codespace (VS Code MySQL Client)
       "label": "MySQL",
       "visibility": "private"
     },
     "8081": {
-      // Adminer (interface web SQL) — garder en prive
       "label": "Adminer",
       "visibility": "private"
     }
@@ -56,7 +52,9 @@
         // Coloration syntaxique EJS
         "digitalbrainstem.javascript-ejs-support",
         // Visualisation des fichiers de log
-        "Tyriar.log-data-highlighter"
+        "Tyriar.log-data-highlighter",
+        // Support Docker Compose (facilite la navigation dans docker-compose.yml)
+        "ms-azuretools.vscode-containers"
       ],
       "settings": {
         "editor.tabSize": 2,
