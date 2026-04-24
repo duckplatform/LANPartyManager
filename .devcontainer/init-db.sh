@@ -6,7 +6,8 @@
 # Ce script :
 #   1. Attend que MySQL soit prêt à accepter des connexions
 #   2. Crée la base de données si elle n'existe pas
-#   3. Importe le schéma + le compte admin par défaut
+#   3. Importe le schéma de base (install.sql)
+#   4. Applique toutes les migrations (database/migrations/*.sql)
 #
 # Les variables DB_* sont injectées par docker-compose.yml
 # ============================================================
@@ -22,6 +23,7 @@ DB_NAME="${DB_NAME:-lanpartymanager}"
 
 WORKSPACE="/workspace"
 SQL_INSTALL="${WORKSPACE}/database/install.sql"
+MIGRATIONS_DIR="${WORKSPACE}/database/migrations"
 
 # ── Couleurs pour la console ─────────────────────────────────
 GREEN='\033[0;32m'
@@ -99,7 +101,31 @@ mysql_cmd "${DB_NAME}" < "${SQL_INSTALL}"
 
 echo -e "${GREEN}✔ Schéma importé avec succès.${NC}"
 
-# ── 4. Résumé ────────────────────────────────────────────────
+# ── 4. Application des migrations ───────────────────────────
+echo ""
+echo "🔄 Application des migrations depuis ${MIGRATIONS_DIR}..."
+
+if [ -d "${MIGRATIONS_DIR}" ]; then
+  MIGRATION_COUNT=0
+  for migration_file in $(ls -1 "${MIGRATIONS_DIR}"/*.sql 2>/dev/null | sort); do
+    migration_name=$(basename "${migration_file}")
+    echo "   → ${migration_name}"
+    # Les erreurs MySQL (ex. colonne déjà existante) sont ignorées
+    # pour rendre le script idempotent sur un schéma déjà à jour
+    if MYSQL_PWD="${DB_PASSWORD}" mysql -h "${DB_HOST}" -P "${DB_PORT}" \
+        -u "${DB_USER}" "${DB_NAME}" < "${migration_file}" 2>/dev/null; then
+      echo -e "   ${GREEN}✔ Appliquée.${NC}"
+    else
+      echo -e "   ${YELLOW}⚠ Ignorée (déjà appliquée ou erreur non bloquante).${NC}"
+    fi
+    MIGRATION_COUNT=$((MIGRATION_COUNT + 1))
+  done
+  echo -e "${GREEN}✔ ${MIGRATION_COUNT} migration(s) traitée(s).${NC}"
+else
+  echo -e "${YELLOW}⚠ Dossier migrations introuvable, étape ignorée.${NC}"
+fi
+
+# ── 5. Résumé ────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}  ✅ Environnement Codespace prêt !                   ${NC}"
