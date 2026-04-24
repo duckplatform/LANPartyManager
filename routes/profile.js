@@ -255,55 +255,42 @@ router.post('/events/:id/unregister', requireAuth, async (req, res) => {
   return res.redirect('/profile');
 });
 
-// ─── GET /profile/events/:id/badge ────────────────────────────────────────
-// Affiche le badge électronique (billet QR) pour l'inscription à un événement
+// ─── GET /profile/badge ───────────────────────────────────────────────────
+// Badge de membre : QR code permanent lié à l'utilisateur.
+// Accessible à tout moment, indépendant des événements.
 
-router.get('/events/:id/badge', requireAuth, async (req, res) => {
-  const eventId = parseInt(req.params.id, 10);
-
+router.get('/badge', requireAuth, async (req, res) => {
   try {
-    const [user, registration] = await Promise.all([
-      User.findById(req.session.userId),
-      EventRegistration.findByEventAndUser(eventId, req.session.userId),
-    ]);
+    let user = await User.findById(req.session.userId);
 
     if (!user) {
       req.session.destroy(() => {});
       return res.redirect('/auth/login');
     }
 
-    if (!registration) {
-      req.flash('error', 'Vous n\'êtes pas inscrit à cet événement.');
-      return res.redirect('/profile');
+    // Génère le badge_token si absent (migration partielle ou compte ancien)
+    if (!user.badge_token) {
+      user.badge_token = await User.ensureBadgeToken(user.id);
     }
 
-    // Génère le QR code (data URL PNG) encodant l'URL de vérification
-    // Utilise APP_URL si défini (production), sinon construit l'URL depuis la requête
-    const baseUrl = process.env.APP_URL
-      ? process.env.APP_URL.replace(/\/$/, '')
-      : `${req.protocol}://${req.get('host')}`;
-    const verifyUrl = `${baseUrl}/moderator/verify/${registration.token}`;
-    const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-      width:          300,
-      margin:         2,
-      color: {
-        dark:  '#0f172a',
-        light: '#ffffff',
-      },
+    // Le QR code encode uniquement le badge_token de l'utilisateur.
+    // La vérification côté modérateur contrôlera l'inscription à l'événement.
+    const qrDataUrl = await QRCode.toDataURL(user.badge_token, {
+      width:  300,
+      margin: 2,
+      color: { dark: '#0f172a', light: '#ffffff' },
     });
 
-    logger.info(`[PROFILE] Utilisateur #${req.session.userId} consulte son badge pour l'événement #${eventId}`);
+    logger.info(`[PROFILE] Utilisateur #${req.session.userId} consulte son badge de membre`);
 
     res.render('badge', {
-      title:        `Badge — ${registration.nom}`,
-      pageClass:    'page-badge',
+      title:     'Mon badge de membre',
+      pageClass: 'page-badge',
       user,
-      registration,
       qrDataUrl,
-      verifyUrl,
     });
   } catch (err) {
-    logger.error(`[PROFILE] Erreur badge événement #${eventId} :`, err);
+    logger.error('[PROFILE] Erreur chargement badge de membre :', err);
     req.flash('error', 'Erreur lors du chargement du badge.');
     return res.redirect('/profile');
   }

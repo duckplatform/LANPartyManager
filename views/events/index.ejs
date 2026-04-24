@@ -1,0 +1,171 @@
+<%- include('../partials/head') %>
+
+<div class="container" style="padding-top: var(--space-xl); padding-bottom: var(--space-xxl);">
+
+  <!-- En-tête de page -->
+  <div style="text-align:center; margin-bottom: var(--space-xl);">
+    <h1 class="section-title">
+      <i class="fas fa-calendar-days"></i> Événements à venir
+    </h1>
+    <p class="text-muted" style="max-width:600px; margin: 0 auto;">
+      Retrouvez tous nos prochains événements. Connectez-vous pour vous inscrire et recevoir votre billet électronique.
+    </p>
+  </div>
+
+  <% if (events.length === 0) { %>
+    <!-- Aucun événement -->
+    <div class="card" style="text-align:center; padding: var(--space-xxl);">
+      <div style="font-size:3rem; color:var(--color-text-muted); margin-bottom:var(--space-md);">
+        <i class="fas fa-calendar-xmark"></i>
+      </div>
+      <h2 style="color:var(--color-text-muted);">Aucun événement planifié</h2>
+      <p class="text-muted">Revenez prochainement, de nouveaux événements seront annoncés bientôt !</p>
+      <a href="/news" class="btn btn--primary" style="margin-top:var(--space-md);">
+        <i class="fas fa-newspaper"></i> Voir les actualités
+      </a>
+    </div>
+
+  <% } else { %>
+    <div class="events-grid">
+      <% events.forEach(function(event) {
+        const dateObj   = new Date(event.date_heure);
+        const dateFr    = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const timeFr    = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+        const isLive    = event.statut === 'en_cours';
+        const isPast    = dateObj <= new Date() && !isLive;
+        const regCount  = parseInt(event.registrationCount, 10) || 0;
+        const deadlineISO = dateObj.toISOString();
+      %>
+      <article class="event-card<%= isLive ? ' event-card--live' : '' %>">
+
+        <!-- Statut -->
+        <div class="event-card-status">
+          <% if (isLive) { %>
+            <span class="event-status-badge event-status--live">
+              <i class="fas fa-circle-play"></i> En cours
+            </span>
+          <% } else { %>
+            <span class="event-status-badge event-status--upcoming">
+              <i class="fas fa-calendar-check"></i> Planifié
+            </span>
+          <% } %>
+        </div>
+
+        <!-- Corps -->
+        <div class="event-card-body">
+          <h2 class="event-card-title">
+            <i class="fas fa-gamepad"></i> <%= event.nom %>
+          </h2>
+
+          <ul class="event-card-meta">
+            <li>
+              <i class="fas fa-calendar-alt"></i>
+              <%= dateFr %> à <%= timeFr %>
+            </li>
+            <li>
+              <i class="fas fa-location-dot"></i> <%= event.lieu %>
+            </li>
+            <li>
+              <i class="fas fa-users"></i>
+              <%= regCount %> inscrit<%= regCount !== 1 ? 's' : '' %>
+            </li>
+          </ul>
+
+          <!-- Compte à rebours si inscriptions ouvertes -->
+          <% if (event.registrationOpen && !isLive) { %>
+            <div class="event-countdown-wrap" style="margin-top:var(--space-sm);">
+              <p class="event-countdown-label" style="font-size:.8rem;">
+                <i class="fas fa-hourglass-half"></i> Inscriptions ouvertes — fermeture dans :
+              </p>
+              <div class="event-countdown event-countdown--sm"
+                   data-deadline="<%= deadlineISO %>">
+                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">j</span></div>
+                <span class="countdown-sep">:</span>
+                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">h</span></div>
+                <span class="countdown-sep">:</span>
+                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">min</span></div>
+                <span class="countdown-sep">:</span>
+                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">s</span></div>
+              </div>
+            </div>
+          <% } else if (!event.registrationOpen && !isLive) { %>
+            <p class="event-registrations-closed" style="margin-top:var(--space-sm);font-size:.85rem;">
+              <i class="fas fa-lock"></i> Inscriptions closes
+            </p>
+          <% } %>
+        </div>
+
+        <!-- Actions -->
+        <div class="event-card-actions">
+          <% if (!currentUser) { %>
+            <a href="/auth/login?redirect=/events" class="btn btn--primary btn--sm">
+              <i class="fas fa-right-to-bracket"></i> Connexion pour s'inscrire
+            </a>
+          <% } else if (event.isRegistered) { %>
+            <div class="event-registered-badge" style="font-size:.9rem;">
+              <i class="fas fa-circle-check"></i> Inscrit
+            </div>
+            <% if (event.registrationOpen && !isLive) { %>
+              <form action="/events/<%= event.id %>/unregister" method="POST" style="display:inline;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                <button type="submit" class="btn btn--ghost btn--xs"
+                        onclick="return confirm('Annuler votre inscription à « <%= event.nom.replace(/'/g, '\\\'') %> » ?')">
+                  <i class="fas fa-user-minus"></i> Se désinscrire
+                </button>
+              </form>
+            <% } %>
+            <a href="/profile" class="btn btn--ghost btn--xs" title="Voir mon billet">
+              <i class="fas fa-ticket"></i> Mon billet
+            </a>
+          <% } else if (event.registrationOpen) { %>
+            <form action="/events/<%= event.id %>/register" method="POST" style="display:inline;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+              <button type="submit" class="btn btn--primary btn--sm">
+                <i class="fas fa-user-plus"></i> S'inscrire
+              </button>
+            </form>
+          <% } else { %>
+            <span class="text-muted" style="font-size:.85rem; display:flex; align-items:center; gap:.4rem;">
+              <i class="fas fa-lock"></i> Inscriptions fermées
+            </span>
+          <% } %>
+        </div>
+
+      </article>
+      <% }); %>
+    </div>
+  <% } %>
+
+</div>
+
+<script>
+/* ── Comptes à rebours des cartes événements ── */
+(function () {
+  'use strict';
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  document.querySelectorAll('.event-countdown--sm').forEach(function (el) {
+    const deadline = new Date(el.dataset.deadline).getTime();
+    const nums = el.querySelectorAll('.countdown-num');
+    if (nums.length < 4) return;
+
+    function tick() {
+      const diff = deadline - Date.now();
+      if (diff <= 0) {
+        el.parentElement.innerHTML =
+          '<p class="event-registrations-closed" style="font-size:.85rem;"><i class="fas fa-lock"></i> Inscriptions closes</p>';
+        return;
+      }
+      nums[0].textContent = Math.floor(diff / 86400000);
+      nums[1].textContent = pad(Math.floor((diff % 86400000) / 3600000));
+      nums[2].textContent = pad(Math.floor((diff % 3600000)  / 60000));
+      nums[3].textContent = pad(Math.floor((diff % 60000)    / 1000));
+      setTimeout(tick, 1000);
+    }
+    tick();
+  });
+}());
+</script>
+
+<%- include('../partials/foot') %>

@@ -13,6 +13,10 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="/css/style.css" />
   <link rel="stylesheet" href="/css/badge.css" />
+  <!-- html2canvas : capture badge → image/PDF (fallback iOS) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+          integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body class="page-badge">
 
@@ -21,7 +25,7 @@
     <a href="/profile" class="btn btn--ghost btn--sm">
       <i class="fas fa-arrow-left"></i> Retour au profil
     </a>
-    <button onclick="window.print()" class="btn btn--primary btn--sm">
+    <button id="btnPdf" class="btn btn--primary btn--sm">
       <i class="fas fa-print"></i> Imprimer / Sauvegarder en PDF
     </button>
   </div>
@@ -36,31 +40,10 @@
           <i class="fas fa-gamepad"></i>
           <span>LAN<span class="badge-logo-accent">Party</span>Manager</span>
         </div>
-        <div class="badge-tag">BILLET OFFICIEL</div>
+        <div class="badge-tag">BADGE MEMBRE</div>
       </div>
 
-      <!-- Nom de l'événement -->
-      <div class="badge-event-name">
-        <%= registration.nom %>
-      </div>
-
-      <!-- Date et lieu -->
-      <div class="badge-event-details">
-        <span>
-          <i class="fas fa-calendar-alt"></i>
-          <%= new Date(registration.date_heure).toLocaleDateString('fr-FR', {
-            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-          }) %>
-          à
-          <%= new Date(registration.date_heure).toLocaleTimeString('fr-FR', {
-            hour: '2-digit', minute: '2-digit'
-          }) %>
-        </span>
-        <span>
-          <i class="fas fa-location-dot"></i>
-          <%= registration.lieu %>
-        </span>
-      </div>
+      <!-- Bloc événement supprimé : le badge est propre au membre, pas à un événement -->
 
       <!-- Séparateur -->
       <div class="badge-divider">
@@ -69,7 +52,7 @@
         <span class="badge-divider-dot"></span>
       </div>
 
-      <!-- Infos joueur + QR Code -->
+      <!-- Infos membre + QR Code -->
       <div class="badge-body">
         <div class="badge-player">
           <div class="badge-player-avatar">
@@ -91,24 +74,80 @@
         </div>
 
         <div class="badge-qr">
-          <img src="<%= qrDataUrl %>" alt="QR Code de vérification" class="badge-qr-img" />
-          <p class="badge-qr-hint">Scanner pour vérifier</p>
+          <img src="<%= qrDataUrl %>" alt="QR Code badge membre" class="badge-qr-img" />
+          <p class="badge-qr-hint">Scanner à l'entrée</p>
         </div>
       </div>
 
       <!-- Pied du badge -->
       <div class="badge-footer">
         <div class="badge-id">
-          <span class="badge-id-label">ID Billet</span>
-          <span class="badge-id-value"><%= registration.token %></span>
+          <span class="badge-id-label">ID Membre</span>
+          <span class="badge-id-value"><%= user.badge_token %></span>
         </div>
         <div class="badge-registered-date">
-          <span>Inscrit le <%= new Date(registration.created_at).toLocaleDateString('fr-FR') %></span>
+          <span>Membre depuis <%= new Date(user.created_at).toLocaleDateString('fr-FR') %></span>
         </div>
       </div>
 
     </div>
   </div>
 
+<script>
+(function () {
+  /* Détecte iOS Safari (window.print désactivé sur iOS) */
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  document.getElementById('btnPdf').addEventListener('click', function () {
+    if (!isIOS) {
+      /* Desktop / Android Chrome : impression native → Enregistrer en PDF */
+      window.print();
+      return;
+    }
+
+    /* iOS : capture la carte via html2canvas puis partage ou ouvre en image */
+    var btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération…';
+
+    var card = document.querySelector('.badge-card');
+
+    html2canvas(card, {
+      backgroundColor: '#1e293b',
+      scale: 2,               /* résolution x2 pour les écrans Retina */
+      useCORS: true,
+      logging: false
+    }).then(function (canvas) {
+      canvas.toBlob(function (blob) {
+        var file = new File([blob], 'badge-lan.png', { type: 'image/png' });
+
+        /* Web Share API niveau 2 (fichiers) — disponible sur iOS 15+ */
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({
+            title: document.title,
+            files: [file]
+          }).catch(function () { /* annulé par l'utilisateur */ });
+        } else {
+          /* Fallback : ouvrir l'image dans un nouvel onglet → Appui long → Enregistrer */
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'badge-lan.png';
+          a.click();
+          setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+        }
+
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-print"></i> Imprimer / Sauvegarder en PDF';
+      }, 'image/png');
+    }).catch(function (err) {
+      console.error('[Badge] html2canvas error :', err);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-print"></i> Imprimer / Sauvegarder en PDF';
+      alert('Impossible de générer le badge. Essayez via Partager > Enregistrer l\'image depuis votre navigateur.');
+    });
+  });
+}());
+</script>
 </body>
 </html>

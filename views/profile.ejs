@@ -32,12 +32,10 @@
             role="tab" data-tab="tab-events" aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'events') ? 'true' : 'false' %>">
       <i class="fas fa-calendar-days"></i> Événements
     </button>
-    <% if (isRegistered && activeEvent) { %>
     <button class="tab-btn<%= (typeof activeTab !== 'undefined' && activeTab === 'badge') ? ' active' : '' %>"
             role="tab" data-tab="tab-badge" aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'badge') ? 'true' : 'false' %>">
-      <i class="fas fa-ticket"></i> Mon badge
+      <i class="fas fa-id-card"></i> Mon badge
     </button>
-    <% } %>
   </div>
 
   <!-- Erreurs de validation -->
@@ -274,33 +272,32 @@
 
   </div>
 
-  <!-- Panneau : Badge électronique -->
-  <% if (isRegistered && activeEvent) { %>
+  <!-- Panneau : Badge de membre -->
   <div id="tab-badge" class="tab-panel<%= (typeof activeTab !== 'undefined' && activeTab === 'badge') ? ' active' : '' %>" role="tabpanel">
     <div class="card">
       <div class="card-header">
-        <h2><i class="fas fa-ticket"></i> Mon badge électronique</h2>
+        <h2><i class="fas fa-id-card"></i> Mon badge de membre</h2>
       </div>
       <div class="card-body" style="text-align: center; padding: var(--space-xl);">
-        <div class="event-registered-badge" style="justify-content: center; margin-bottom: var(--space-md);">
-          <i class="fas fa-circle-check"></i> Inscrit à : <strong><%= activeEvent.nom %></strong>
-        </div>
         <p class="form-hint" style="margin-bottom: var(--space-lg);">
-          Votre badge électronique contient un QR code unique. Présentez-le à l'entrée de l'événement pour validation.
+          <i class="fas fa-circle-info"></i>
+          Votre badge de membre contient un QR code unique et personnel.
+          Présentez-le à l'entrée de chaque événement auquel vous êtes inscrit.
         </p>
-        <a href="/profile/events/<%= activeEvent.id %>/badge" class="btn btn--primary">
-          <i class="fas fa-ticket"></i> Afficher mon badge
-        </a>
-        <a href="/profile/events/<%= activeEvent.id %>/badge" target="_blank" class="btn btn--ghost" style="margin-left: var(--space-sm);">
-          <i class="fas fa-external-link-alt"></i> Ouvrir dans un nouvel onglet
-        </a>
+        <div style="display: flex; gap: var(--space-sm); justify-content: center; flex-wrap: wrap;">
+          <a href="/profile/badge" class="btn btn--primary">
+            <i class="fas fa-id-card"></i> Voir mon badge
+          </a>
+          <a href="/profile/badge" target="_blank" class="btn btn--ghost">
+            <i class="fas fa-external-link-alt"></i> Ouvrir dans un nouvel onglet
+          </a>
+        </div>
         <p class="form-hint" style="margin-top: var(--space-md);">
-          <i class="fas fa-print"></i> Vous pouvez imprimer ou sauvegarder ce badge en PDF depuis la page du badge.
+          <i class="fas fa-print"></i> Imprimez ou sauvegardez en PDF depuis la page du badge.
         </p>
       </div>
     </div>
   </div>
-  <% } %>
 
   <!-- Infos compte -->
   <div class="card profile-meta-card">

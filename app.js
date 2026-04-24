@@ -51,7 +51,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc:  ["'self'"],
-      scriptSrc:   ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'],
+      scriptSrc:   ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com', 'https://cdn.jsdelivr.net'],
       styleSrc:    ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
       fontSrc:     ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
       imgSrc:      ["'self'", 'data:', 'https:'],
@@ -155,6 +155,7 @@ app.use((req, res, next) => {
 
 app.use('/',          require('./routes/index'));
 app.use('/auth',      require('./routes/auth'));
+app.use('/events',    require('./routes/events'));
 app.use('/profile',   require('./routes/profile'));
 app.use('/admin',     require('./routes/admin'));
 app.use('/moderator', require('./routes/moderator'));

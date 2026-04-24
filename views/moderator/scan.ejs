@@ -1,6 +1,49 @@
 <%- include('../partials/head') %>
 
-<div class="container admin-container">
+<style>
+  @media (max-width: 768px) {
+    .scan-page.admin-container {
+      padding-top: var(--space-md);
+      padding-left: var(--space-sm);
+      padding-right: var(--space-sm);
+    }
+
+    .scan-page .admin-title {
+      font-size: 1.2rem;
+    }
+
+    .scan-page .scan-form {
+      flex-direction: column;
+      align-items: stretch !important;
+    }
+
+    .scan-page .scan-form .form-input,
+    .scan-page .scan-form .btn {
+      width: 100%;
+      max-width: none !important;
+      justify-content: center;
+    }
+
+    .scan-page #scanOverlay {
+      max-width: 100% !important;
+    }
+
+    .scan-page #scanVideo {
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      background: transparent !important;
+    }
+
+    .scan-page .scan-visor {
+      box-shadow: none !important;
+      width: 160px !important;
+      height: 160px !important;
+      border-width: 2px !important;
+    }
+  }
+</style>
+
+<div class="container admin-container scan-page">
 
   <!-- En-tête -->
   <div class="admin-header">
@@ -27,29 +70,58 @@
     </div>
   </div>
 
-  <!-- Vérification manuelle par token -->
+  <!-- Vérification par token (manuel ou scan caméra) -->
   <div class="card" style="margin-bottom: var(--space-lg);">
     <div class="card-header">
-      <h2><i class="fas fa-search"></i> Vérifier un billet manuellement</h2>
+      <h2><i class="fas fa-search"></i> Vérifier un billet</h2>
     </div>
     <div class="card-body">
       <p class="form-hint" style="margin-bottom: var(--space-md);">
-        Saisissez le token UUID du billet ou utilisez un lecteur QR code pour accéder directement à la page de vérification.
+        Saisissez l'ID billet manuellement ou cliquez sur <strong><i class="fas fa-camera"></i> Scanner</strong>
+        pour remplir automatiquement le champ depuis le QR code.
       </p>
-      <form action="/moderator/verify" method="POST" class="inline-form" style="display:flex;gap:.5rem;flex-wrap:wrap;">
+
+      <!-- Formulaire de saisie / soumission -->
+      <form id="verifyForm" action="/moderator/verify" method="POST" class="scan-form"
+            style="display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;">
         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+        <input type="hidden" name="returnTo" value="/moderator/events/<%= event.id %>/scan" />
+        <input type="hidden" name="eventId" value="<%= event.id %>" />
         <input type="text"
+               id="tokenInput"
                name="token"
                class="form-input"
-               style="max-width: 380px; font-family: monospace;"
-               placeholder="xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-               pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
-               title="Format UUID v4 attendu (ex: 550e8400-e29b-41d4-a716-446655440000)"
+               style="max-width:380px; font-family:monospace;"
+               placeholder="Badge membre (QR code)"
+               title="Badge membre"
+               autocomplete="off"
                required />
+        <button type="button" id="btnCamera" class="btn btn--ghost btn--sm" title="Scanner avec la caméra">
+          <i class="fas fa-camera"></i> Scanner
+        </button>
         <button type="submit" class="btn btn--primary btn--sm">
           <i class="fas fa-check-circle"></i> Vérifier
         </button>
       </form>
+
+      <!-- Overlay caméra (masqué par défaut) -->
+      <div id="scanOverlay" style="display:none; margin-top:var(--space-md); position:relative; max-width:480px;">
+        <video id="scanVideo" autoplay playsinline muted
+               style="width:100%; border-radius:8px; background:#000; display:block;"></video>
+        <canvas id="scanCanvas" style="display:none;"></canvas>
+        <!-- Viseur -->
+        <div class="scan-visor" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+              width:200px;height:200px;border:3px solid var(--color-primary);
+              border-radius:8px;pointer-events:none;">
+        </div>
+        <p style="text-align:center;margin-top:.4rem;color:var(--color-text-muted);font-size:.82rem;">
+          <i class="fas fa-qrcode"></i> Pointez le QR code dans le cadre — l'ID du billet sera recopié dans le champ
+        </p>
+        <button type="button" onclick="stopCamera()" class="btn btn--ghost btn--xs"
+                style="margin-top:.4rem;">
+          <i class="fas fa-times"></i> Annuler
+        </button>
+      </div>
     </div>
   </div>
 
@@ -67,13 +139,12 @@
               <th>Nom complet</th>
               <th>Email</th>
               <th>Inscrit le</th>
-              <th>Billet</th>
             </tr>
           </thead>
           <tbody>
             <% if (registrations.length === 0) { %>
               <tr>
-                <td colspan="5" class="table-empty">
+                <td colspan="4" class="table-empty">
                   <i class="fas fa-inbox"></i> Aucun inscrit pour le moment.
                 </td>
               </tr>
@@ -90,11 +161,6 @@
                   <td class="td-date">
                     <%= new Date(r.created_at).toLocaleDateString('fr-FR') %>
                   </td>
-                  <td>
-                    <a href="/moderator/verify/<%= r.token %>" class="btn btn--xs btn--info" title="Vérifier le billet">
-                      <i class="fas fa-ticket"></i> Vérifier
-                    </a>
-                  </td>
                 </tr>
               <% }); %>
             <% } %>
@@ -105,5 +171,142 @@
   </div>
 
 </div>
+
+<!-- jsQR : décodage QR côté client (aucune donnée envoyée à un tiers) -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"
+        crossorigin="anonymous"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  const tokenInput = document.getElementById('tokenInput');
+  const btnCamera  = document.getElementById('btnCamera');
+  const overlay    = document.getElementById('scanOverlay');
+  const video      = document.getElementById('scanVideo');
+  const canvas     = document.getElementById('scanCanvas');
+  const ctx        = canvas.getContext('2d', { willReadFrequently: true });
+
+  let stream = null;
+  let rafId  = null;
+  let detector = null;
+
+  if ('BarcodeDetector' in window) {
+    try {
+      detector = new BarcodeDetector({ formats: ['qr_code'] });
+    } catch (_) {
+      detector = null;
+    }
+  }
+
+  // -- Ouvre la caméra au clic sur "Scanner" -------------------------------
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    btnCamera.addEventListener('click', startCamera);
+  } else {
+    // Caméra non disponible (HTTP ou navigateur non supporté)
+    btnCamera.disabled = true;
+    btnCamera.title    = 'Caméra non disponible (HTTPS requis)';
+  }
+
+  async function startCamera() {
+    try {
+      if (stream) {
+        stopCamera();
+      }
+
+      if (!detector && typeof window.jsQR !== 'function') {
+        alert('Détection QR indisponible : la bibliothèque de scan est bloquée ou absente.');
+        return;
+      }
+
+      // Préférer la caméra arrière sur mobile, webcam sur PC
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } }
+      });
+      video.srcObject = stream;
+      await video.play();
+      overlay.style.display = 'block';
+      document.body.classList.add('scan-active');
+      rafId = requestAnimationFrame(scanFrame);
+    } catch (err) {
+      alert('Impossible d\'accéder à la caméra : ' + err.message);
+    }
+  }
+
+  // -- Boucle de décodage --------------------------------------------------
+  async function scanFrame() {
+    if (!stream) return;
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width  = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0);
+
+      // 1) Détection native (souvent meilleure sur mobile)
+      if (detector) {
+        try {
+          const barcodes = await detector.detect(canvas);
+          if (barcodes && barcodes.length > 0) {
+            const raw = barcodes[0].rawValue || '';
+            const token = extractTicketId(raw);
+            if (token) {
+              stopCamera();
+              tokenInput.value = token;
+              tokenInput.focus();
+              return;
+            }
+          }
+        } catch (_) {
+          // ignore et fallback jsQR
+        }
+      }
+
+      // 2) Fallback jsQR
+      if (typeof window.jsQR === 'function') {
+        const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const code = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
+
+        if (code && code.data) {
+          const token = extractTicketId(code.data);
+          if (token) {
+            // ID détecté : remplir le champ uniquement, puis laisser le modérateur valider.
+            stopCamera();
+            tokenInput.value = token;
+            tokenInput.focus();
+            return;
+          }
+        }
+      }
+    }
+
+    rafId = requestAnimationFrame(scanFrame);
+  }
+
+  // -- Arrêt de la caméra --------------------------------------------------
+  window.stopCamera = function () {
+    if (rafId)  { cancelAnimationFrame(rafId); rafId = null; }
+    if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+    overlay.style.display = 'none';
+    document.body.classList.remove('scan-active');
+  };
+
+  // -- Extrait l'ID billet depuis la valeur brute du QR --------------------
+  // Cas attendu : QR contenant directement l'ID (token).
+  // Compatibilité maintenue avec d'anciens QR contenant une URL.
+  function extractTicketId(raw) {
+    raw = raw.trim();
+    if (!raw) return null;
+    if (!raw.includes('http://') && !raw.includes('https://')) return raw;
+
+    try {
+      const parts = new URL(raw).pathname.split('/');
+      const idx   = parts.findIndex(p => p === 'verify' || p === 'badge' || p === 'ticket');
+      if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
+    } catch (_) {}
+
+    return null;
+  }
+}());
+</script>
 
 <%- include('../partials/foot') %>

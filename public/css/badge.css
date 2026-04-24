@@ -295,6 +295,81 @@ body.page-badge {
   flex-shrink: 0;
 }
 
+/* ── Responsive mobile ──────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  :root {
+    --badge-width: 100%;
+  }
+
+  body.page-badge {
+    padding: 1rem 0.75rem;
+  }
+
+  /* Corps : empile joueur + QR en colonne centrée */
+  .badge-body {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1rem 1.25rem 1.25rem;
+  }
+
+  .badge-player {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .badge-player-avatar {
+    font-size: 2.5rem;
+  }
+
+  .badge-player-pseudo {
+    font-size: 1rem;
+  }
+
+  /* QR centré et légèrement réduit */
+  .badge-qr {
+    width: 100%;
+  }
+
+  .badge-qr-img {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto;
+  }
+
+  /* Pied de badge : empile en colonne */
+  .badge-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .badge-registered-date {
+    text-align: left;
+  }
+
+  .badge-id-value {
+    max-width: 100%;
+  }
+
+  /* En-tête : réduit légèrement */
+  .badge-event-name {
+    font-size: 1.05rem;
+    padding: 1rem 1.25rem 0.4rem;
+  }
+
+  .badge-event-details {
+    padding: 0 1.25rem 0.75rem;
+  }
+
+  .badge-header {
+    padding: 1rem 1.25rem;
+  }
+}
+
 /* ── Styles impression ──────────────────────────────────────────────────── */
 
 @media print {

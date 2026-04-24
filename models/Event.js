@@ -60,6 +60,27 @@ const Event = {
   },
 
   /**
+   * Retourne tous les événements visibles publiquement (planifiés + en cours)
+   * avec leur nombre d'inscrits, triés par date ASC (les plus proches en premier).
+   * Inclut tous les événements planifiés, même ceux non mis en avant sur la home.
+   * @returns {Promise<Array>}
+   */
+  async findAllPublic() {
+    const [rows] = await db.pool.execute(
+      `SELECT e.id, e.nom, e.date_heure, e.lieu, e.statut,
+              COUNT(er.id) AS registrationCount
+         FROM events e
+         LEFT JOIN event_registrations er ON er.event_id = e.id
+        WHERE e.statut IN ('planifie', 'en_cours')
+        GROUP BY e.id
+        ORDER BY
+          CASE e.statut WHEN 'en_cours' THEN 0 ELSE 1 END ASC,
+          e.date_heure ASC`
+    );
+    return rows;
+  },
+
+  /**
    * Crée un nouvel événement.
    * @param {{ nom: string, date_heure: string, lieu: string, statut?: string }} data
    * @returns {Promise<number>} ID du nouvel événement
