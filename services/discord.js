@@ -214,13 +214,19 @@ async function notifyNewsPublished(announcement) {
   const { appUrl, channelNews } = getConfig();
   const newsUrl = appUrl ? `${appUrl}/news/${announcement.id}` : null;
 
-  // Tronque le contenu Markdown pour le résumé Discord (max 300 caractères)
-  let description = (announcement.contenu || '').replace(/[#*_~`>[\]!]/g, '').trim();
+  // Nettoie le contenu Markdown pour le résumé Discord (max 300 caractères) :
+  //   1. Convertit les liens [texte](url) en conservant uniquement le texte
+  //   2. Supprime les symboles Markdown restants
+  let description = (announcement.contenu || '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // [texte](url) → texte
+    .replace(/[#*_~`>!]/g, '')               // titres, gras, italic, barré, code, blockquote, images
+    .replace(/\s+/g, ' ')                    // normalise les espaces multiples
+    .trim();
   if (description.length > 300) {
     description = description.slice(0, 297) + '…';
   }
   if (!description) {
-    description = '*Pas de résumé disponible.*';
+    description = 'Pas de résumé disponible.';
   }
 
   const embed = {

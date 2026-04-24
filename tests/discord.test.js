@@ -215,9 +215,9 @@ describe('Discord Service', function () {
       await discord.notifyNewsPublished(announcement);
 
       const embed = postCalls[0].options.body.embeds[0];
-      // La description contient le résumé tronqué + le lien
+      // Le résumé est tronqué à 297 caractères + '…' = 298 caractères
       const summary = embed.description.split('\n\n')[0];
-      expect(summary.length).to.be.at.most(303); // 297 + 1 (…) = 298, + marge
+      expect(summary.length).to.equal(298);
       expect(summary.endsWith('…')).to.be.true;
     });
 
@@ -232,8 +232,14 @@ describe('Discord Service', function () {
 
       const embed = postCalls[0].options.body.embeds[0];
       const summary = embed.description.split('\n\n')[0];
+      // Les symboles Markdown sont supprimés
       expect(summary).to.not.include('**');
-      expect(summary).to.not.include('_italique_');
+      expect(summary).to.not.include('_');
+      // Les liens [texte](url) sont convertis en texte brut
+      expect(summary).to.include('lien');
+      expect(summary).to.not.include('https://example.com');
+      // Le texte des emphases est conservé
+      expect(summary).to.include('italique');
     });
 
     it('doit utiliser un résumé par défaut si le contenu est vide', async function () {
