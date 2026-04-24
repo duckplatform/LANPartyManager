@@ -160,6 +160,7 @@ app.use('/profile',   require('./routes/profile'));
 app.use('/admin',     require('./routes/admin'));
 app.use('/moderator', require('./routes/moderator'));
 app.use('/news',      require('./routes/news'));
+app.use('/battles',   require('./routes/battles'));
 
 // ─── Page 404 ─────────────────────────────────────────────────────────────
 

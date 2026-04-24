@@ -12,6 +12,8 @@ const User              = require('../models/User');
 const Announcement      = require('../models/Announcement');
 const Event             = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
+const Game              = require('../models/Game');
+const Room              = require('../models/Room');
 const { renderMarkdown } = require('../config/markdown');
 const logger       = require('../config/logger');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
@@ -585,5 +587,415 @@ router.post('/events/:id/registrations/:regId/delete', async (req, res) => {
   return res.redirect(`/admin/events/${id}/registrations`);
 });
 
-module.exports = router;
+// ═══════════════════════════════════════════════════════════════════════════
+// GESTION DES JEUX (GAMES)
+// ═══════════════════════════════════════════════════════════════════════════
 
+// ─── GET /admin/games ─────────────────────────────────────────────────────
+// Liste des jeux disponibles
+
+router.get('/games', async (req, res) => {
+  try {
+    const games = await Game.findAll();
+    res.render('admin/games/index', {
+      title:     'Jeux disponibles',
+      pageClass: 'page-admin',
+      games,
+    });
+  } catch (err) {
+    logger.error('[ADMIN/GAMES] Erreur chargement jeux :', err);
+    req.flash('error', 'Erreur lors du chargement des jeux.');
+    return res.redirect('/admin');
+  }
+});
+
+// ─── GET /admin/games/create ──────────────────────────────────────────────
+// Formulaire de création d'un jeu
+
+router.get('/games/create', (req, res) => {
+  res.render('admin/games/create', {
+    title:     'Ajouter un jeu',
+    pageClass: 'page-admin',
+    errors:    [],
+    old:       {},
+    TYPES_RENCONTRE: Game.TYPES_RENCONTRE,
+  });
+});
+
+// ─── POST /admin/games ────────────────────────────────────────────────────
+// Création d'un jeu
+
+router.post(
+  '/games',
+  [
+    body('nom').trim().notEmpty().withMessage('Le nom est obligatoire.')
+      .isLength({ max: 100 }).withMessage('Le nom ne peut pas dépasser 100 caractères.'),
+    body('console').trim().notEmpty().withMessage('La console est obligatoire.')
+      .isLength({ max: 100 }).withMessage('La console ne peut pas dépasser 100 caractères.'),
+    body('type_rencontre').isIn(Game.TYPES_RENCONTRE).withMessage('Type de rencontre invalide.'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.render('admin/games/create', {
+        title:     'Ajouter un jeu',
+        pageClass: 'page-admin',
+        errors:    errors.array(),
+        old:       req.body,
+        TYPES_RENCONTRE: Game.TYPES_RENCONTRE,
+      });
+    }
+
+    try {
+      const id = await Game.create({
+        nom:            req.body.nom,
+        console:        req.body.console,
+        type_rencontre: req.body.type_rencontre,
+      });
+      logger.info(`[ADMIN/GAMES] Admin #${req.session.userId} a créé le jeu #${id} : ${req.body.nom}`);
+      req.flash('success', `Jeu "${req.body.nom}" créé avec succès.`);
+      return res.redirect('/admin/games');
+    } catch (err) {
+      logger.error('[ADMIN/GAMES] Erreur création jeu :', err);
+      req.flash('error', 'Erreur lors de la création du jeu.');
+      return res.redirect('/admin/games/create');
+    }
+  }
+);
+
+// ─── GET /admin/games/:id/edit ────────────────────────────────────────────
+// Formulaire d'édition d'un jeu
+
+router.get('/games/:id/edit', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const game = await Game.findById(id);
+    if (!game) {
+      req.flash('error', 'Jeu introuvable.');
+      return res.redirect('/admin/games');
+    }
+    res.render('admin/games/edit', {
+      title:     `Modifier — ${game.nom}`,
+      pageClass: 'page-admin',
+      game,
+      errors:    [],
+      old:       game,
+      TYPES_RENCONTRE: Game.TYPES_RENCONTRE,
+    });
+  } catch (err) {
+    logger.error(`[ADMIN/GAMES] Erreur chargement édition jeu #${id} :`, err);
+    req.flash('error', 'Erreur lors du chargement du jeu.');
+    return res.redirect('/admin/games');
+  }
+});
+
+// ─── PUT /admin/games/:id ─────────────────────────────────────────────────
+// Mise à jour d'un jeu
+
+router.put(
+  '/games/:id',
+  [
+    body('nom').trim().notEmpty().withMessage('Le nom est obligatoire.')
+      .isLength({ max: 100 }).withMessage('Le nom ne peut pas dépasser 100 caractères.'),
+    body('console').trim().notEmpty().withMessage('La console est obligatoire.')
+      .isLength({ max: 100 }).withMessage('La console ne peut pas dépasser 100 caractères.'),
+    body('type_rencontre').isIn(Game.TYPES_RENCONTRE).withMessage('Type de rencontre invalide.'),
+  ],
+  async (req, res) => {
+    const id     = parseInt(req.params.id, 10);
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      const game = await Game.findById(id).catch(() => null);
+      return res.render('admin/games/edit', {
+        title:     `Modifier — ${game ? game.nom : 'Jeu'}`,
+        pageClass: 'page-admin',
+        game:      game || { id },
+        errors:    errors.array(),
+        old:       req.body,
+        TYPES_RENCONTRE: Game.TYPES_RENCONTRE,
+      });
+    }
+
+    try {
+      const updated = await Game.update(id, {
+        nom:            req.body.nom,
+        console:        req.body.console,
+        type_rencontre: req.body.type_rencontre,
+      });
+      if (!updated) {
+        req.flash('error', 'Jeu introuvable.');
+        return res.redirect('/admin/games');
+      }
+      logger.info(`[ADMIN/GAMES] Admin #${req.session.userId} a modifié le jeu #${id}`);
+      req.flash('success', 'Jeu mis à jour.');
+      return res.redirect('/admin/games');
+    } catch (err) {
+      logger.error(`[ADMIN/GAMES] Erreur mise à jour jeu #${id} :`, err);
+      req.flash('error', 'Erreur lors de la mise à jour du jeu.');
+      return res.redirect(`/admin/games/${id}/edit`);
+    }
+  }
+);
+
+// ─── DELETE /admin/games/:id ──────────────────────────────────────────────
+// Suppression d'un jeu
+
+router.delete('/games/:id', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const deleted = await Game.delete(id);
+    if (!deleted) {
+      req.flash('error', 'Jeu introuvable.');
+    } else {
+      logger.info(`[ADMIN/GAMES] Admin #${req.session.userId} a supprimé le jeu #${id}`);
+      req.flash('success', 'Jeu supprimé.');
+    }
+  } catch (err) {
+    logger.error(`[ADMIN/GAMES] Erreur suppression jeu #${id} :`, err);
+    req.flash('error', 'Impossible de supprimer ce jeu (des rencontres y sont peut-être associées).');
+  }
+  return res.redirect('/admin/games');
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GESTION DES SALLES (ROOMS)
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ─── GET /admin/rooms ─────────────────────────────────────────────────────
+// Liste des salles (filtrée par événement si ?event_id=X)
+
+router.get('/rooms', async (req, res) => {
+  const eventId = parseInt(req.query.event_id, 10) || null;
+  try {
+    const [events, rooms] = await Promise.all([
+      Event.findAll(),
+      eventId ? Room.findByEvent(eventId) : Promise.resolve([]),
+    ]);
+    const selectedEvent = eventId ? events.find(e => e.id === eventId) || null : null;
+
+    res.render('admin/rooms/index', {
+      title:         'Salles de jeu',
+      pageClass:     'page-admin',
+      events,
+      rooms,
+      selectedEvent,
+      eventId,
+      TYPES_SALLE:      Room.TYPES_SALLE,
+      TYPES_RENCONTRE:  Room.TYPES_RENCONTRE,
+    });
+  } catch (err) {
+    logger.error('[ADMIN/ROOMS] Erreur chargement salles :', err);
+    req.flash('error', 'Erreur lors du chargement des salles.');
+    return res.redirect('/admin');
+  }
+});
+
+// ─── GET /admin/rooms/create ──────────────────────────────────────────────
+// Formulaire de création d'une salle (event_id requis en query)
+
+router.get('/rooms/create', async (req, res) => {
+  const eventId = parseInt(req.query.event_id, 10) || null;
+  try {
+    const [events, suggestedName] = await Promise.all([
+      Event.findAll(),
+      eventId ? Room.generateName(eventId) : Promise.resolve(''),
+    ]);
+    res.render('admin/rooms/create', {
+      title:    'Ajouter une salle',
+      pageClass: 'page-admin',
+      events,
+      errors:   [],
+      old:      { event_id: eventId, nom: suggestedName },
+      TYPES_SALLE:      Room.TYPES_SALLE,
+      TYPES_RENCONTRE:  Room.TYPES_RENCONTRE,
+    });
+  } catch (err) {
+    logger.error('[ADMIN/ROOMS] Erreur chargement formulaire création salle :', err);
+    req.flash('error', 'Erreur lors du chargement du formulaire.');
+    return res.redirect('/admin/rooms');
+  }
+});
+
+// ─── POST /admin/rooms ────────────────────────────────────────────────────
+// Création d'une salle
+
+router.post(
+  '/rooms',
+  [
+    body('event_id').isInt({ min: 1 }).withMessage('Événement invalide.'),
+    body('nom').trim().notEmpty().withMessage('Le nom est obligatoire.')
+      .isLength({ max: 100 }).withMessage('Le nom ne peut pas dépasser 100 caractères.'),
+    body('type').isIn(Room.TYPES_SALLE).withMessage('Type de salle invalide.'),
+    body('type_rencontre').isIn(Room.TYPES_RENCONTRE).withMessage('Type de rencontre invalide.'),
+  ],
+  async (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const events = await Event.findAll().catch(() => []);
+      return res.render('admin/rooms/create', {
+        title:    'Ajouter une salle',
+        pageClass: 'page-admin',
+        events,
+        errors:   errors.array(),
+        old:      req.body,
+        TYPES_SALLE:      Room.TYPES_SALLE,
+        TYPES_RENCONTRE:  Room.TYPES_RENCONTRE,
+      });
+    }
+
+    try {
+      const id = await Room.create({
+        nom:            req.body.nom,
+        type:           req.body.type,
+        type_rencontre: req.body.type_rencontre,
+        actif:          req.body.actif === '1' ? 1 : 0,
+        event_id:       parseInt(req.body.event_id, 10),
+      });
+      logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a créé la salle #${id} : ${req.body.nom}`);
+      req.flash('success', `Salle "${req.body.nom}" créée avec succès.`);
+      return res.redirect(`/admin/rooms?event_id=${req.body.event_id}`);
+    } catch (err) {
+      logger.error('[ADMIN/ROOMS] Erreur création salle :', err);
+      req.flash('error', 'Erreur lors de la création de la salle.');
+      return res.redirect('/admin/rooms/create');
+    }
+  }
+);
+
+// ─── GET /admin/rooms/:id/edit ────────────────────────────────────────────
+// Formulaire d'édition d'une salle
+
+router.get('/rooms/:id/edit', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const [room, events] = await Promise.all([
+      Room.findById(id),
+      Event.findAll(),
+    ]);
+    if (!room) {
+      req.flash('error', 'Salle introuvable.');
+      return res.redirect('/admin/rooms');
+    }
+    res.render('admin/rooms/edit', {
+      title:     `Modifier — ${room.nom}`,
+      pageClass: 'page-admin',
+      room,
+      events,
+      errors:    [],
+      old:       room,
+      TYPES_SALLE:      Room.TYPES_SALLE,
+      TYPES_RENCONTRE:  Room.TYPES_RENCONTRE,
+    });
+  } catch (err) {
+    logger.error(`[ADMIN/ROOMS] Erreur chargement édition salle #${id} :`, err);
+    req.flash('error', 'Erreur lors du chargement de la salle.');
+    return res.redirect('/admin/rooms');
+  }
+});
+
+// ─── PUT /admin/rooms/:id ─────────────────────────────────────────────────
+// Mise à jour d'une salle
+
+router.put(
+  '/rooms/:id',
+  [
+    body('nom').trim().notEmpty().withMessage('Le nom est obligatoire.')
+      .isLength({ max: 100 }).withMessage('Le nom ne peut pas dépasser 100 caractères.'),
+    body('type').isIn(Room.TYPES_SALLE).withMessage('Type de salle invalide.'),
+    body('type_rencontre').isIn(Room.TYPES_RENCONTRE).withMessage('Type de rencontre invalide.'),
+  ],
+  async (req, res) => {
+    const id     = parseInt(req.params.id, 10);
+    const errors = validationResult(req);
+
+    if (!errors.isEmpty()) {
+      const [room, events] = await Promise.all([
+        Room.findById(id).catch(() => null),
+        Event.findAll().catch(() => []),
+      ]);
+      return res.render('admin/rooms/edit', {
+        title:     `Modifier — ${room ? room.nom : 'Salle'}`,
+        pageClass: 'page-admin',
+        room:      room || { id },
+        events,
+        errors:    errors.array(),
+        old:       req.body,
+        TYPES_SALLE:      Room.TYPES_SALLE,
+        TYPES_RENCONTRE:  Room.TYPES_RENCONTRE,
+      });
+    }
+
+    try {
+      const updated = await Room.update(id, {
+        nom:            req.body.nom,
+        type:           req.body.type,
+        type_rencontre: req.body.type_rencontre,
+        actif:          req.body.actif === '1' ? 1 : 0,
+      });
+      if (!updated) {
+        req.flash('error', 'Salle introuvable.');
+        return res.redirect('/admin/rooms');
+      }
+      const room = await Room.findById(id);
+      logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a modifié la salle #${id}`);
+      req.flash('success', 'Salle mise à jour.');
+      return res.redirect(`/admin/rooms?event_id=${room.event_id}`);
+    } catch (err) {
+      logger.error(`[ADMIN/ROOMS] Erreur mise à jour salle #${id} :`, err);
+      req.flash('error', 'Erreur lors de la mise à jour de la salle.');
+      return res.redirect(`/admin/rooms/${id}/edit`);
+    }
+  }
+);
+
+// ─── POST /admin/rooms/:id/toggle ─────────────────────────────────────────
+// Active / désactive une salle (toggle)
+
+router.post('/rooms/:id/toggle', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const room = await Room.findById(id);
+    if (!room) {
+      req.flash('error', 'Salle introuvable.');
+      return res.redirect('/admin/rooms');
+    }
+    await Room.setActif(id, !room.actif);
+    logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a ${room.actif ? 'désactivé' : 'activé'} la salle #${id}`);
+    req.flash('success', `Salle "${room.nom}" ${room.actif ? 'désactivée' : 'activée'}.`);
+    return res.redirect(`/admin/rooms?event_id=${room.event_id}`);
+  } catch (err) {
+    logger.error(`[ADMIN/ROOMS] Erreur toggle salle #${id} :`, err);
+    req.flash('error', 'Erreur lors du changement d\'état de la salle.');
+    return res.redirect('/admin/rooms');
+  }
+});
+
+// ─── DELETE /admin/rooms/:id ──────────────────────────────────────────────
+// Suppression d'une salle
+
+router.delete('/rooms/:id', async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  try {
+    const room = await Room.findById(id);
+    if (!room) {
+      req.flash('error', 'Salle introuvable.');
+      return res.redirect('/admin/rooms');
+    }
+    const eventId = room.event_id;
+    const deleted = await Room.delete(id);
+    if (!deleted) {
+      req.flash('error', 'Impossible de supprimer cette salle.');
+    } else {
+      logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a supprimé la salle #${id}`);
+      req.flash('success', 'Salle supprimée.');
+    }
+    return res.redirect(`/admin/rooms?event_id=${eventId}`);
+  } catch (err) {
+    logger.error(`[ADMIN/ROOMS] Erreur suppression salle #${id} :`, err);
+    req.flash('error', 'Impossible de supprimer cette salle (des rencontres y sont peut-être associées).');
+    return res.redirect('/admin/rooms');
+  }
+});
+
+module.exports = router;

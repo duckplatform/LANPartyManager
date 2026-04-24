@@ -42,6 +42,9 @@
             <li><a href="/moderator" class="nav-link nav-link--moderator<%= (typeof pageClass !== 'undefined' && pageClass === 'page-moderator') ? ' active' : '' %>">
               <i class="fas fa-ticket"></i> Contrôle billets
             </a></li>
+            <li><a href="/battles" class="nav-link nav-link--moderator<%= (typeof pageClass !== 'undefined' && pageClass && pageClass.includes('page-battles')) ? ' active' : '' %>">
+              <i class="fas fa-gamepad"></i> Rencontres
+            </a></li>
           <% } %>
 
           <li class="nav-user-info">

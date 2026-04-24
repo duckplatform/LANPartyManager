@@ -1,0 +1,128 @@
+<%- include('../../partials/head') %>
+
+<style>
+  /* Vue épurée optimisée pour lecture rapide */
+  body { font-size: 1.05rem; }
+  .announce-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-md); }
+  .announce-card { border: 2px solid var(--color-border); border-radius: 12px; padding: var(--space-md);
+                    background: var(--color-surface); }
+  .announce-card.statut-planifie   { border-color: #3b82f6; }
+  .announce-card.statut-en_attente { border-color: #8b5cf6; }
+  .announce-card.statut-en_cours   { border-color: #10b981; }
+  .announce-room { font-size: 2rem; font-weight: 900; letter-spacing: .02em; color: var(--color-primary); }
+  .announce-game { font-size: 1.1rem; font-weight: 700; margin: .25rem 0; }
+  .announce-players { margin-top: .5rem; display: flex; flex-wrap: wrap; gap: .4rem; }
+  .announce-player { display: inline-flex; align-items: center; gap: .35rem; background: var(--color-surface-2,#f1f5f9);
+                      border: 1px solid var(--color-border); border-radius: 20px; padding: .25rem .75rem;
+                      font-size: .95rem; font-weight: 600; }
+  .vs-separator { align-self: center; font-weight: 900; color: var(--color-text-muted); }
+  @media print {
+    .site-header, .admin-header-actions, .no-print { display: none !important; }
+    .announce-card { page-break-inside: avoid; }
+  }
+</style>
+
+<div class="container admin-container">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-bullhorn"></i> Annonces — <%= event.nom %>
+      </h1>
+      <p class="admin-subtitle">
+        Vue récapitulative pour les annonces au micro — <strong><%= battles.length %></strong> rencontre(s) à annoncer
+      </p>
+    </div>
+    <div class="admin-header-actions no-print">
+      <button onclick="window.print()" class="btn btn--ghost btn--sm">
+        <i class="fas fa-print"></i> Imprimer
+      </button>
+      <button onclick="window.location.reload()" class="btn btn--ghost btn--sm">
+        <i class="fas fa-rotate-right"></i> Actualiser
+      </button>
+      <a href="/battles/events/<%= event.id %>" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Retour
+      </a>
+    </div>
+  </div>
+
+  <% if (battles.length === 0) { %>
+    <div class="card">
+      <div class="card-body" style="text-align:center; color:var(--color-text-muted); padding:var(--space-xl);">
+        <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:.75rem;"></i>
+        Aucune rencontre planifiée, en installation ou en cours.
+      </div>
+    </div>
+  <% } else { %>
+    <div class="announce-grid">
+      <% battles.forEach(function(b) { %>
+        <div class="announce-card statut-<%= b.statut %>">
+          <!-- Salle -->
+          <div class="announce-room">
+            <i class="fas fa-door-open"></i> SALLE <%= b.room_nom || '?' %>
+          </div>
+
+          <!-- Statut -->
+          <div style="font-size:.8rem; color:var(--color-text-muted); margin-bottom:.5rem;">
+            <% const statutLabels = { planifie: 'Planifiée — En attente d\'installation', en_attente: 'Installation en cours', en_cours: 'En cours' }; %>
+            <i class="fas fa-circle" style="color:<%= {planifie:'#3b82f6', en_attente:'#8b5cf6', en_cours:'#10b981'}[b.statut] %>;"></i>
+            <%= statutLabels[b.statut] || b.statut %>
+          </div>
+
+          <!-- Jeu -->
+          <div class="announce-game">
+            <i class="fas fa-gamepad"></i> <%= b.game_nom %>
+            <span style="font-weight:400; font-size:.85rem; color:var(--color-text-muted);">
+              — <%= b.game_console %> — <%= b.type_rencontre %>
+            </span>
+          </div>
+
+          <!-- Joueurs -->
+          <div class="announce-players">
+            <% if (b.type_rencontre === '2v2') {
+                const team1 = b.players.filter(p => p.equipe === 1);
+                const team2 = b.players.filter(p => p.equipe === 2);
+            %>
+              <div>
+                <div style="font-size:.72rem; color:var(--color-text-muted); text-transform:uppercase; margin-bottom:.2rem;">Équipe 1</div>
+                <% team1.forEach(function(p) { %>
+                  <div class="announce-player">
+                    <i class="fas fa-circle-user" style="color:#3b82f6;"></i> <%= p.pseudo %>
+                    <small style="color:var(--color-text-muted);">(<%= p.prenom %>)</small>
+                  </div>
+                <% }); %>
+              </div>
+              <div class="vs-separator">VS</div>
+              <div>
+                <div style="font-size:.72rem; color:var(--color-text-muted); text-transform:uppercase; margin-bottom:.2rem;">Équipe 2</div>
+                <% team2.forEach(function(p) { %>
+                  <div class="announce-player">
+                    <i class="fas fa-circle-user" style="color:#f59e0b;"></i> <%= p.pseudo %>
+                    <small style="color:var(--color-text-muted);">(<%= p.prenom %>)</small>
+                  </div>
+                <% }); %>
+              </div>
+            <% } else { %>
+              <% b.players.forEach(function(p, i) { %>
+                <% if (i === 1) { %><span class="vs-separator">VS</span><% } %>
+                <div class="announce-player">
+                  <i class="fas fa-circle-user"></i> <%= p.pseudo %>
+                  <small style="color:var(--color-text-muted);">(<%= p.prenom %>)</small>
+                </div>
+              <% }); %>
+            <% } %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  <% } %>
+
+</div>
+
+<!-- Auto-refresh toutes les 30 secondes -->
+<script>
+setTimeout(function() { window.location.reload(); }, 30000);
+</script>
+
+<%- include('../../partials/foot') %>

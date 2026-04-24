@@ -1,0 +1,147 @@
+<%- include('../../partials/head') %>
+
+<div class="container admin-container">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-door-open"></i> Salles de jeu
+      </h1>
+      <p class="admin-subtitle">Gérez les espaces de jeu par événement</p>
+    </div>
+    <div class="admin-header-actions">
+      <% if (eventId) { %>
+        <a href="/admin/rooms/create?event_id=<%= eventId %>" class="btn btn--primary btn--sm">
+          <i class="fas fa-plus"></i> Ajouter une salle
+        </a>
+      <% } %>
+      <a href="/admin" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Administration
+      </a>
+    </div>
+  </div>
+
+  <!-- Sélecteur d'événement -->
+  <div class="card" style="margin-bottom: var(--space-md);">
+    <div class="card-body">
+      <form action="/admin/rooms" method="GET" class="form-inline" style="display:flex; gap:.75rem; align-items:center; flex-wrap:wrap;">
+        <label class="form-label" for="event_id" style="margin:0; white-space:nowrap;">
+          <i class="fas fa-calendar-days"></i> Événement :
+        </label>
+        <select name="event_id" id="event_id" class="form-select" style="min-width:250px;"
+                onchange="this.form.submit()">
+          <option value="">— Sélectionner un événement —</option>
+          <% events.forEach(function(e) { %>
+            <option value="<%= e.id %>" <%= eventId === e.id ? 'selected' : '' %>>
+              <%= e.nom %> (<%= e.statut %>)
+            </option>
+          <% }); %>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <% if (eventId && selectedEvent) { %>
+    <!-- Résumé de l'événement sélectionné -->
+    <div class="card" style="margin-bottom: var(--space-md); border-left: 4px solid var(--color-primary);">
+      <div class="card-body" style="padding: var(--space-sm) var(--space-md);">
+        <strong><i class="fas fa-calendar-check"></i> <%= selectedEvent.nom %></strong>
+        &nbsp;—&nbsp;<%= new Date(selectedEvent.date_heure).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) %>
+        &nbsp;—&nbsp;<%= selectedEvent.lieu %>
+      </div>
+    </div>
+
+    <!-- Liste des salles -->
+    <div class="card admin-users-card">
+      <div class="card-header admin-card-header">
+        <h2><i class="fas fa-list"></i> Salles (<%= rooms.length %>)</h2>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Type</th>
+                <th>Format</th>
+                <th>État</th>
+                <th>Battle active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (rooms.length === 0) { %>
+                <tr>
+                  <td colspan="6" class="table-empty">
+                    <i class="fas fa-inbox"></i> Aucune salle configurée pour cet événement.
+                    <a href="/admin/rooms/create?event_id=<%= eventId %>">Ajouter une salle</a>.
+                  </td>
+                </tr>
+              <% } else { %>
+                <% rooms.forEach(function(room) { %>
+                  <tr class="<%= !room.actif ? 'row-inactive' : '' %>">
+                    <td><strong><%= room.nom %></strong></td>
+                    <td>
+                      <i class="fas <%= room.type === 'simulation' ? 'fa-steering-wheel' : 'fa-tv' %>"></i>
+                      <%= room.type === 'simulation' ? 'Simulation' : 'Console' %>
+                    </td>
+                    <td>
+                      <span class="badge badge--<%= room.type_rencontre === '2v2' ? 'info' : 'primary' %>">
+                        <%= room.type_rencontre %>
+                      </span>
+                    </td>
+                    <td>
+                      <% if (room.actif) { %>
+                        <span class="badge badge--success"><i class="fas fa-circle"></i> Active</span>
+                      <% } else { %>
+                        <span class="badge badge--muted"><i class="fas fa-circle"></i> Inactive</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <% if (room.battles_actives > 0) { %>
+                        <span class="badge badge--warning"><i class="fas fa-swords"></i> En cours</span>
+                      <% } else { %>
+                        <span class="badge badge--muted"><i class="fas fa-check"></i> Libre</span>
+                      <% } %>
+                    </td>
+                    <td class="td-actions">
+                      <a href="/admin/rooms/<%= room.id %>/edit" class="btn btn--ghost btn--xs" title="Modifier">
+                        <i class="fas fa-pen"></i>
+                      </a>
+                      <form action="/admin/rooms/<%= room.id %>/toggle" method="POST" class="form-inline">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                        <button type="submit" class="btn btn--<%= room.actif ? 'warning' : 'success' %> btn--xs"
+                                title="<%= room.actif ? 'Désactiver' : 'Activer' %>">
+                          <i class="fas fa-<%= room.actif ? 'ban' : 'check' %>"></i>
+                        </button>
+                      </form>
+                      <form action="/admin/rooms/<%= room.id %>?_method=DELETE" method="POST"
+                            class="form-inline"
+                            onsubmit="return confirm('Supprimer la salle <%= room.nom %> ?')">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                        <button type="submit" class="btn btn--danger btn--xs" title="Supprimer">
+                          <i class="fas fa-trash"></i>
+                        </button>
+                      </form>
+                    </td>
+                  </tr>
+                <% }); %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <% } else if (!eventId) { %>
+    <div class="card">
+      <div class="card-body" style="text-align:center; color:var(--color-text-muted); padding: var(--space-xl);">
+        <i class="fas fa-hand-pointer" style="font-size:2rem; margin-bottom:.75rem; display:block;"></i>
+        Sélectionnez un événement ci-dessus pour voir ses salles.
+      </div>
+    </div>
+  <% } %>
+
+</div>
+
+<%- include('../../partials/foot') %>
