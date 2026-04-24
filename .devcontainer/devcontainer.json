@@ -25,7 +25,7 @@
   "postStartCommand": "bash .devcontainer/start-app.sh",
 
   // ─── Ports ────────────────────────────────────────────────────────────────
-  "forwardPorts": [3000, 3306],
+  "forwardPorts": [3000, 3306, 8081],
   "portsAttributes": {
     "3000": {
       // "public" = accessible sans authentification GitHub depuis n'importe quel navigateur
@@ -36,6 +36,11 @@
     "3306": {
       // "private" = accessible seulement au sein du Codespace (VS Code MySQL Client)
       "label": "MySQL",
+      "visibility": "private"
+    },
+    "8081": {
+      // Adminer (interface web SQL) — garder en prive
+      "label": "Adminer",
       "visibility": "private"
     }
   },

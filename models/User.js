@@ -6,6 +6,7 @@
  */
 
 const bcrypt  = require('bcryptjs');
+const { randomUUID } = require('crypto');
 const db      = require('../config/database');
 const BCRYPT_ROUNDS = 12;
 
@@ -44,10 +45,11 @@ const User = {
    */
   async create({ nom, prenom, pseudo, email, password, is_admin = false, is_moderator = false }) {
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
+    const badgeToken = randomUUID();
     const [result] = await db.pool.execute(
-      `INSERT INTO users (nom, prenom, pseudo, email, password, is_admin, is_moderator)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), hashedPassword, is_admin ? 1 : 0, is_moderator ? 1 : 0]
+      `INSERT INTO users (nom, prenom, pseudo, email, password, is_admin, is_moderator, badge_token)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), hashedPassword, is_admin ? 1 : 0, is_moderator ? 1 : 0, badgeToken]
     );
     return result.insertId;
   },
@@ -187,7 +189,6 @@ const User = {
    * @returns {Promise<string>} badge_token
    */
   async ensureBadgeToken(id) {
-    const { randomUUID } = require('crypto');
     const newToken = randomUUID();
     await db.pool.execute(
       'UPDATE users SET badge_token = ? WHERE id = ? AND (badge_token = \'\' OR badge_token IS NULL)',

@@ -249,13 +249,21 @@ router.post(
     const gameId = parseInt(req.body.game_id, 10);
     const notes  = (req.body.notes || '').trim() || null;
 
-    // Récupère les tokens des joueurs (badge_token[]  et equipe[])
-    const tokens = Array.isArray(req.body['badge_token[]'])
-      ? req.body['badge_token[]']
-      : [req.body['badge_token[]']].filter(Boolean);
-    const equipes = Array.isArray(req.body['equipe[]'])
-      ? req.body['equipe[]']
-      : [req.body['equipe[]']].filter(Boolean);
+    // Accepte les payloads urlencoded avec ou sans suffixe []
+    // (selon le parseur/body encoder utilisé côté client)
+    const readArrayField = (body, name) => {
+      const raw = body[name] ?? body[`${name}[]`];
+      if (raw == null) {
+        return [];
+      }
+      return Array.isArray(raw) ? raw : [raw];
+    };
+
+    const tokens = readArrayField(req.body, 'badge_token')
+      .map(token => (token || '').trim())
+      .filter(Boolean);
+    const equipes = readArrayField(req.body, 'equipe')
+      .map(equipe => (equipe || '').toString().trim());
 
     try {
       const game = await Game.findById(gameId);

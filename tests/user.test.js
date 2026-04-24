@@ -97,6 +97,7 @@ describe('User Model', function () {
       const storedPassword = callArgs[4];
       expect(storedPassword).to.not.equal('Password1');
       expect(storedPassword).to.match(/^\$2[ab]\$\d+\$/); // Pattern bcrypt
+      expect(callArgs[7]).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
     });
 
     it('doit mettre is_admin à 0 par défaut', async function () {
@@ -104,6 +105,7 @@ describe('User Model', function () {
       await User.create({ nom: 'X', prenom: 'Y', pseudo: 'Z', email: 'z@test.com', password: 'Pass1234' });
       const callArgs = poolStub.execute.firstCall.args[1];
       expect(callArgs[5]).to.equal(0); // is_admin = 0
+      expect(callArgs[6]).to.equal(0); // is_moderator = 0
     });
 
     it('doit permettre de créer un admin', async function () {

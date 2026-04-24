@@ -11,11 +11,9 @@
       <p class="admin-subtitle">Gérez les espaces de jeu par événement</p>
     </div>
     <div class="admin-header-actions">
-      <% if (eventId) { %>
-        <a href="/admin/rooms/create?event_id=<%= eventId %>" class="btn btn--primary btn--sm">
-          <i class="fas fa-plus"></i> Ajouter une salle
-        </a>
-      <% } %>
+      <a href="/admin/rooms/create<%= eventId ? '?event_id=' + eventId : '' %>" class="btn btn--primary btn--sm">
+        <i class="fas fa-plus"></i> Ajouter une salle
+      </a>
       <a href="/admin" class="btn btn--ghost btn--sm">
         <i class="fas fa-arrow-left"></i> Administration
       </a>
@@ -38,6 +36,9 @@
             </option>
           <% }); %>
         </select>
+        <button type="submit" class="btn btn--ghost btn--sm">
+          <i class="fas fa-filter"></i> Filtrer
+        </button>
       </form>
     </div>
   </div>

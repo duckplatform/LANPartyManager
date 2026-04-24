@@ -8,8 +8,8 @@
 
 FROM mcr.microsoft.com/devcontainers/javascript-node:20
 
-# Installe le client MySQL (paquet standard Debian/Ubuntu)
+# Installe le client MySQL et PHP CLI (Adminer)
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends default-mysql-client \
+    && apt-get install -y --no-install-recommends default-mysql-client php-cli php-mysql curl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
