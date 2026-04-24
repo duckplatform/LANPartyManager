@@ -15,6 +15,7 @@ const EventRegistration = require('../models/EventRegistration');
 const { renderMarkdown } = require('../config/markdown');
 const logger       = require('../config/logger');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
+const discord      = require('../services/discord');
 
 // Toutes les routes admin nécessitent auth + admin
 router.use(requireAuth, requireAdmin);
@@ -165,6 +166,12 @@ router.post('/news', announcementValidation, async (req, res) => {
     const { titre, contenu, statut } = req.body;
     const id = await Announcement.create({ titre, contenu, statut });
     logger.info(`[ADMIN/NEWS] Annonce #${id} créée par l'utilisateur #${req.session.userId} (statut: ${statut})`);
+
+    // Notification Discord si l'annonce est directement publiée
+    if (statut === 'publie') {
+      discord.notifyNewsPublished({ id, titre, contenu }).catch(() => {});
+    }
+
     req.flash('success', `L'annonce "${titre}" a été créée.`);
     return res.redirect('/admin/news');
   } catch (err) {
@@ -222,6 +229,12 @@ router.post('/news/:id', announcementValidation, async (req, res) => {
     const { titre, contenu, statut } = req.body;
     await Announcement.update(id, { titre, contenu, statut });
     logger.info(`[ADMIN/NEWS] Annonce #${id} modifiée par l'utilisateur #${req.session.userId}`);
+
+    // Notification Discord lors du passage en statut 'publie'
+    if (statut === 'publie' && existing.statut !== 'publie') {
+      discord.notifyNewsPublished({ id, titre, contenu }).catch(() => {});
+    }
+
     req.flash('success', `L'annonce "${titre}" a été mise à jour.`);
     return res.redirect('/admin/news');
   } catch (err) {
@@ -336,6 +349,10 @@ router.post('/events', eventValidation, async (req, res) => {
     const statut = req.body.statut;
     const id = await Event.create({ nom, date_heure, lieu, statut });
     logger.info(`[ADMIN/EVENTS] Événement #${id} créé par l'utilisateur #${req.session.userId}`);
+
+    // Notification Discord à la création de l'événement
+    discord.notifyEventCreated({ id, nom, date_heure, lieu, statut }).catch(() => {});
+
     req.flash('success', `L'événement "${nom}" a été créé.`);
     return res.redirect('/admin/events');
   } catch (err) {
@@ -402,6 +419,17 @@ router.post('/events/:id', eventValidation, async (req, res) => {
     const statut = req.body.statut;
     await Event.update(id, { nom, date_heure, lieu, statut });
     logger.info(`[ADMIN/EVENTS] Événement #${id} modifié par l'utilisateur #${req.session.userId}`);
+
+    // Notifications Discord selon les transitions de statut
+    if (existing.statut !== statut) {
+      const updatedEvent = { id, nom, date_heure, lieu, statut };
+      if (statut === 'en_cours') {
+        discord.notifyEventStarted(updatedEvent).catch(() => {});
+      } else if (statut === 'termine') {
+        discord.notifyEventEnded(updatedEvent).catch(() => {});
+      }
+    }
+
     req.flash('success', `L'événement "${nom}" a été mis à jour.`);
     return res.redirect('/admin/events');
   } catch (err) {
