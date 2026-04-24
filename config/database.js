@@ -10,8 +10,8 @@ const mysql = require('mysql2/promise');
 // Création du pool de connexions MySQL
 const pool = mysql.createPool({
   host:     process.env.DB_HOST     || 'localhost',
-  user:     process.env.DB_USER     || 'root',
-  password: process.env.DB_PASSWORD || '',
+  user:     process.env.DB_USER     || 'lanparty',
+  password: process.env.DB_PASSWORD || 'lanparty_dev',
   database: process.env.DB_NAME     || 'lanpartymanager',
   port:     parseInt(process.env.DB_PORT || '3306', 10),
   waitForConnections: true,
