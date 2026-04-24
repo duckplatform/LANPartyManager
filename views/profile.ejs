@@ -10,6 +10,8 @@
       <p class="profile-meta"><%= user.prenom %> <%= user.nom %></p>
       <% if (user.is_admin) { %>
         <span class="badge badge--admin"><i class="fas fa-shield-halved"></i> Administrateur</span>
+      <% } else if (user.is_moderator) { %>
+        <span class="badge badge--moderator"><i class="fas fa-user-shield"></i> Modérateur</span>
       <% } else { %>
         <span class="badge badge--member"><i class="fas fa-user"></i> Membre</span>
       <% } %>
@@ -29,6 +31,10 @@
     <button class="tab-btn<%= (typeof activeTab !== 'undefined' && activeTab === 'events') ? ' active' : '' %>"
             role="tab" data-tab="tab-events" aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'events') ? 'true' : 'false' %>">
       <i class="fas fa-calendar-days"></i> Événements
+    </button>
+    <button class="tab-btn<%= (typeof activeTab !== 'undefined' && activeTab === 'badge') ? ' active' : '' %>"
+            role="tab" data-tab="tab-badge" aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'badge') ? 'true' : 'false' %>">
+      <i class="fas fa-id-card"></i> Mon badge
     </button>
   </div>
 
@@ -172,6 +178,12 @@
           <div class="event-registered-badge" style="margin: var(--space-md) 0;">
             <i class="fas fa-circle-check"></i> Vous êtes inscrit à cet événement !
           </div>
+          <!-- Bouton d'accès au badge électronique -->
+          <div style="margin-bottom: var(--space-md);">
+            <a href="/profile/events/<%= activeEvent.id %>/badge" class="btn btn--primary btn--sm">
+              <i class="fas fa-ticket"></i> Voir mon badge électronique
+            </a>
+          </div>
           <% if (registrationOpen) { %>
             <form action="/profile/events/<%= activeEvent.id %>/unregister" method="POST">
               <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
@@ -258,6 +270,33 @@
       </div>
     </div>
 
+  </div>
+
+  <!-- Panneau : Badge de membre -->
+  <div id="tab-badge" class="tab-panel<%= (typeof activeTab !== 'undefined' && activeTab === 'badge') ? ' active' : '' %>" role="tabpanel">
+    <div class="card">
+      <div class="card-header">
+        <h2><i class="fas fa-id-card"></i> Mon badge de membre</h2>
+      </div>
+      <div class="card-body" style="text-align: center; padding: var(--space-xl);">
+        <p class="form-hint" style="margin-bottom: var(--space-lg);">
+          <i class="fas fa-circle-info"></i>
+          Votre badge de membre contient un QR code unique et personnel.
+          Présentez-le à l'entrée de chaque événement auquel vous êtes inscrit.
+        </p>
+        <div style="display: flex; gap: var(--space-sm); justify-content: center; flex-wrap: wrap;">
+          <a href="/profile/badge" class="btn btn--primary">
+            <i class="fas fa-id-card"></i> Voir mon badge
+          </a>
+          <a href="/profile/badge" target="_blank" class="btn btn--ghost">
+            <i class="fas fa-external-link-alt"></i> Ouvrir dans un nouvel onglet
+          </a>
+        </div>
+        <p class="form-hint" style="margin-top: var(--space-md);">
+          <i class="fas fa-print"></i> Imprimez ou sauvegardez en PDF depuis la page du badge.
+        </p>
+      </div>
+    </div>
   </div>
 
   <!-- Infos compte -->

@@ -18,7 +18,7 @@ const User = {
    */
   async findById(id) {
     const [rows] = await db.pool.execute(
-      'SELECT id, nom, prenom, pseudo, email, is_admin, created_at, updated_at FROM users WHERE id = ?',
+      'SELECT id, nom, prenom, pseudo, email, is_admin, is_moderator, badge_token, created_at, updated_at FROM users WHERE id = ?',
       [id]
     );
     return rows[0] || null;
@@ -39,15 +39,15 @@ const User = {
 
   /**
    * Crée un nouvel utilisateur (mot de passe haché automatiquement)
-   * @param {Object} data - { nom, prenom, pseudo, email, password, is_admin? }
+   * @param {Object} data - { nom, prenom, pseudo, email, password, is_admin?, is_moderator? }
    * @returns {Promise<number>} ID du nouvel utilisateur
    */
-  async create({ nom, prenom, pseudo, email, password, is_admin = false }) {
+  async create({ nom, prenom, pseudo, email, password, is_admin = false, is_moderator = false }) {
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const [result] = await db.pool.execute(
-      `INSERT INTO users (nom, prenom, pseudo, email, password, is_admin)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), hashedPassword, is_admin ? 1 : 0]
+      `INSERT INTO users (nom, prenom, pseudo, email, password, is_admin, is_moderator)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), hashedPassword, is_admin ? 1 : 0, is_moderator ? 1 : 0]
     );
     return result.insertId;
   },
@@ -98,7 +98,7 @@ const User = {
    */
   async findAll() {
     const [rows] = await db.pool.execute(
-      'SELECT id, nom, prenom, pseudo, email, is_admin, created_at, updated_at FROM users ORDER BY created_at DESC'
+      'SELECT id, nom, prenom, pseudo, email, is_admin, is_moderator, badge_token, created_at, updated_at FROM users ORDER BY created_at DESC'
     );
     return rows;
   },
@@ -128,6 +128,20 @@ const User = {
   },
 
   /**
+   * Met à jour le statut modérateur d'un utilisateur
+   * @param {number} id
+   * @param {boolean} isModerator
+   * @returns {Promise<boolean>}
+   */
+  async setModerator(id, isModerator) {
+    const [result] = await db.pool.execute(
+      'UPDATE users SET is_moderator = ?, updated_at = NOW() WHERE id = ?',
+      [isModerator ? 1 : 0, id]
+    );
+    return result.affectedRows > 0;
+  },
+
+  /**
    * Vérifie si un email est déjà utilisé (sauf par l'utilisateur avec excludeId)
    * @param {string} email
    * @param {number} [excludeId]
@@ -151,6 +165,40 @@ const User = {
   async count() {
     const [rows] = await db.pool.execute('SELECT COUNT(*) AS total FROM users');
     return rows[0].total;
+  },
+
+  /**
+   * Trouve un utilisateur par son badge_token (QR code de membre)
+   * @param {string} token - badge_token UUID
+   * @returns {Promise<Object|null>}
+   */
+  async findByBadgeToken(token) {
+    const [rows] = await db.pool.execute(
+      'SELECT id, nom, prenom, pseudo, email, is_admin, is_moderator, badge_token, created_at FROM users WHERE badge_token = ?',
+      [token]
+    );
+    return rows[0] || null;
+  },
+
+  /**
+   * S'assure qu'un utilisateur possède un badge_token.
+   * En génère un si absent (cas de migration partielle).
+   * @param {number} id
+   * @returns {Promise<string>} badge_token
+   */
+  async ensureBadgeToken(id) {
+    const { randomUUID } = require('crypto');
+    const newToken = randomUUID();
+    await db.pool.execute(
+      'UPDATE users SET badge_token = ? WHERE id = ? AND (badge_token = \'\' OR badge_token IS NULL)',
+      [newToken, id]
+    );
+    // Re-lit pour retourner la valeur finale (qu'elle soit nouvelle ou déjà existante)
+    const [rows] = await db.pool.execute(
+      'SELECT badge_token FROM users WHERE id = ?',
+      [id]
+    );
+    return rows[0] ? rows[0].badge_token : newToken;
   },
 };
 

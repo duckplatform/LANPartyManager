@@ -1,0 +1,74 @@
+<%- include('../partials/head') %>
+
+<div class="container admin-container">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-ticket"></i> Contrôle des billets
+      </h1>
+      <p class="admin-subtitle">Sélectionnez un événement pour contrôler les billets à l'entrée</p>
+    </div>
+  </div>
+
+  <!-- Liste des événements -->
+  <div class="card admin-users-card">
+    <div class="card-header admin-card-header">
+      <h2><i class="fas fa-calendar-days"></i> Événements</h2>
+    </div>
+    <div class="card-body">
+      <% if (!events || events.length === 0) { %>
+        <p class="text-muted text-center">
+          <i class="fas fa-calendar-xmark"></i> Aucun événement disponible.
+        </p>
+      <% } else { %>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Événement</th>
+                <th>Date</th>
+                <th>Lieu</th>
+                <th>Statut</th>
+                <th>Inscrits</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% events.forEach(function(e) { %>
+                <tr>
+                  <td><strong><%= e.nom %></strong></td>
+                  <td class="td-date">
+                    <%= new Date(e.date_heure).toLocaleDateString('fr-FR', {
+                      day: '2-digit', month: '2-digit', year: 'numeric'
+                    }) %>
+                  </td>
+                  <td><%= e.lieu %></td>
+                  <td>
+                    <% if (e.statut === 'planifie') { %>
+                      <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> Planifié</span>
+                    <% } else if (e.statut === 'en_cours') { %>
+                      <span class="badge badge--member"><i class="fas fa-circle-play"></i> En cours</span>
+                    <% } else { %>
+                      <span class="badge badge--draft"><i class="fas fa-circle-check"></i> Terminé</span>
+                    <% } %>
+                  </td>
+                  <td><%= e.registration_count || 0 %></td>
+                  <td>
+                    <a href="/moderator/events/<%= e.id %>/scan" class="btn btn--primary btn--sm">
+                      <i class="fas fa-qrcode"></i> Contrôler les billets
+                    </a>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+</div>
+
+<%- include('../partials/foot') %>

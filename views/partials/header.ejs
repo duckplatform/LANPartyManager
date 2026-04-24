@@ -22,6 +22,10 @@
           <i class="fas fa-newspaper"></i> Actualités
         </a></li>
 
+        <li><a href="/events" class="nav-link<%= (typeof pageClass !== 'undefined' && pageClass === 'page-events') ? ' active' : '' %>">
+          <i class="fas fa-calendar-days"></i> Événements
+        </a></li>
+
         <% if (currentUser) { %>
           <!-- Utilisateur connecté -->
           <li><a href="/profile" class="nav-link<%= (typeof pageClass !== 'undefined' && pageClass === 'page-profile') ? ' active' : '' %>">
@@ -31,6 +35,12 @@
           <% if (currentUser.isAdmin) { %>
             <li><a href="/admin" class="nav-link nav-link--admin<%= (typeof pageClass !== 'undefined' && pageClass === 'page-admin') ? ' active' : '' %>">
               <i class="fas fa-shield-halved"></i> Administration
+            </a></li>
+          <% } %>
+
+          <% if (currentUser.isAdmin || currentUser.isModerator) { %>
+            <li><a href="/moderator" class="nav-link nav-link--moderator<%= (typeof pageClass !== 'undefined' && pageClass === 'page-moderator') ? ' active' : '' %>">
+              <i class="fas fa-ticket"></i> Contrôle billets
             </a></li>
           <% } %>
 

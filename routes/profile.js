@@ -7,6 +7,7 @@
 const express   = require('express');
 const { body, validationResult } = require('express-validator');
 const router    = express.Router();
+const QRCode    = require('qrcode');
 const User              = require('../models/User');
 const Event             = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
@@ -252,6 +253,47 @@ router.post('/events/:id/unregister', requireAuth, async (req, res) => {
     req.flash('error', 'Erreur lors de la désinscription.');
   }
   return res.redirect('/profile');
+});
+
+// ─── GET /profile/badge ───────────────────────────────────────────────────
+// Badge de membre : QR code permanent lié à l'utilisateur.
+// Accessible à tout moment, indépendant des événements.
+
+router.get('/badge', requireAuth, async (req, res) => {
+  try {
+    let user = await User.findById(req.session.userId);
+
+    if (!user) {
+      req.session.destroy(() => {});
+      return res.redirect('/auth/login');
+    }
+
+    // Génère le badge_token si absent (migration partielle ou compte ancien)
+    if (!user.badge_token) {
+      user.badge_token = await User.ensureBadgeToken(user.id);
+    }
+
+    // Le QR code encode uniquement le badge_token de l'utilisateur.
+    // La vérification côté modérateur contrôlera l'inscription à l'événement.
+    const qrDataUrl = await QRCode.toDataURL(user.badge_token, {
+      width:  300,
+      margin: 2,
+      color: { dark: '#0f172a', light: '#ffffff' },
+    });
+
+    logger.info(`[PROFILE] Utilisateur #${req.session.userId} consulte son badge de membre`);
+
+    res.render('badge', {
+      title:     'Mon badge de membre',
+      pageClass: 'page-badge',
+      user,
+      qrDataUrl,
+    });
+  } catch (err) {
+    logger.error('[PROFILE] Erreur chargement badge de membre :', err);
+    req.flash('error', 'Erreur lors du chargement du badge.');
+    return res.redirect('/profile');
+  }
 });
 
 module.exports = router;

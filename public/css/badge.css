@@ -1,0 +1,409 @@
+/**
+ * Badge électronique — Styles dédiés
+ * Utilisé par views/badge.ejs (page indépendante, non incluse dans le layout principal)
+ */
+
+/* ── Variables héritées du site ─────────────────────────────────────────── */
+
+:root {
+  --badge-bg:        #0f172a;
+  --badge-surface:   #1e293b;
+  --badge-border:    #334155;
+  --badge-accent:    #6366f1;
+  --badge-accent-2:  #8b5cf6;
+  --badge-success:   #10b981;
+  --badge-text:      #f1f5f9;
+  --badge-muted:     #94a3b8;
+  --badge-width:     420px;
+  --font-heading:    'Orbitron', monospace;
+  --font-body:       'Inter', sans-serif;
+}
+
+/* ── Reset minimal ──────────────────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body.page-badge {
+  background: var(--badge-bg);
+  color: var(--badge-text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 1rem;
+  gap: 1.5rem;
+}
+
+/* ── Barre d'actions (masquée à l'impression) ───────────────────────────── */
+
+.badge-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.badge-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: none;
+  border: none;
+  transition: background 0.2s;
+}
+
+.badge-actions .btn--primary {
+  background: var(--badge-accent);
+  color: #fff;
+}
+
+.badge-actions .btn--primary:hover { background: var(--badge-accent-2); }
+
+.badge-actions .btn--ghost {
+  background: transparent;
+  color: var(--badge-muted);
+  border: 1px solid var(--badge-border);
+}
+
+.badge-actions .btn--ghost:hover { color: var(--badge-text); background: var(--badge-surface); }
+
+/* ── Wrapper centré ─────────────────────────────────────────────────────── */
+
+.badge-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+/* ── Carte badge ────────────────────────────────────────────────────────── */
+
+.badge-card {
+  width: var(--badge-width);
+  max-width: 100%;
+  background: var(--badge-surface);
+  border: 1px solid var(--badge-border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(99, 102, 241, 0.2);
+}
+
+/* ── En-tête du badge ───────────────────────────────────────────────────── */
+
+.badge-header {
+  background: linear-gradient(135deg, var(--badge-accent), var(--badge-accent-2));
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-heading);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.badge-logo i { font-size: 1.2rem; }
+.badge-logo-accent { color: rgba(255,255,255,0.7); }
+
+.badge-tag {
+  font-family: var(--font-heading);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 4px;
+  padding: 0.2rem 0.5rem;
+  text-transform: uppercase;
+}
+
+/* ── Nom de l'événement ─────────────────────────────────────────────────── */
+
+.badge-event-name {
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--badge-text);
+  padding: 1.25rem 1.5rem 0.5rem;
+  letter-spacing: 0.02em;
+}
+
+/* ── Détails de l'événement ─────────────────────────────────────────────── */
+
+.badge-event-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0 1.5rem 1rem;
+  font-size: 0.82rem;
+  color: var(--badge-muted);
+}
+
+.badge-event-details i { color: var(--badge-accent); margin-right: 0.3rem; }
+
+/* ── Séparateur perforé ─────────────────────────────────────────────────── */
+
+.badge-divider {
+  display: flex;
+  align-items: center;
+  padding: 0 1rem;
+  margin: 0.25rem 0;
+}
+
+.badge-divider-line {
+  flex: 1;
+  height: 1px;
+  border-top: 2px dashed var(--badge-border);
+}
+
+.badge-divider-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  flex-shrink: 0;
+}
+
+/* ── Corps du badge ─────────────────────────────────────────────────────── */
+
+.badge-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.5rem 1.25rem;
+}
+
+/* ── Info joueur ────────────────────────────────────────────────────────── */
+
+.badge-player {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.badge-player-avatar {
+  font-size: 3rem;
+  color: var(--badge-accent);
+  line-height: 1;
+}
+
+.badge-player-pseudo {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--badge-text);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.2rem;
+}
+
+.badge-player-name {
+  font-size: 0.82rem;
+  color: var(--badge-muted);
+  margin-bottom: 0.4rem;
+}
+
+.badge-role {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.badge-role--admin    { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+.badge-role--moderator{ background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+.badge-role--member   { background: rgba(99,102,241,0.15); color: #6366f1; border: 1px solid rgba(99,102,241,0.3); }
+
+/* ── QR Code ────────────────────────────────────────────────────────────── */
+
+.badge-qr {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.badge-qr-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  border: 3px solid var(--badge-border);
+  display: block;
+}
+
+.badge-qr-hint {
+  font-size: 0.65rem;
+  color: var(--badge-muted);
+  margin-top: 0.4rem;
+  text-align: center;
+}
+
+/* ── Pied du badge ──────────────────────────────────────────────────────── */
+
+.badge-footer {
+  background: rgba(0,0,0,0.25);
+  border-top: 1px solid var(--badge-border);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.badge-id {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.badge-id-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--badge-muted);
+}
+
+.badge-id-value {
+  font-family: monospace;
+  font-size: 0.65rem;
+  color: var(--badge-muted);
+  word-break: break-all;
+  max-width: 220px;
+}
+
+.badge-registered-date {
+  font-size: 0.7rem;
+  color: var(--badge-muted);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Responsive mobile ──────────────────────────────────────────────────── */
+
+@media (max-width: 480px) {
+  :root {
+    --badge-width: 100%;
+  }
+
+  body.page-badge {
+    padding: 1rem 0.75rem;
+  }
+
+  /* Corps : empile joueur + QR en colonne centrée */
+  .badge-body {
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1rem 1.25rem 1.25rem;
+  }
+
+  .badge-player {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 100%;
+  }
+
+  .badge-player-avatar {
+    font-size: 2.5rem;
+  }
+
+  .badge-player-pseudo {
+    font-size: 1rem;
+  }
+
+  /* QR centré et légèrement réduit */
+  .badge-qr {
+    width: 100%;
+  }
+
+  .badge-qr-img {
+    width: 140px;
+    height: 140px;
+    margin: 0 auto;
+  }
+
+  /* Pied de badge : empile en colonne */
+  .badge-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .badge-registered-date {
+    text-align: left;
+  }
+
+  .badge-id-value {
+    max-width: 100%;
+  }
+
+  /* En-tête : réduit légèrement */
+  .badge-event-name {
+    font-size: 1.05rem;
+    padding: 1rem 1.25rem 0.4rem;
+  }
+
+  .badge-event-details {
+    padding: 0 1.25rem 0.75rem;
+  }
+
+  .badge-header {
+    padding: 1rem 1.25rem;
+  }
+}
+
+/* ── Styles impression ──────────────────────────────────────────────────── */
+
+@media print {
+  .no-print { display: none !important; }
+
+  body.page-badge {
+    background: #fff;
+    color: #000;
+    padding: 0;
+    min-height: auto;
+  }
+
+  .badge-wrapper {
+    justify-content: center;
+    padding: 0;
+  }
+
+  .badge-card {
+    box-shadow: none;
+    border: 2px solid #333;
+    border-radius: 12px;
+    width: 380px;
+    max-width: 100%;
+  }
+
+  .badge-header {
+    background: #1e293b !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .badge-event-name { color: #000; }
+  .badge-event-details { color: #555; }
+  .badge-player-pseudo { color: #000; }
+  .badge-player-name { color: #555; }
+  .badge-footer { background: #f8f8f8; }
+}

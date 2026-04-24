@@ -6,7 +6,7 @@
 
 const { expect } = require('chai');
 const sinon      = require('sinon');
-const { requireAuth, requireAdmin, injectLocals } = require('../middleware/auth');
+const { requireAuth, requireAdmin, requireModerator, injectLocals } = require('../middleware/auth');
 
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -76,6 +76,47 @@ describe('Middleware Auth', function () {
     });
   });
 
+  // ── requireModerator ───────────────────────────────────────────────────
+
+  describe('requireModerator()', function () {
+    it('doit appeler next() si l\'utilisateur est modérateur', function () {
+      const req  = { session: { userId: 1, isAdmin: false, isModerator: true } };
+      const res  = {};
+      const next = sinon.spy();
+
+      requireModerator(req, res, next);
+      expect(next.calledOnce).to.be.true;
+    });
+
+    it('doit appeler next() si l\'utilisateur est admin', function () {
+      const req  = { session: { userId: 1, isAdmin: true, isModerator: false } };
+      const res  = {};
+      const next = sinon.spy();
+
+      requireModerator(req, res, next);
+      expect(next.calledOnce).to.be.true;
+    });
+
+    it('doit rediriger vers / si l\'utilisateur n\'est ni admin ni modérateur', function () {
+      const req  = { session: { userId: 1, isAdmin: false, isModerator: false }, flash: sinon.stub() };
+      const res  = { redirect: sinon.spy() };
+      const next = sinon.spy();
+
+      requireModerator(req, res, next);
+      expect(next.called).to.be.false;
+      expect(res.redirect.calledWith('/')).to.be.true;
+    });
+
+    it('doit rediriger si userId est absent', function () {
+      const req  = { session: { isModerator: true }, flash: sinon.stub() };
+      const res  = { redirect: sinon.spy() };
+      const next = sinon.spy();
+
+      requireModerator(req, res, next);
+      expect(res.redirect.calledWith('/')).to.be.true;
+    });
+  });
+
   // ── injectLocals ───────────────────────────────────────────────────────
 
   describe('injectLocals()', function () {
@@ -95,7 +136,7 @@ describe('Middleware Auth', function () {
 
     it('doit injecter les données utilisateur si connecté', function () {
       const req = {
-        session: { userId: 5, pseudo: 'GamerX', isAdmin: false },
+        session: { userId: 5, pseudo: 'GamerX', isAdmin: false, isModerator: false },
         flash:   sinon.stub().returns([]),
         csrfToken: sinon.stub().returns('tok'),
       };
@@ -104,9 +145,10 @@ describe('Middleware Auth', function () {
 
       injectLocals(req, res, next);
       expect(res.locals.currentUser).to.deep.equal({
-        id:      5,
-        pseudo:  'GamerX',
-        isAdmin: false,
+        id:          5,
+        pseudo:      'GamerX',
+        isAdmin:     false,
+        isModerator: false,
       });
     });
 

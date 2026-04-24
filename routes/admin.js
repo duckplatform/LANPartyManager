@@ -38,8 +38,9 @@ router.get('/', async (req, res) => {
       totalAnnouncements,
       totalEvents,
       stats: {
-        admins:  users.filter(u => u.is_admin).length,
-        members: users.filter(u => !u.is_admin).length,
+        admins:      users.filter(u => u.is_admin).length,
+        moderators:  users.filter(u => u.is_moderator && !u.is_admin).length,
+        members:     users.filter(u => !u.is_admin && !u.is_moderator).length,
       },
     });
   } catch (err) {
@@ -73,6 +74,34 @@ router.post('/users/:id/toggle-admin', async (req, res) => {
   } catch (err) {
     logger.error('[ADMIN] Erreur toggle-admin :', err);
     req.flash('error', 'Erreur lors de la modification des droits.');
+  }
+  return res.redirect('/admin');
+});
+
+// ─── POST /admin/users/:id/toggle-moderator ──────────────────────────────
+
+router.post('/users/:id/toggle-moderator', async (req, res) => {
+  const targetId = parseInt(req.params.id, 10);
+
+  // Empêche l'admin de modifier ses propres droits depuis ce panneau
+  if (targetId === req.session.userId) {
+    req.flash('error', 'Vous ne pouvez pas modifier vos propres droits de modérateur.');
+    return res.redirect('/admin');
+  }
+
+  try {
+    const user = await User.findById(targetId);
+    if (!user) {
+      req.flash('error', 'Utilisateur introuvable.');
+      return res.redirect('/admin');
+    }
+    const newStatus = !user.is_moderator;
+    await User.setModerator(targetId, newStatus);
+    logger.info(`[ADMIN] Utilisateur #${req.session.userId} a ${newStatus ? 'accordé' : 'retiré'} le rôle modérateur à l'utilisateur #${targetId}`);
+    req.flash('success', `Rôle modérateur ${newStatus ? 'accordé à' : 'retiré de'} ${user.pseudo}.`);
+  } catch (err) {
+    logger.error('[ADMIN] Erreur toggle-moderator :', err);
+    req.flash('error', 'Erreur lors de la modification du rôle modérateur.');
   }
   return res.redirect('/admin');
 });

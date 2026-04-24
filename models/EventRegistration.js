@@ -8,6 +8,7 @@
  *   Les inscriptions sont bloquées 24 h avant le début de l'événement.
  */
 
+const { randomUUID } = require('crypto');
 const db = require('../config/database');
 
 const EventRegistration = {
@@ -20,7 +21,7 @@ const EventRegistration = {
    */
   async findByEvent(eventId) {
     const [rows] = await db.pool.execute(
-      `SELECT er.id, er.event_id, er.user_id, er.created_at,
+      `SELECT er.id, er.event_id, er.user_id, er.token, er.created_at,
               u.pseudo, u.nom, u.prenom, u.email
          FROM event_registrations er
          JOIN users u ON u.id = er.user_id
@@ -39,7 +40,7 @@ const EventRegistration = {
    */
   async findByUser(userId) {
     const [rows] = await db.pool.execute(
-      `SELECT er.id, er.event_id, er.user_id, er.created_at,
+      `SELECT er.id, er.event_id, er.user_id, er.token, er.created_at,
               e.nom, e.date_heure, e.lieu, e.statut
          FROM event_registrations er
          JOIN events e ON e.id = er.event_id
@@ -65,15 +66,53 @@ const EventRegistration = {
   },
 
   /**
-   * Inscrit un utilisateur à un événement
+   * Retourne l'inscription d'un utilisateur à un événement (avec token)
+   * @param {number} eventId
+   * @param {number} userId
+   * @returns {Promise<Object|null>}
+   */
+  async findByEventAndUser(eventId, userId) {
+    const [rows] = await db.pool.execute(
+      `SELECT er.id, er.event_id, er.user_id, er.token, er.created_at,
+              e.nom, e.date_heure, e.lieu, e.statut
+         FROM event_registrations er
+         JOIN events e ON e.id = er.event_id
+        WHERE er.event_id = ? AND er.user_id = ?`,
+      [eventId, userId]
+    );
+    return rows[0] || null;
+  },
+
+  /**
+   * Retourne une inscription à partir de son token UUID (pour la vérification QR)
+   * @param {string} token
+   * @returns {Promise<Object|null>}
+   */
+  async findByToken(token) {
+    const [rows] = await db.pool.execute(
+      `SELECT er.id, er.event_id, er.user_id, er.token, er.created_at,
+              e.nom AS event_nom, e.date_heure, e.lieu, e.statut,
+              u.pseudo, u.nom, u.prenom, u.email
+         FROM event_registrations er
+         JOIN events e ON e.id = er.event_id
+         JOIN users u ON u.id = er.user_id
+        WHERE er.token = ?`,
+      [token]
+    );
+    return rows[0] || null;
+  },
+
+  /**
+   * Inscrit un utilisateur à un événement (génère un token UUID pour le badge)
    * @param {number} eventId
    * @param {number} userId
    * @returns {Promise<number>} ID de l'inscription créée
    */
   async create(eventId, userId) {
+    const token = randomUUID();
     const [result] = await db.pool.execute(
-      'INSERT INTO event_registrations (event_id, user_id) VALUES (?, ?)',
-      [eventId, userId]
+      'INSERT INTO event_registrations (event_id, user_id, token) VALUES (?, ?, ?)',
+      [eventId, userId, token]
     );
     return result.insertId;
   },

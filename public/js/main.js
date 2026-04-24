@@ -7,17 +7,35 @@
   const nav    = document.getElementById('mainNav');
   if (!toggle || !nav) return;
 
-  toggle.addEventListener('click', function () {
-    const isOpen = nav.classList.toggle('is-open');
+  function setMenuState(isOpen) {
+    nav.classList.toggle('is-open', isOpen);
     toggle.setAttribute('aria-expanded', String(isOpen));
     toggle.setAttribute('aria-label', isOpen ? 'Fermer le menu' : 'Ouvrir le menu');
+    document.body.classList.toggle('menu-open', isOpen);
+  }
+
+  toggle.addEventListener('click', function () {
+    const isOpen = !nav.classList.contains('is-open');
+    setMenuState(isOpen);
   });
 
   // Ferme le menu si clic en dehors
   document.addEventListener('click', function (e) {
     if (!nav.contains(e.target) && !toggle.contains(e.target)) {
-      nav.classList.remove('is-open');
-      toggle.setAttribute('aria-expanded', 'false');
+      setMenuState(false);
+    }
+  });
+
+  // Ferme le menu lors du clic sur un lien/bouton de navigation
+  nav.querySelectorAll('a, button').forEach(function (el) {
+    el.addEventListener('click', function () {
+      setMenuState(false);
+    });
+  });
+
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 768) {
+      setMenuState(false);
     }
   });
 })();
