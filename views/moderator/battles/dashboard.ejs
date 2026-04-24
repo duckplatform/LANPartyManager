@@ -212,7 +212,10 @@
                 </form>
               <% } %>
               <% if (['en_attente', 'en_cours'].includes(b.statut)) { %>
-                <button type="button" class="btn btn--warning btn--sm" onclick="openResultModal(<%= b.id %>, <%= JSON.stringify(b.players) %>, '<%= b.type_rencontre %>')">
+                <button type="button" class="btn btn--warning btn--sm btn-open-result"
+                        data-battle-id="<%= b.id %>"
+                        data-players="<%- JSON.stringify(b.players).replace(/"/g, '&quot;') %>"
+                        data-type="<%= b.type_rencontre %>">
                   <i class="fas fa-flag-checkered"></i> Terminer & résultat
                 </button>
               <% } %>
@@ -294,7 +297,7 @@
         <button type="submit" class="btn btn--primary">
           <i class="fas fa-save"></i> Enregistrer
         </button>
-        <button type="button" class="btn btn--ghost" onclick="closeResultModal()">Annuler</button>
+        <button type="button" class="btn btn--ghost btn-close-modal">Annuler</button>
       </div>
     </form>
   </div>
@@ -304,21 +307,27 @@
 (function () {
   'use strict';
 
+  // Intervalle d'auto-refresh en ms (30 secondes)
+  const AUTO_REFRESH_MS = 30000;
+
   const modal      = document.getElementById('resultModal');
   const resultForm = document.getElementById('resultForm');
   const winnersList = document.getElementById('winnersList');
   const scoreInput = document.getElementById('scoreInput');
 
-  window.openResultModal = function(battleId, players, typeRencontre) {
+  /**
+   * Ouvre le modal de résultat en lisant les données depuis les attributs data-*
+   * du bouton cliqué, évitant ainsi toute injection JSON inline.
+   */
+  function openResultModal(battleId, players, typeRencontre) {
     resultForm.action = '/battles/' + battleId + '/result';
     scoreInput.value  = '';
     winnersList.innerHTML = '';
 
     // Génère les checkboxes des joueurs selon le format
     if (typeRencontre === '2v2') {
-      // Sélection par équipe
       [1, 2].forEach(function(equipe) {
-        const teamPlayers = players.filter(p => p.equipe === equipe);
+        const teamPlayers = players.filter(function(p) { return p.equipe === equipe; });
         if (teamPlayers.length === 0) return;
         const label = document.createElement('div');
         label.style.fontWeight = '600';
@@ -326,30 +335,56 @@
         label.textContent = 'Équipe ' + equipe;
         winnersList.appendChild(label);
         teamPlayers.forEach(function(p) {
-          const wrap = document.createElement('label');
+          const wrap  = document.createElement('label');
+          const input = document.createElement('input');
+          const icon  = document.createElement('i');
+          const text  = document.createTextNode(' ' + p.pseudo);
+          input.type  = 'checkbox';
+          input.name  = 'winner_ids[]';
+          input.value = p.user_id;
+          icon.className = 'fas fa-circle-user';
           wrap.className = 'form-checkbox';
-          wrap.innerHTML = '<input type="checkbox" name="winner_ids[]" value="' + p.user_id + '" /> ' +
-                           '<i class="fas fa-circle-user"></i> ' + p.pseudo;
+          wrap.appendChild(input);
+          wrap.appendChild(icon);
+          wrap.appendChild(text);
           winnersList.appendChild(wrap);
         });
       });
     } else {
       players.forEach(function(p) {
-        const wrap = document.createElement('label');
+        const wrap  = document.createElement('label');
+        const input = document.createElement('input');
+        const icon  = document.createElement('i');
+        const text  = document.createTextNode(' ' + p.pseudo);
+        input.type  = 'checkbox';
+        input.name  = 'winner_ids[]';
+        input.value = p.user_id;
+        icon.className = 'fas fa-circle-user';
         wrap.className = 'form-checkbox';
-        wrap.innerHTML = '<input type="checkbox" name="winner_ids[]" value="' + p.user_id + '" /> ' +
-                         '<i class="fas fa-circle-user"></i> ' + p.pseudo;
+        wrap.appendChild(input);
+        wrap.appendChild(icon);
+        wrap.appendChild(text);
         winnersList.appendChild(wrap);
       });
     }
 
     modal.classList.add('open');
     scoreInput.focus();
-  };
+  }
 
-  window.closeResultModal = function() {
+  function closeResultModal() {
     modal.classList.remove('open');
-  };
+  }
+
+  // Branchement des boutons "Terminer & résultat" via délégation (data attributes)
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-open-result');
+    if (!btn) return;
+    const battleId = parseInt(btn.dataset.battleId, 10);
+    const players  = JSON.parse(btn.dataset.players);
+    const type     = btn.dataset.type;
+    openResultModal(battleId, players, type);
+  });
 
   // Fermer en cliquant sur le fond
   modal.addEventListener('click', function(e) {
@@ -360,6 +395,9 @@
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') closeResultModal();
   });
+
+  // Bouton "Annuler" du modal
+  document.querySelector('.btn-close-modal').addEventListener('click', closeResultModal);
 }());
 </script>
 

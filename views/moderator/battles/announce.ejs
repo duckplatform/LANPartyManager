@@ -120,9 +120,14 @@
 
 </div>
 
-<!-- Auto-refresh toutes les 30 secondes -->
+<!-- Auto-refresh toutes les 30 secondes pour maintenir la vue à jour -->
 <script>
-setTimeout(function() { window.location.reload(); }, 30000);
+(function () {
+  'use strict';
+  // Délai d'actualisation automatique en millisecondes
+  var REFRESH_DELAY_MS = 30000;
+  setTimeout(function() { window.location.reload(); }, REFRESH_DELAY_MS);
+}());
 </script>
 
 <%- include('../../partials/foot') %>
