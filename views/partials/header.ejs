@@ -27,11 +27,6 @@
         </a></li>
 
         <% if (currentUser) { %>
-          <!-- Utilisateur connecté -->
-          <li><a href="/profile" class="nav-link<%= (typeof pageClass !== 'undefined' && pageClass === 'page-profile') ? ' active' : '' %>">
-            <i class="fas fa-user"></i> Mon profil
-          </a></li>
-
           <% if (currentUser.isAdmin) { %>
             <li><a href="/admin" class="nav-link nav-link--admin<%= (typeof pageClass !== 'undefined' && pageClass === 'page-admin') ? ' active' : '' %>">
               <i class="fas fa-shield-halved"></i> Administration
@@ -48,7 +43,9 @@
           <% } %>
 
           <li class="nav-user-info">
-            <span class="nav-pseudo"><i class="fas fa-circle-user"></i> <%= currentUser.pseudo %></span>
+            <a href="/profile" class="nav-pseudo<%= (typeof pageClass !== 'undefined' && pageClass === 'page-profile') ? ' active' : '' %>">
+              <i class="fas fa-circle-user"></i> <%= currentUser.pseudo %>
+            </a>
           </li>
 
           <li>
