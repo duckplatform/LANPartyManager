@@ -1,6 +1,10 @@
 <%- include('../../partials/head') %>
 
 <div class="container admin-container">
+  <div class="admin-layout">
+    <%- include('../_sidebar', { activeSection: 'games' }) %>
+
+    <section class="admin-main">
 
   <div class="admin-header">
     <div>
@@ -61,6 +65,9 @@
         </div>
       </form>
     </div>
+  </div>
+
+    </section>
   </div>
 
 </div>
