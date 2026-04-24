@@ -2,8 +2,8 @@
 
 <div class="error-page container">
   <div class="error-content">
-    <div class="error-code">500</div>
-    <h1 class="error-title">Erreur serveur</h1>
+    <div class="error-code"><%= statusCode || 500 %></div>
+    <h1 class="error-title"><%= title || 'Erreur serveur' %></h1>
     <p class="error-message"><%= message || 'Une erreur interne est survenue. Notre équipe a été notifiée.' %></p>
     <a href="/" class="btn btn--primary btn--lg">
       <i class="fas fa-home"></i> Retour à l'accueil

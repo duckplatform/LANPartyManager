@@ -27,6 +27,12 @@ const { injectLocals }   = require('./middleware/auth');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 const ENV  = process.env.NODE_ENV || 'development';
+const DB_RETRY_DELAY_MS = parseInt(process.env.DB_RETRY_DELAY_MS || '10000', 10);
+
+app.locals.databaseReady = ENV === 'test';
+app.locals.databaseError = null;
+
+let dbRetryTimer = null;
 
 // ─── Moteur de templates EJS ───────────────────────────────────────────────
 
@@ -121,6 +127,30 @@ app.use(csrfSynchronisedProtection);
 
 app.use(injectLocals);
 
+// ─── Santé de l'application / disponibilité DB ────────────────────────────
+
+app.get('/health', (req, res) => {
+  const databaseReady = app.locals.databaseReady !== false;
+
+  res.status(databaseReady ? 200 : 503).json({
+    status:   databaseReady ? 'ok' : 'degraded',
+    database: databaseReady ? 'up' : 'down',
+  });
+});
+
+app.use((req, res, next) => {
+  if (app.locals.databaseReady !== false) {
+    return next();
+  }
+
+  return res.status(503).render('errors/500', {
+    title:      'Service temporairement indisponible',
+    pageClass:  'page-error',
+    statusCode: 503,
+    message:    'L\'application est demarree, mais la base de donnees n\'est pas encore disponible. Reessayez dans quelques instants.',
+  });
+});
+
 // ─── Routes ───────────────────────────────────────────────────────────────
 
 app.use('/',        require('./routes/index'));
@@ -160,15 +190,56 @@ app.use((err, req, res, next) => {
 
 // ─── Démarrage du serveur ──────────────────────────────────────────────────
 
+function scheduleDatabaseRetry() {
+  if (dbRetryTimer || ENV === 'test') {
+    return;
+  }
+
+  dbRetryTimer = setTimeout(() => {
+    dbRetryTimer = null;
+    void refreshDatabaseState();
+  }, DB_RETRY_DELAY_MS);
+
+  if (typeof dbRetryTimer.unref === 'function') {
+    dbRetryTimer.unref();
+  }
+}
+
+async function refreshDatabaseState() {
+  try {
+    await testConnection();
+
+    if (!app.locals.databaseReady) {
+      logger.info('[DB] Base de donnees disponible, reprise du trafic.');
+    }
+
+    app.locals.databaseReady = true;
+    app.locals.databaseError = null;
+  } catch (err) {
+    app.locals.databaseReady = false;
+    app.locals.databaseError = err;
+    logger.error(`[DB] Base de donnees indisponible : ${err.message}`);
+    scheduleDatabaseRetry();
+  }
+}
+
+function listenAsync() {
+  return new Promise((resolve, reject) => {
+    const server = app.listen(PORT, () => {
+      logger.info(`[SERVER] LANPartyManager demarre sur le port ${PORT} (${ENV})`);
+      resolve(server);
+    });
+
+    server.once('error', reject);
+  });
+}
+
 async function startServer() {
   try {
-    // Vérifie la connexion DB avant de démarrer
-    await testConnection();
-    app.listen(PORT, () => {
-      logger.info(`[SERVER] LANPartyManager démarré sur le port ${PORT} (${ENV})`);
-    });
+    await listenAsync();
+    void refreshDatabaseState();
   } catch (err) {
-    logger.error('[SERVER] Impossible de démarrer :', err.message);
+    logger.error(`[SERVER] Impossible de demarrer : ${err.message}`);
     process.exit(1);
   }
 }
