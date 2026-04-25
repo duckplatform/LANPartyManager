@@ -288,6 +288,12 @@ WHERE NOT EXISTS (
   SELECT 1 FROM `games` WHERE `nom` = 'Street Fighter 6' AND `console` = 'PC'
 );
 
+INSERT INTO `games` (`nom`, `console`, `type_rencontre`)
+SELECT 'Trackmania Turbo', 'PC', 'solo'
+WHERE NOT EXISTS (
+  SELECT 1 FROM `games` WHERE `nom` = 'Trackmania Turbo' AND `console` = 'PC'
+);
+
 -- ------------------------------------------------------------
 -- Salles de demonstration rattachees a l'evenement a venir
 -- ------------------------------------------------------------
@@ -338,6 +344,22 @@ FROM `events` e
 WHERE e.nom = 'LAN Spring Showdown'
   AND NOT EXISTS (
     SELECT 1 FROM `rooms` r WHERE r.event_id = e.id AND r.nom = 'Tifa'
+  );
+
+INSERT INTO `rooms` (`nom`, `type`, `type_rencontre`, `actif`, `event_id`)
+SELECT 'Fox', 'simulation', 'solo', 1, e.id
+FROM `events` e
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `rooms` r WHERE r.event_id = e.id AND r.nom = 'Fox'
+  );
+
+INSERT INTO `rooms` (`nom`, `type`, `type_rencontre`, `actif`, `event_id`)
+SELECT 'Cortex', 'simulation', 'solo', 0, e.id
+FROM `events` e
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `rooms` r WHERE r.event_id = e.id AND r.nom = 'Cortex'
   );
 
 -- ------------------------------------------------------------
@@ -408,6 +430,19 @@ WHERE e.nom = 'LAN Spring Showdown'
   );
 
 INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, r.id, 'planifie', NULL,
+       'Duel 1v1 planifie sur Link (slot suivant) pour tester le verrou d''occupation.',
+       '2026-04-24 18:23:00', '2026-04-25 10:28:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Street Fighter 6' AND g.console = 'PC'
+JOIN `rooms` r ON r.event_id = e.id AND r.nom = 'Link'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Duel 1v1 planifie sur Link (slot suivant) pour tester le verrou d''occupation.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
 SELECT e.id, g.id, r.id, 'en_cours', NULL,
        'Rencontre 2v2 deja lancee sur la seconde salle active.',
        '2026-04-24 18:24:00', '2026-04-25 10:29:00'
@@ -418,6 +453,69 @@ WHERE e.nom = 'LAN Spring Showdown'
   AND NOT EXISTS (
     SELECT 1 FROM `battles` b
     WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Rencontre 2v2 deja lancee sur la seconde salle active.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, r.id, 'planifie', NULL,
+       'Rencontre 2v2 planifiee sur Kirby (slot suivant) pour tester la file bloquee.',
+       '2026-04-24 18:25:00', '2026-04-25 10:30:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Mario Kart 8 Deluxe' AND g.console = 'Nintendo Switch'
+JOIN `rooms` r ON r.event_id = e.id AND r.nom = 'Kirby'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Rencontre 2v2 planifiee sur Kirby (slot suivant) pour tester la file bloquee.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, r.id, 'en_cours', NULL,
+       'Session solo en cours sur Fox (salle unique active).',
+       '2026-04-24 18:34:00', '2026-04-25 10:39:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Trackmania Turbo' AND g.console = 'PC'
+JOIN `rooms` r ON r.event_id = e.id AND r.nom = 'Fox'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Session solo en cours sur Fox (salle unique active).'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, r.id, 'planifie', NULL,
+       'Session solo planifiee sur Fox pour verifier la promotion unique.',
+       '2026-04-24 18:35:00', '2026-04-25 10:40:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Trackmania Turbo' AND g.console = 'PC'
+JOIN `rooms` r ON r.event_id = e.id AND r.nom = 'Fox'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Session solo planifiee sur Fox pour verifier la promotion unique.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Session solo en attente numero 1 (doit rester bloquee tant que Fox a un planifie).',
+       '2026-04-24 18:36:00', '2026-04-25 10:41:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Trackmania Turbo' AND g.console = 'PC'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Session solo en attente numero 1 (doit rester bloquee tant que Fox a un planifie).'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Session solo en attente numero 2 pour verifier l''ordre FIFO.',
+       '2026-04-24 18:37:00', '2026-04-25 10:42:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Trackmania Turbo' AND g.console = 'PC'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Session solo en attente numero 2 pour verifier l''ordre FIFO.'
   );
 
 INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
@@ -634,6 +732,24 @@ WHERE b.notes = 'Rencontre 2v2 deja lancee sur la seconde salle active.'
   );
 
 INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'theo.lemoine@lanparty.local'
+WHERE b.notes = 'Duel 1v1 planifie sur Link (slot suivant) pour tester le verrou d''occupation.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'hugo.bernard@lanparty.local'
+WHERE b.notes = 'Duel 1v1 planifie sur Link (slot suivant) pour tester le verrou d''occupation.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
 SELECT b.id, u.id, 1, 0
 FROM `battles` b
 JOIN `users` u ON u.email = 'leo.andre@lanparty.local'
@@ -656,6 +772,78 @@ SELECT b.id, u.id, 2, 0
 FROM `battles` b
 JOIN `users` u ON u.email = 'theo.lemoine@lanparty.local'
 WHERE b.notes = 'Rencontre 2v2 deja lancee sur la seconde salle active.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'ines.dubois@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 planifiee sur Kirby (slot suivant) pour tester la file bloquee.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'lucas.petit@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 planifiee sur Kirby (slot suivant) pour tester la file bloquee.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'sarah.garcia@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 planifiee sur Kirby (slot suivant) pour tester la file bloquee.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'tom.moreau@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 planifiee sur Kirby (slot suivant) pour tester la file bloquee.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'jade.renard@lanparty.local'
+WHERE b.notes = 'Session solo en cours sur Fox (salle unique active).'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'mila.chevalier@lanparty.local'
+WHERE b.notes = 'Session solo planifiee sur Fox pour verifier la promotion unique.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'leo.andre@lanparty.local'
+WHERE b.notes = 'Session solo en attente numero 1 (doit rester bloquee tant que Fox a un planifie).'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'emma.roux@lanparty.local'
+WHERE b.notes = 'Session solo en attente numero 2 pour verifier l''ordre FIFO.'
   AND NOT EXISTS (
     SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
   );
@@ -821,3 +1009,36 @@ WHERE b.notes = 'Rencontre 2v2 terminee pour enrichir l''historique du tableau.'
   AND NOT EXISTS (
     SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
   );
+
+-- ------------------------------------------------------------
+-- Checklist de validation manuelle (file d'attente)
+-- Copier/coller ces requetes dans MySQL apres seed si besoin.
+-- ------------------------------------------------------------
+-- 1) Verifier la repartition des statuts par format
+-- SELECT g.type_rencontre, b.statut, COUNT(*) AS total
+-- FROM battles b
+-- JOIN games g ON g.id = b.game_id
+-- JOIN events e ON e.id = b.event_id
+-- WHERE e.nom = 'LAN Spring Showdown'
+-- GROUP BY g.type_rencontre, b.statut
+-- ORDER BY g.type_rencontre, FIELD(b.statut,'en_cours','installation','planifie','file_attente','termine');
+--
+-- 2) Verifier les slots d'occupation par salle (active + planifie)
+-- SELECT r.nom AS room, r.type_rencontre,
+--        SUM(CASE WHEN b.statut IN ('installation','en_cours') THEN 1 ELSE 0 END) AS active_slot,
+--        SUM(CASE WHEN b.statut = 'planifie' THEN 1 ELSE 0 END) AS planifie_slot,
+--        SUM(CASE WHEN b.statut = 'file_attente' THEN 1 ELSE 0 END) AS waiting_attached
+-- FROM rooms r
+-- LEFT JOIN battles b ON b.room_id = r.id
+-- JOIN events e ON e.id = r.event_id
+-- WHERE e.nom = 'LAN Spring Showdown'
+-- GROUP BY r.id, r.nom, r.type_rencontre
+-- ORDER BY r.type_rencontre, r.nom;
+--
+-- 3) Verifier l'ordre FIFO des rencontres en attente
+-- SELECT b.id, g.type_rencontre, g.nom AS game, b.created_at, b.notes
+-- FROM battles b
+-- JOIN games g ON g.id = b.game_id
+-- JOIN events e ON e.id = b.event_id
+-- WHERE e.nom = 'LAN Spring Showdown' AND b.statut = 'file_attente'
+-- ORDER BY b.created_at ASC;
