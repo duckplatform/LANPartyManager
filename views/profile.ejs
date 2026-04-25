@@ -72,10 +72,11 @@
 
           <div class="form-group">
             <label for="pseudo" class="form-label">
-              <i class="fas fa-gamepad"></i> Pseudo (surnom en jeu)
+              <i class="fas fa-gamepad"></i> Pseudo (jeu ou Discord)
             </label>
             <input type="text" id="pseudo" name="pseudo" class="form-input"
                    value="<%= user.pseudo || '' %>" required minlength="2" maxlength="50" />
+            <small class="form-hint">Ce pseudo est utilise pour identifier les joueurs dans les annonces de rencontres Discord.</small>
           </div>
 
           <div class="form-group">

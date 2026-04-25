@@ -258,12 +258,25 @@ file_attente  →  planifie  →  en_attente  →  en_cours  →  termine
 
 Le service `services/discord.js` envoie des notifications formatées (Discord Embeds) sur des canaux Discord configurés lors des événements métier suivants :
 
+Pour les rencontres, le canal utilisé est prioritairement `events.discord_channel_id` (canal dédié à l'événement), avec repli sur `DISCORD_CHANNEL_EVENTS` si le champ n'est pas renseigné.
+
 | Déclencheur | Canal | Message |
 |-------------|-------|---------|
-| Création d'un événement | `DISCORD_CHANNEL_EVENTS` | Embed bleu avec nom, date, lieu |
-| Passage d'un événement en statut `en_cours` | `DISCORD_CHANNEL_EVENTS` | Embed vert + mention `@everyone` |
-| Passage d'un événement en statut `termine` | `DISCORD_CHANNEL_EVENTS` | Embed rouge |
+| Création d'un événement | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed bleu avec nom, date, lieu |
+| Passage d'un événement en statut `en_cours` | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed vert + mention `@everyone` |
+| Passage d'un événement en statut `termine` | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed rouge |
 | Publication d'une actualité (création ou mise à jour vers `publie`) | `DISCORD_CHANNEL_NEWS` | Embed jaune avec résumé et lien |
+| Création d'une rencontre | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed avec jeu, salle, participants, notes |
+| Rencontre → `installation` | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed "installation en cours" + rappel participants/salle |
+| Rencontre → `en_cours` | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed de démarrage + informations utiles |
+| Rencontre → `termine` | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed de fin avec score + gagnants |
+
+Toutes les transitions du cycle de vie d'une rencontre sont couvertes :
+- création en `file_attente` ou `planifie`
+- promotion automatique `file_attente -> planifie` (reevaluation de file)
+- `planifie -> installation`
+- `installation -> en_cours`
+- `installation/en_cours -> termine`
 
 **Caractéristiques techniques :**
 - Utilise l'API REST Discord via `discord.js` v14 (pas de connexion WebSocket permanente)

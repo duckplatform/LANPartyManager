@@ -301,7 +301,7 @@ const Battle = {
    * Appelé après chaque changement de statut de rencontre.
    * Parcourt les battles en file_attente par ordre de création et tente de leur attribuer une salle.
    * @param {number} eventId
-   * @returns {Promise<void>}
+    * @returns {Promise<number[]>} IDs des rencontres promues en planifie
    */
   async reevaluateQueue(eventId) {
     // Récupère les battles en file_attente, dans l'ordre de création
@@ -314,9 +314,16 @@ const Battle = {
       [eventId]
     );
 
+    const promotedBattleIds = [];
+
     for (const battle of waiting) {
-      await Battle.assignRoomIfAvailable(battle.id, eventId, battle.game_id);
+      const promoted = await Battle.assignRoomIfAvailable(battle.id, eventId, battle.game_id);
+      if (promoted) {
+        promotedBattleIds.push(battle.id);
+      }
     }
+
+    return promotedBattleIds;
   },
 
   /**
@@ -404,6 +411,19 @@ const Battle = {
    * @returns {Promise<boolean>}
    */
   async setResult(id, score, winnerIds, eventId) {
+    const result = await Battle.setResultWithQueue(id, score, winnerIds, eventId);
+    return result.success;
+  },
+
+  /**
+   * Variante détaillée de setResult qui expose les promotions de file d'attente.
+   * @param {number} id
+   * @param {string|null} score
+   * @param {number[]} winnerIds
+   * @param {number} eventId
+   * @returns {Promise<{success: boolean, promotedBattleIds: number[]}>}
+   */
+  async setResultWithQueue(id, score, winnerIds, eventId) {
     // Met à jour le score et le statut
     const [result] = await db.pool.execute(
       `UPDATE battles SET score = ?, statut = 'termine', updated_at = NOW()
@@ -411,7 +431,9 @@ const Battle = {
       [score || null, id]
     );
 
-    if (result.affectedRows === 0) return false;
+    if (result.affectedRows === 0) {
+      return { success: false, promotedBattleIds: [] };
+    }
 
     // Réinitialise tous les gagnants à 0
     await db.pool.execute(
@@ -430,9 +452,9 @@ const Battle = {
     }
 
     // Réévalue la file d'attente
-    await Battle.reevaluateQueue(eventId);
+    const promotedBattleIds = await Battle.reevaluateQueue(eventId);
 
-    return true;
+    return { success: true, promotedBattleIds };
   },
 
   /**

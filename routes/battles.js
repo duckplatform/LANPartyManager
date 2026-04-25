@@ -27,6 +27,7 @@ const Event  = require('../models/Event');
 const User   = require('../models/User');
 const EventRegistration = require('../models/EventRegistration');
 const logger = require('../config/logger');
+const discord = require('../services/discord');
 const { requireAuth, requireModerator } = require('../middleware/auth');
 
 // Toutes les routes battles nécessitent auth + (admin ou modérateur)
@@ -72,6 +73,20 @@ function formatRoomConflictMessage(actionLabel, conflict) {
   return `Impossible de ${actionLabel} : la salle ${conflict.room_nom} est occupee par la rencontre #${conflict.conflicting_battle_id} (${statutLabel}).`;
 }
 
+async function notifyPromotedBattles(event, promotedBattleIds = []) {
+  if (!Array.isArray(promotedBattleIds) || promotedBattleIds.length === 0) {
+    return;
+  }
+
+  for (const battleId of promotedBattleIds) {
+    const promotedBattle = await Battle.findById(battleId);
+    if (!promotedBattle || promotedBattle.statut !== 'planifie') {
+      continue;
+    }
+    discord.notifyBattlePlanned({ event, battle: promotedBattle }).catch(() => {});
+  }
+}
+
 // ─── GET /battles ─────────────────────────────────────────────────────────────
 // Liste des événements disponibles pour la gestion des rencontres
 
@@ -106,7 +121,8 @@ router.get('/events/:id', async (req, res) => {
       return;
     }
 
-    await Battle.reevaluateQueue(eventId);
+    const promotedBattleIds = await Battle.reevaluateQueue(eventId);
+    await notifyPromotedBattles(event, promotedBattleIds);
 
     const [battles, rooms, stats] = await Promise.all([
       Battle.findByEvent(eventId),
@@ -145,7 +161,8 @@ router.get('/events/:id/announce', async (req, res) => {
       return;
     }
 
-    await Battle.reevaluateQueue(eventId);
+    const promotedBattleIds = await Battle.reevaluateQueue(eventId);
+    await notifyPromotedBattles(event, promotedBattleIds);
 
     const [battles, rooms, stats] = await Promise.all([
       Battle.findByEvent(eventId),
@@ -395,6 +412,9 @@ router.post(
       // Crée la rencontre (et tente d'assigner une salle automatiquement)
       const battleId = await Battle.create({ event_id: eventId, game_id: gameId, notes }, players);
 
+      const createdBattle = await Battle.findById(battleId);
+      discord.notifyBattleCreated({ event, battle: createdBattle }).catch(() => {});
+
       logger.info(
         `[BATTLES] Nouvelle rencontre #${battleId} créée par #${req.session.userId} — jeu: ${game.nom} — joueurs: ${players.map(p => p.user_id).join(',')}`
       );
@@ -444,6 +464,9 @@ router.post('/:id/ready', async (req, res) => {
       return res.redirect(`/battles/events/${battle.event_id}`);
     }
 
+    const updatedBattle = await Battle.findById(battleId);
+    discord.notifyBattleInstallation({ event, battle: updatedBattle }).catch(() => {});
+
     logger.info(`[BATTLES] Rencontre #${battleId} → installation par #${req.session.userId}`);
     req.flash('success', 'Rencontre en cours d\'installation.');
     return res.redirect(`/battles/events/${battle.event_id}`);
@@ -488,6 +511,9 @@ router.post('/:id/start', async (req, res) => {
       req.flash('error', formatRoomConflictMessage('lancer la rencontre', conflict));
       return res.redirect(`/battles/events/${battle.event_id}`);
     }
+
+    const updatedBattle = await Battle.findById(battleId);
+    discord.notifyBattleStarted({ event, battle: updatedBattle }).catch(() => {});
 
     logger.info(`[BATTLES] Rencontre #${battleId} → en_cours par #${req.session.userId}`);
     req.flash('success', 'Rencontre lancée !');
@@ -545,7 +571,16 @@ router.post(
         return res.redirect(`/battles/events/${battle.event_id}`);
       }
 
-      await Battle.setResult(battleId, score, winnerIds, battle.event_id);
+      const resultData = await Battle.setResultWithQueue(battleId, score, winnerIds, battle.event_id);
+      if (!resultData.success) {
+        req.flash('error', 'Impossible d\'enregistrer ce résultat (rencontre introuvable).');
+        return res.redirect(`/battles/events/${battle.event_id}`);
+      }
+
+      await notifyPromotedBattles(event, resultData.promotedBattleIds);
+
+      const endedBattle = await Battle.findById(battleId);
+      discord.notifyBattleEnded({ event, battle: endedBattle }).catch(() => {});
 
       logger.info(
         `[BATTLES] Rencontre #${battleId} terminée par #${req.session.userId} — score: ${score} — gagnants: ${winnerIds.join(',')}`
@@ -592,7 +627,8 @@ router.delete('/:id', async (req, res) => {
     }
 
     // Réévalue la file après suppression
-    await Battle.reevaluateQueue(eventId);
+    const promotedBattleIds = await Battle.reevaluateQueue(eventId);
+    await notifyPromotedBattles(event, promotedBattleIds);
 
     logger.info(`[BATTLES] Rencontre #${battleId} annulée par #${req.session.userId}`);
     req.flash('success', 'Rencontre annulée.');

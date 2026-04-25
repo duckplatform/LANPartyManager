@@ -184,6 +184,38 @@ describe('Battle Model', function () {
     });
   });
 
+  // ── reevaluateQueue ─────────────────────────────────────────────────────
+
+  describe('reevaluateQueue()', function () {
+    it('doit retourner les IDs des rencontres promues en planifie', async function () {
+      poolStub.execute.resolves([[{ id: 1, game_id: 10 }, { id: 2, game_id: 11 }]]);
+
+      const assignStub = sinon.stub(Battle, 'assignRoomIfAvailable');
+      assignStub.onFirstCall().resolves(true);
+      assignStub.onSecondCall().resolves(false);
+
+      const promoted = await Battle.reevaluateQueue(3);
+
+      expect(promoted).to.deep.equal([1]);
+      expect(assignStub.firstCall.args).to.deep.equal([1, 3, 10]);
+      expect(assignStub.secondCall.args).to.deep.equal([2, 3, 11]);
+
+      assignStub.restore();
+    });
+
+    it('doit retourner un tableau vide si aucune rencontre en file_attente', async function () {
+      poolStub.execute.resolves([[]]);
+
+      const assignStub = sinon.stub(Battle, 'assignRoomIfAvailable');
+      const promoted = await Battle.reevaluateQueue(8);
+
+      expect(promoted).to.deep.equal([]);
+      expect(assignStub.notCalled).to.be.true;
+
+      assignStub.restore();
+    });
+  });
+
   // ── changeStatut ─────────────────────────────────────────────────────────
 
   describe('changeStatut()', function () {

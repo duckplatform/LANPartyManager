@@ -24,6 +24,26 @@ const discord      = require('../services/discord');
 // Toutes les routes admin nécessitent auth + admin
 router.use(requireAuth, requireAdmin);
 
+async function notifyPromotedBattlesForEvent(eventId) {
+  const promotedBattleIds = await Battle.reevaluateQueue(eventId);
+  if (!Array.isArray(promotedBattleIds) || promotedBattleIds.length === 0) {
+    return;
+  }
+
+  const event = await Event.findById(eventId);
+  if (!event) {
+    return;
+  }
+
+  for (const battleId of promotedBattleIds) {
+    const battle = await Battle.findById(battleId);
+    if (!battle || battle.statut !== 'planifie') {
+      continue;
+    }
+    discord.notifyBattlePlanned({ event, battle }).catch(() => {});
+  }
+}
+
 // ─── GET /admin ────────────────────────────────────────────────────────────
 
 router.get('/', async (req, res) => {
@@ -433,7 +453,7 @@ router.post('/events', eventValidation, async (req, res) => {
     logger.info(`[ADMIN/EVENTS] Événement #${id} créé par l'utilisateur #${req.session.userId}`);
 
     // Notification Discord à la création de l'événement
-    discord.notifyEventCreated({ id, nom, date_heure, lieu, statut }).catch(() => {});
+    discord.notifyEventCreated({ id, nom, date_heure, lieu, statut, discord_channel_id }).catch(() => {});
 
     req.flash('success', `L'événement "${nom}" a été créé.`);
     return res.redirect('/admin/events');
@@ -512,7 +532,7 @@ router.post('/events/:id', eventValidation, async (req, res) => {
 
     // Notifications Discord selon les transitions de statut
     if (existing.statut !== statut) {
-      const updatedEvent = { id, nom, date_heure, lieu, statut };
+      const updatedEvent = { id, nom, date_heure, lieu, statut, discord_channel_id };
       if (statut === 'en_cours') {
         discord.notifyEventStarted(updatedEvent).catch(() => {});
       } else if (statut === 'termine') {
@@ -923,7 +943,7 @@ router.post(
       logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a créé la salle #${id} : ${req.body.nom}`);
 
       // Une nouvelle salle disponible peut libérer des rencontres en file d'attente
-      await Battle.reevaluateQueue(eventId).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
+      await notifyPromotedBattlesForEvent(eventId).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
 
       req.flash('success', `Salle "${req.body.nom}" créée avec succès.`);
       return res.redirect(`/admin/rooms?event_id=${req.body.event_id}`);
@@ -1013,7 +1033,7 @@ router.put(
       logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a modifié la salle #${id}`);
 
       // Une salle modifiée (activée/désactivée ou type changé) peut impacter la file d'attente
-      await Battle.reevaluateQueue(room.event_id).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
+      await notifyPromotedBattlesForEvent(room.event_id).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
 
       req.flash('success', 'Salle mise à jour.');
       return res.redirect(`/admin/rooms?event_id=${room.event_id}`);
@@ -1040,7 +1060,7 @@ router.post('/rooms/:id/toggle', async (req, res) => {
     logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a ${room.actif ? 'désactivé' : 'activé'} la salle #${id}`);
 
     // Un changement d'état de salle doit réévaluer la file d'attente
-    await Battle.reevaluateQueue(room.event_id).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
+    await notifyPromotedBattlesForEvent(room.event_id).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
 
     req.flash('success', `Salle "${room.nom}" ${room.actif ? 'désactivée' : 'activée'}.`);
     return res.redirect(`/admin/rooms?event_id=${room.event_id}`);
@@ -1070,7 +1090,7 @@ router.delete('/rooms/:id', async (req, res) => {
       logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a supprimé la salle #${id}`);
 
       // La suppression d'une salle peut libérer des places dans la file d'attente
-      await Battle.reevaluateQueue(eventId).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
+      await notifyPromotedBattlesForEvent(eventId).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
 
       req.flash('success', 'Salle supprimée.');
     }

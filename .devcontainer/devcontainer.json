@@ -74,9 +74,6 @@
     },
     "DISCORD_CHANNEL_NEWS": {
       "description": "ID du canal Discord pour les notifications d'actualités"
-    },
-    "APP_URL": {
-      "description": "URL publique de l'application (ex: https://lanparty.example.com)"
     }
   }
 }
