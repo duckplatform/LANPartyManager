@@ -124,7 +124,7 @@ const Battle = {
   async findPlayers(battleId) {
     const [rows] = await db.pool.execute(
       `SELECT bp.id, bp.battle_id, bp.user_id, bp.equipe, bp.est_gagnant,
-              u.pseudo, u.nom, u.prenom
+              u.pseudo, u.nom, u.prenom, u.discord_user_id
          FROM battle_players bp
          JOIN users u ON u.id = bp.user_id
         WHERE bp.battle_id = ?

@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `is_admin`      TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = administrateur',
   `is_moderator`  TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = moderateur',
   `badge_token`   CHAR(36)      NOT NULL COMMENT 'Token UUID permanent pour badge membre',
+  `discord_user_id` VARCHAR(20) NULL DEFAULT NULL COMMENT 'ID Discord Snowflake (ex: 123456789012345678) pour les mentions dans les notifications',
   `created_at`    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

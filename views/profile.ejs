@@ -87,6 +87,19 @@
                    value="<%= user.email || '' %>" required autocomplete="email" />
           </div>
 
+          <div class="form-group">
+            <label for="discord_user_id" class="form-label">
+              <i class="fab fa-discord"></i> ID Discord (optionnel)
+            </label>
+            <input type="text" id="discord_user_id" name="discord_user_id" class="form-input font-monospace"
+                   value="<%= user.discord_user_id || '' %>" maxlength="20"
+                   placeholder="ex: 123456789012345678" autocomplete="off" />
+            <small class="form-hint">
+              Permet de vous mentionner (<code>@vous</code>) dans les notifications Discord lors des rencontres.
+              Pour trouver votre ID : activez le <em>Mode développeur</em> dans Discord → clic droit sur votre avatar → <em>Copier l'identifiant</em>.
+            </small>
+          </div>
+
           <div class="form-actions">
             <button type="submit" class="btn btn--primary">
               <i class="fas fa-floppy-disk"></i> Sauvegarder

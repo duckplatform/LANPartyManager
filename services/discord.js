@@ -202,7 +202,11 @@ async function notifyEventEnded(event) {
     timestamp: new Date().toISOString(),
   };
 
-  await sendEmbed(channelId, embed);
+  await sendEmbed(
+    channelId,
+    embed,
+    `@everyone 🏁 **${event.nom}** est terminé !`
+  );
 }
 
 // ─── Notifications actualités ──────────────────────────────────────────────
@@ -262,11 +266,14 @@ function buildBattlePlayersField(players = []) {
   const teams = new Map();
   for (const player of players) {
     const team = Number(player.equipe) || 1;
-    const pseudo = (player.pseudo || `Joueur #${player.user_id || '?'}`).toString().trim();
+    // Mention réelle si discord_user_id disponible, sinon @pseudo en texte
+    const display = player.discord_user_id
+      ? `<@${player.discord_user_id}>`
+      : '@' + (player.pseudo || `Joueur #${player.user_id || '?'}`).toString().trim();
     if (!teams.has(team)) {
       teams.set(team, []);
     }
-    teams.get(team).push(pseudo);
+    teams.get(team).push(display);
   }
 
   return Array.from(teams.entries())
@@ -295,7 +302,10 @@ function isWinningPlayer(value) {
 function buildBattleWinnersField(players = []) {
   const winners = (players || [])
     .filter(player => isWinningPlayer(player.est_gagnant))
-    .map(player => (player.pseudo || `Joueur #${player.user_id || '?'}`).toString().trim());
+    .map(player => player.discord_user_id
+      ? `<@${player.discord_user_id}>`
+      : '@' + (player.pseudo || `Joueur #${player.user_id || '?'}`).toString().trim()
+    );
 
   if (winners.length === 0) {
     return 'Non renseigne';

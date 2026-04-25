@@ -1102,4 +1102,118 @@ router.delete('/rooms/:id', async (req, res) => {
   }
 });
 
+// ─── Test Discord ──────────────────────────────────────────────────────────
+
+/**
+ * GET /admin/discord-test
+ * Page de test des mentions Discord (@pseudo vs <@discord_id>).
+ */
+router.get('/discord-test', (req, res) => {
+  const { REST, Routes } = require('discord.js');
+  const config = {
+    token:         process.env.DISCORD_BOT_TOKEN      || '',
+    channelEvents: process.env.DISCORD_CHANNEL_EVENTS || '',
+  };
+  res.render('admin/discord-test', {
+    title: 'Test Discord Mentions',
+    pageClass: 'page-admin',
+    configuredChannel: config.channelEvents || null,
+    channelId: null,
+    pseudo: null,
+    discordId: null,
+  });
+});
+
+/**
+ * POST /admin/discord-test
+ * Envoie un message de test Discord avec @pseudo et <@discord_id>.
+ */
+router.post('/discord-test', async (req, res) => {
+  const { REST, Routes } = require('discord.js');
+  const token         = process.env.DISCORD_BOT_TOKEN      || '';
+  const defaultChannel = process.env.DISCORD_CHANNEL_EVENTS || '';
+
+  const pseudo    = (req.body.pseudo    || '').trim();
+  const discordId = (req.body.discord_id || '').trim();
+  const channelId = (req.body.channel_id || '').trim() || defaultChannel;
+
+  if (!token) {
+    return res.render('admin/discord-test', {
+      title: 'Test Discord Mentions',
+      pageClass: 'page-admin',
+      configuredChannel: defaultChannel || null,
+      channelId: req.body.channel_id,
+      pseudo,
+      discordId,
+      result: { success: false, message: 'DISCORD_BOT_TOKEN non configuré dans les variables d\'environnement.' },
+    });
+  }
+
+  if (!channelId) {
+    return res.render('admin/discord-test', {
+      title: 'Test Discord Mentions',
+      pageClass: 'page-admin',
+      configuredChannel: defaultChannel || null,
+      channelId: req.body.channel_id,
+      pseudo,
+      discordId,
+      result: { success: false, message: 'Aucun canal Discord configuré. Renseignez DISCORD_CHANNEL_EVENTS ou saisissez un ID manuellement.' },
+    });
+  }
+
+  // Construit les deux formats de mention
+  const pseudoDisplay   = pseudo   ? `@${pseudo}`         : '*(non renseigné)*';
+  const discordDisplay  = discordId ? `<@${discordId}>`    : '*(non renseigné)*';
+
+  try {
+    const rest = new REST({ version: '10' }).setToken(token);
+    await rest.post(Routes.channelMessages(channelId), {
+      body: {
+        content: `🧪 **Test de mentions — LANPartyManager**`,
+        embeds: [{
+          title: 'Comparaison des formats de mention',
+          color: 0x5865F2,
+          fields: [
+            {
+              name: '① Texte brut `@pseudo`',
+              value: pseudoDisplay,
+              inline: false,
+            },
+            {
+              name: '② Mention réelle `<@discord_id>`',
+              value: discordDisplay,
+              inline: false,
+            },
+          ],
+          description: '**Format ①** : texte affiché uniquement, aucune notification.\n**Format ②** : mention cliquable avec notification push si l\'utilisateur est dans le serveur.',
+          footer: { text: 'LANPartyManager • Page de test admin' },
+          timestamp: new Date().toISOString(),
+        }],
+      },
+    });
+
+    logger.info(`[ADMIN/DISCORD-TEST] Message de test envoyé sur le canal #${channelId}`);
+    return res.render('admin/discord-test', {
+      title: 'Test Discord Mentions',
+      pageClass: 'page-admin',
+      configuredChannel: defaultChannel || null,
+      channelId: req.body.channel_id,
+      pseudo,
+      discordId,
+      result: { success: true, message: `Message envoyé sur le canal #${channelId}. Vérifiez Discord !` },
+    });
+  } catch (err) {
+    logger.error('[ADMIN/DISCORD-TEST] Erreur envoi :', err);
+    return res.render('admin/discord-test', {
+      title: 'Test Discord Mentions',
+      pageClass: 'page-admin',
+      configuredChannel: defaultChannel || null,
+      channelId: req.body.channel_id,
+      pseudo,
+      discordId,
+      result: { success: false, message: `Erreur Discord : ${err.message}` },
+    });
+  }
+});
+
 module.exports = router;
