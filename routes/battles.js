@@ -158,7 +158,9 @@ router.get('/events/:id/announce', async (req, res) => {
       .filter(b => b.statut === 'file_attente')
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
-    const roomBoards = rooms.map((room) => {
+    const roomBoards = rooms
+      .filter(room => Number(room.actif) === 1)
+      .map((room) => {
       const roomBattles = battles.filter(
         b => b.room_id === room.id && activeStatuts.includes(b.statut)
       );
@@ -169,9 +171,7 @@ router.get('/events/:id/announce', async (req, res) => {
       const currentBattle = liveBattle || installBattle;
 
       let roomState = { key: 'libre', label: 'Libre', color: 'var(--color-success)' };
-      if (!room.actif) {
-        roomState = { key: 'inactive', label: 'Inactive', color: 'var(--color-danger)' };
-      } else if (liveBattle) {
+      if (liveBattle) {
         roomState = { key: 'en_jeu', label: 'En jeu', color: 'var(--color-success)' };
       } else if (installBattle) {
         roomState = { key: 'installation', label: 'Installation', color: 'var(--color-neon)' };

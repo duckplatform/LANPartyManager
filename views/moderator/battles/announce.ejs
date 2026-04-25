@@ -14,7 +14,8 @@
     termine: safeBattles.filter(b => b && b.statut === 'termine').length,
   };
 
-  const safeRoomBoards = (typeof roomBoards !== 'undefined' && Array.isArray(roomBoards)) ? roomBoards : [];
+  const safeRoomBoardsRaw = (typeof roomBoards !== 'undefined' && Array.isArray(roomBoards)) ? roomBoards : [];
+  const safeRoomBoards = safeRoomBoardsRaw.filter((room) => Number(room.actif) === 1 || typeof room.actif === 'undefined');
   const safeGlobalQueue = (typeof globalQueue !== 'undefined' && Array.isArray(globalQueue))
     ? globalQueue
     : safeBattles.filter(b => b && b.statut === 'file_attente');
@@ -85,7 +86,7 @@
   body.page-announce {
     font-size: 1.2rem;
     overflow: hidden;
-    min-height: 100vh;
+    height: 100vh;
   }
   .page-announce .container {
     max-width: 100vw;
@@ -94,9 +95,10 @@
   }
   .page-announce .admin-container {
     margin: 0;
-    min-height: 100vh;
+    height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
   .wall-header {
     display: flex;
@@ -120,10 +122,11 @@
   .wall-kpi span { font-size: .92rem; }
   .wall-grid {
     display: grid;
-    grid-template-columns: minmax(0, 2.5fr) minmax(360px, 1fr);
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr) minmax(320px, 1fr);
     gap: .85rem;
     flex: 1;
     min-height: 0;
+    overflow: hidden;
   }
   .wall-panel {
     background: var(--color-bg-card);
@@ -131,6 +134,9 @@
     border-radius: 14px;
     padding: .9rem;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
   .wall-panel h2 {
     font-size: 1.34rem;
@@ -144,6 +150,14 @@
     grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
     gap: .78rem;
   }
+  .rooms-window {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: .2rem;
+    scrollbar-width: thin;
+  }
   .room-card {
     border: 1px solid var(--color-border);
     border-radius: 12px;
@@ -153,6 +167,11 @@
   .room-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
   .room-name { font-size: 1.48rem; font-weight: 900; letter-spacing: .02em; }
   .room-state { font-size: .96rem; font-weight: 800; text-transform: uppercase; }
+  .room-state--en_jeu { color: var(--color-success); }
+  .room-state--pret { color: var(--color-neon); }
+  .room-state--planifie { color: var(--color-warning); }
+  .room-state--libre { color: var(--color-success); }
+  .room-state--unknown { color: var(--color-text-muted); }
   .room-block { margin-top: .6rem; }
   .room-label { font-size: .86rem; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: .24rem; letter-spacing: .03em; }
   .match-line { font-weight: 800; font-size: 1.1rem; }
@@ -187,22 +206,30 @@
     position: relative;
     border-radius: 10px;
     min-height: 0;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+  }
+  .queue-window::-webkit-scrollbar,
+  .results-window::-webkit-scrollbar {
+    display: none;
   }
   .queue-window {
-    max-height: clamp(250px, 43vh, 680px);
+    flex: 1;
+    min-height: 0;
     border: 1px dashed rgba(255, 255, 255, .08);
     padding: .35rem;
   }
   .results-window {
-    max-height: clamp(210px, 30vh, 500px);
+    flex: 1;
+    min-height: 0;
     border: 1px dashed rgba(255, 255, 255, .08);
     padding: .35rem;
   }
   .queue-scroll,
   .results-scroll {
-    height: 100%;
-    overflow: hidden;
+    height: auto;
+    overflow: visible;
   }
   .queue-window::before,
   .queue-window::after,
@@ -241,12 +268,24 @@
   }
   .wall-actions { display: flex; gap: .5rem; }
   @media (max-width: 1480px) {
-    .wall-grid { grid-template-columns: 1fr; }
-    .queue-window {
-      max-height: clamp(230px, 36vh, 560px);
+    .wall-grid {
+      grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr) minmax(280px, 1fr);
     }
+    .rooms-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 1180px) {
+    .page-announce .admin-container {
+      height: auto;
+      overflow: visible;
+    }
+    .wall-grid { grid-template-columns: 1fr; }
+    .rooms-window,
+    .queue-window,
     .results-window {
-      max-height: clamp(190px, 28vh, 440px);
+      max-height: none;
+      overflow: visible;
     }
   }
   @media (max-width: 900px) {
@@ -265,12 +304,12 @@
     .wall-title {
       font-size: clamp(1.4rem, 4vw, 2rem);
     }
-    .rooms-grid {
-      grid-template-columns: 1fr;
-    }
+    .rooms-grid { grid-template-columns: 1fr; }
+    .rooms-window,
     .queue-window,
     .results-window {
       max-height: none;
+      overflow: visible;
       border-style: solid;
     }
     .queue-scroll,
@@ -317,75 +356,78 @@
   <div class="wall-grid" style="margin-top: .85rem;">
     <section class="wall-panel">
       <h2><i class="fas fa-door-open"></i> Etat des salles</h2>
-      <div class="rooms-grid">
-        <% computedRoomBoards.forEach(function(room) {
-             const roomState = room && room.state ? room.state : { color: 'var(--color-text-muted)', label: 'Inconnu' };
-             const roomType = room && room.type_rencontre ? room.type_rencontre : 'N/A';
-             const roomHardware = room && room.type ? room.type : 'N/A';
-        %>
-          <article class="room-card">
-            <div class="room-head">
-              <div class="room-name"><%= room && room.nom ? room.nom : 'Salle' %></div>
-              <div class="room-state" style="color:<%= roomState.color %>"><%= roomState.label %></div>
-            </div>
-            <div class="match-sub"><%= roomType %> • <%= roomHardware %></div>
+      <div class="rooms-window">
+        <div class="rooms-grid">
+          <% computedRoomBoards.forEach(function(room) {
+               const roomState = room && room.state ? room.state : { key: 'unknown', label: 'Inconnu' };
+               const roomStateKey = roomState && roomState.key ? roomState.key : 'unknown';
+               const roomType = room && room.type_rencontre ? room.type_rencontre : 'N/A';
+               const roomHardware = room && room.type ? room.type : 'N/A';
+          %>
+            <article class="room-card">
+              <div class="room-head">
+                <div class="room-name"><%= room && room.nom ? room.nom : 'Salle' %></div>
+                <div class="room-state room-state--<%= roomStateKey %>"><%= roomState.label %></div>
+              </div>
+              <div class="match-sub"><%= roomType %> • <%= roomHardware %></div>
 
-            <div class="room-block">
-              <div class="room-label">Partie en cours</div>
-              <% if (room.currentBattle) { %>
-                <div class="match-line"><%= room.currentBattle.game_nom %> — <%= room.currentBattle.game_console %></div>
-                <div class="match-sub">
-                  Statut: <%= room.currentBattle.statut === 'installation' ? 'Installation' : room.currentBattle.statut === 'en_cours' ? 'En cours' : room.currentBattle.statut %>
-                </div>
-                <div class="player-strip">
-                  <% const currentPlayers = playerTokens(room.currentBattle); %>
-                  <% currentPlayers.forEach(function(player, index) { %>
-                    <span class="player-tag"><%= player %></span>
-                    <% if (index < currentPlayers.length - 1) { %>
-                      <span class="player-vs"><%= room.currentBattle.type_rencontre === '2v2' ? '|' : 'VS' %></span>
-                    <% } %>
-                  <% }); %>
-                </div>
-              <% } else { %>
-                <div class="empty-note">Aucune partie en jeu</div>
-              <% } %>
-            </div>
+              <div class="room-block">
+                <div class="room-label">Partie en cours</div>
+                <% if (room.currentBattle) { %>
+                  <div class="match-line"><%= room.currentBattle.game_nom %> — <%= room.currentBattle.game_console %></div>
+                  <div class="match-sub">
+                    Statut: <%= room.currentBattle.statut === 'installation' ? 'Installation' : room.currentBattle.statut === 'en_cours' ? 'En cours' : room.currentBattle.statut %>
+                  </div>
+                  <div class="player-strip">
+                    <% const currentPlayers = playerTokens(room.currentBattle); %>
+                    <% currentPlayers.forEach(function(player, index) { %>
+                      <span class="player-tag"><%= player %></span>
+                      <% if (index < currentPlayers.length - 1) { %>
+                        <span class="player-vs"><%= room.currentBattle.type_rencontre === '2v2' ? '|' : 'VS' %></span>
+                      <% } %>
+                    <% }); %>
+                  </div>
+                <% } else { %>
+                  <div class="empty-note">Aucune partie en jeu</div>
+                <% } %>
+              </div>
 
-            <div class="room-block">
-              <div class="room-label">Partie suivante</div>
-              <% if (room.nextBattle) { %>
-                <div class="match-line"><%= room.nextBattle.game_nom %> — <%= room.nextBattle.game_console %></div>
-                <div class="match-sub">
-                  Statut: <%= room.nextBattle.statut === 'planifie' ? 'Planifiee' : room.nextBattle.statut %>
-                </div>
-                <div class="player-strip">
-                  <% const nextPlayers = playerTokens(room.nextBattle); %>
-                  <% nextPlayers.forEach(function(player, index) { %>
-                    <span class="player-tag"><%= player %></span>
-                    <% if (index < nextPlayers.length - 1) { %>
-                      <span class="player-vs"><%= room.nextBattle.type_rencontre === '2v2' ? '|' : 'VS' %></span>
-                    <% } %>
-                  <% }); %>
-                </div>
-              <% } else { %>
-                <div class="empty-note">Aucune partie suivante</div>
-              <% } %>
-            </div>
-          </article>
-        <% }); %>
-        <% if (computedRoomBoards.length === 0) { %>
-          <div class="empty-note">Aucune salle/rencontre active a afficher pour cet evenement.</div>
-        <% } %>
+              <div class="room-block">
+                <div class="room-label">Partie suivante</div>
+                <% if (room.nextBattle) { %>
+                  <div class="match-line"><%= room.nextBattle.game_nom %> — <%= room.nextBattle.game_console %></div>
+                  <div class="match-sub">
+                    Statut: <%= room.nextBattle.statut === 'planifie' ? 'Planifiee' : room.nextBattle.statut %>
+                  </div>
+                  <div class="player-strip">
+                    <% const nextPlayers = playerTokens(room.nextBattle); %>
+                    <% nextPlayers.forEach(function(player, index) { %>
+                      <span class="player-tag"><%= player %></span>
+                      <% if (index < nextPlayers.length - 1) { %>
+                        <span class="player-vs"><%= room.nextBattle.type_rencontre === '2v2' ? '|' : 'VS' %></span>
+                      <% } %>
+                    <% }); %>
+                  </div>
+                <% } else { %>
+                  <div class="empty-note">Aucune partie suivante</div>
+                <% } %>
+              </div>
+            </article>
+          <% }); %>
+          <% if (computedRoomBoards.length === 0) { %>
+            <div class="empty-note">Aucune salle/rencontre active a afficher pour cet evenement.</div>
+          <% } %>
+        </div>
       </div>
     </section>
 
-    <aside class="wall-panel">
+    <section class="wall-panel">
       <h2><i class="fas fa-list-ol"></i> File d'attente globale</h2>
       <div class="list-caption">Defilement automatique pour afficher toute la file.</div>
       <% if (displayedQueue.length === 0) { %>
         <div class="empty-note">Aucune rencontre en file d'attente.</div>
       <% } else { %>
-        <div class="queue-window">
+        <div class="queue-window" data-auto-scroll="queue">
           <div class="queue-scroll" data-auto-scroll="queue">
             <div class="queue-list">
               <% displayedQueue.forEach(function(b, idx) { %>
@@ -407,13 +449,15 @@
           </div>
         </div>
       <% } %>
+    </section>
 
+    <section class="wall-panel">
       <h2 style="margin-top:1rem;"><i class="fas fa-flag-checkered"></i> Derniers resultats</h2>
       <div class="list-caption">Affichage des 10 derniers resultats maximum.</div>
       <% if (displayedRecentResults.length === 0) { %>
         <div class="empty-note">Aucun resultat enregistre.</div>
       <% } else { %>
-        <div class="results-window">
+        <div class="results-window" data-auto-scroll="results">
           <div class="results-scroll" data-auto-scroll="results">
             <div class="results-list">
               <% displayedRecentResults.forEach(function(b) { %>
@@ -437,7 +481,7 @@
           </div>
         </div>
       <% } %>
-    </aside>
+    </section>
   </div>
 </div>
 
@@ -482,17 +526,17 @@
     window.requestAnimationFrame(tick);
   }
 
-  setupAutoScroll(document.querySelector('[data-auto-scroll="queue"]'), {
+  setupAutoScroll(document.querySelector('.queue-window[data-auto-scroll="queue"]'), {
     speed: 0.6,
     pauseMs: 1400,
   });
 
-  setupAutoScroll(document.querySelector('[data-auto-scroll="results"]'), {
+  setupAutoScroll(document.querySelector('.results-window[data-auto-scroll="results"]'), {
     speed: 0.45,
     pauseMs: 1200,
   });
 
-  var REFRESH_DELAY_MS = 30000;
+  var REFRESH_DELAY_MS = 12000;
   setTimeout(function () {
     window.location.reload();
   }, REFRESH_DELAY_MS);
