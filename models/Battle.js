@@ -156,7 +156,7 @@ const Battle = {
   },
 
   /**
-   * Retourne la vue récapitulative pour les annonces micro
+   * Retourne la vue récapitulative pour l'écran d'annonce
    * (battles planifiées avec salle, triées par ordre de création)
    * @param {number} eventId
    * @returns {Promise<Array>}

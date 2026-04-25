@@ -6,7 +6,7 @@
  *
  * GET  /battles                         → liste des événements disponibles
  * GET  /battles/events/:id              → file d'attente + rencontres d'un événement
- * GET  /battles/events/:id/announce     → vue récapitulative pour annonces micro
+ * GET  /battles/events/:id/announce     → vue récapitulative pour l'écran d'annonce
  * GET  /battles/events/:id/create       → wizard étape 1 (choix du jeu)
  * POST /battles/events/:id/create       → wizard étape 2 (identification joueurs)
  * POST /battles/events/:id/store        → enregistre la rencontre
@@ -130,7 +130,7 @@ router.get('/events/:id', async (req, res) => {
 });
 
 // ─── GET /battles/events/:id/announce ─────────────────────────────────────────
-// Vue dynamique pour projection écran géant
+// Vue dynamique pour l'écran d'annonce
 
 router.get('/events/:id/announce', async (req, res) => {
   const eventId = parseId(req.params.id);

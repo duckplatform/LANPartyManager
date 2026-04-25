@@ -78,7 +78,7 @@ LANPartyManager/
 │   │       ├── dashboard.ejs # Tableau de bord rencontres + file d'attente
 │   │       ├── create-step1.ejs  # Wizard : choix du jeu
 │   │       ├── create-step2.ejs  # Wizard : identification joueurs
-│   │       └── announce.ejs  # Vue récapitulative annonces micro
+│   │       └── announce.ejs  # Vue récapitulative écran d'annonce
 │   └── errors/
 │       ├── 404.ejs           # Page 404
 │       └── 500.ejs           # Page 500
