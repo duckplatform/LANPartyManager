@@ -39,16 +39,6 @@ Comptes utiles :
 npm test
 ```
 
-## Consultation rapide de la base (Adminer)
-
-Dans le Codespace, demarrer Adminer avec:
-
-```bash
-npm run db:adminer
-```
-
-Puis ouvrir le port `8081` (visibilite `private`) depuis l'onglet Ports.
-
 Parametres de connexion habituels dans ce projet:
 - Systeme: `MySQL`
 - Serveur: `db`

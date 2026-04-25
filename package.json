@@ -7,7 +7,6 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "test": "NODE_ENV=test mocha tests/**/*.test.js --timeout 10000 --exit",
-    "db:adminer": "bash .devcontainer/start-adminer.sh",
     "db:reset": "bash .devcontainer/reset-db.sh"
   },
   "keywords": [

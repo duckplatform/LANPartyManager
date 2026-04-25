@@ -25,7 +25,7 @@
   "postStartCommand": "bash .devcontainer/start-app.sh",
 
   // ─── Ports ────────────────────────────────────────────────────────────────
-  "forwardPorts": [3000, 3306, 8081],
+  "forwardPorts": [3000, 3306],
   "portsAttributes": {
     "3000": {
       "label": "LANPartyManager",
@@ -33,10 +33,6 @@
     },
     "3306": {
       "label": "MySQL",
-      "visibility": "private"
-    },
-    "8081": {
-      "label": "Adminer",
       "visibility": "private"
     }
   },
