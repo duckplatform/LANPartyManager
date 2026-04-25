@@ -208,6 +208,7 @@
 
 </div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
 /* ── Comptes à rebours des cartes événements ── */
 (function () {
@@ -235,6 +236,31 @@
     }
     tick();
   });
+
+  if (typeof window.io === 'function') {
+    var socket = window.io({
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+    });
+
+    var reloadTimer = null;
+    function scheduleReload() {
+      if (reloadTimer) {
+        window.clearTimeout(reloadTimer);
+      }
+      reloadTimer = window.setTimeout(function () {
+        window.location.reload();
+      }, 450);
+    }
+
+    socket.on('connect', function () {
+      socket.emit('ranking:join-all');
+    });
+
+    socket.on('ranking:update', function () {
+      scheduleReload();
+    });
+  }
 }());
 </script>
 

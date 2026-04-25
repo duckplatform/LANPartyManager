@@ -709,12 +709,16 @@ describe('Routes - Tests d\'intégration', function () {
     let battleFindByEventStub;
     let battleCountByStatutStub;
     let roomFindByEventStub;
+    let battleReevaluateQueueStub;
+    let rankingFindByEventStub;
 
     beforeEach(function () {
       eventFindByIdStub = sinon.stub(Event, 'findById');
       battleFindByEventStub = sinon.stub(Battle, 'findByEvent');
       battleCountByStatutStub = sinon.stub(Battle, 'countByStatut');
       roomFindByEventStub = sinon.stub(Room, 'findByEvent');
+      battleReevaluateQueueStub = sinon.stub(Battle, 'reevaluateQueue');
+      rankingFindByEventStub = sinon.stub(EventRanking, 'findByEvent');
     });
 
     afterEach(function () {
@@ -736,6 +740,8 @@ describe('Routes - Tests d\'intégration', function () {
       battleFindByEventStub.resolves([]);
       roomFindByEventStub.resolves([]);
       battleCountByStatutStub.resolves(undefined);
+      battleReevaluateQueueStub.resolves([]);
+      rankingFindByEventStub.resolves([]);
 
       await handler(req, res);
 
@@ -744,11 +750,12 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.render.firstCall.args[0]).to.equal('moderator/battles/announce');
 
       const payload = res.render.firstCall.args[1];
-      expect(payload).to.include.keys('event', 'stats', 'roomBoards', 'globalQueue', 'recentResults', 'now');
+      expect(payload).to.include.keys('event', 'stats', 'roomBoards', 'globalQueue', 'recentResults', 'rankingBoard', 'now');
       expect(payload.stats).to.deep.equal({ en_cours: 0, installation: 0, planifie: 0, file_attente: 0, termine: 0 });
       expect(payload.roomBoards).to.deep.equal([]);
       expect(payload.globalQueue).to.deep.equal([]);
       expect(payload.recentResults).to.deep.equal([]);
+      expect(payload.rankingBoard).to.deep.equal([]);
     });
   });
 

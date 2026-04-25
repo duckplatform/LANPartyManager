@@ -172,6 +172,46 @@
 </script>
 <% } %>
 
+<% if (activeEvent && typeof eventRanking !== 'undefined' && eventRanking && eventRanking.length > 0) { %>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var eventId = Number.parseInt('<%= activeEvent.id %>', 10);
+  if (!Number.isInteger(eventId) || eventId <= 0 || typeof window.io !== 'function') {
+    return;
+  }
+
+  var reloadTimer = null;
+  function scheduleReload() {
+    if (reloadTimer) {
+      window.clearTimeout(reloadTimer);
+    }
+    reloadTimer = window.setTimeout(function () {
+      window.location.reload();
+    }, 450);
+  }
+
+  var socket = window.io({
+    path: '/socket.io',
+    transports: ['websocket', 'polling'],
+  });
+
+  socket.on('connect', function () {
+    socket.emit('ranking:join-event', { eventId: eventId });
+  });
+
+  socket.on('ranking:update', function (payload) {
+    if (!payload || Number(payload.eventId) !== eventId) {
+      return;
+    }
+    scheduleReload();
+  });
+}());
+</script>
+<% } %>
+
 <!-- ═══════════════════ CLASSEMENT ═══════════════════ -->
 <% if (activeEvent && typeof eventRanking !== 'undefined' && eventRanking && eventRanking.length > 0) { %>
 <section class="section ranking-section">
