@@ -141,6 +141,8 @@ Le bootstrap Codespace repose sur [.devcontainer/init-db.sh](.devcontainer/init-
 2. import du schema complet depuis [database/install.sql](database/install.sql) ;
 3. import du jeu de donnees de demonstration depuis [database/seeds/codespace.sql](database/seeds/codespace.sql).
 
+Le projet ne maintient pas de migrations SQL incrementales : [database/install.sql](database/install.sql) est l'unique source de verite du schema.
+
 Le seed est idempotent : il ajoute uniquement des enregistrements de demonstration absents, sans supprimer les donnees deja saisies dans le Codespace.
 
 **Table `users`**
@@ -349,6 +351,8 @@ MYSQL_PWD=lanparty_dev mysql -h mysql -u lanparty lanpartymanager
 5. Vérifiez la création des tables `users` et `announcements`, et du compte admin
 
 > **Mise à jour d'une installation existante** : réimportez le schéma complet via `database/install.sql` puis redémarrez l'application.
+
+> **Important** : aucune migration SQL incrémentale n'est requise dans ce projet. Le schéma est centralisé dans `database/install.sql`.
 
 ### 2. Application
 

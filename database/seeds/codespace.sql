@@ -8,7 +8,7 @@
 -- Contraintes :
 --   - le script doit etre idempotent
 --   - il ne doit pas ecraser les donnees deja saisies a la main
---   - il s'appuie sur le schema apres migrations
+--   - il s'appuie sur le schema SQL unique (install.sql)
 -- ============================================================
 
 SET NAMES utf8mb4;

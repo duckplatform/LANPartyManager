@@ -7,6 +7,9 @@ Site web pour association de jeux vidéo — gestion d'utilisateurs et panneau d
 
 ## Installation rapide
 
+Le projet utilise un schema SQL unique : `database/install.sql`.
+Il n'y a pas de migrations SQL incrementales a executer.
+
 ```bash
 # 1. Importer database/install.sql dans PHPMyAdmin
 # 2. Configurer les variables d'environnement dans cPanel
