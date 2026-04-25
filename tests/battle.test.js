@@ -89,8 +89,10 @@ describe('Battle Model', function () {
       poolStub.execute.onCall(2).resolves([{ insertId: 2 }]);
       // assignRoomIfAvailable → SELECT battle (file_attente)
       poolStub.execute.onCall(3).resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
+      // assignRoomIfAvailable → aucun conflit joueur
+      poolStub.execute.onCall(4).resolves([[{ total: 0 }]]);
       // assignRoomIfAvailable → SELECT rooms (aucune salle dispo)
-      poolStub.execute.onCall(4).resolves([[]]);
+      poolStub.execute.onCall(5).resolves([[]]);
 
       const players = [
         { user_id: 10, equipe: 1 },
@@ -114,17 +116,19 @@ describe('Battle Model', function () {
       poolStub.execute.onCall(2).resolves([{ insertId: 2 }]);
       // assignRoomIfAvailable → statut file_attente
       poolStub.execute.onCall(3).resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
+      // assignRoomIfAvailable → aucun conflit joueur
+      poolStub.execute.onCall(4).resolves([[{ total: 0 }]]);
       // assignRoomIfAvailable → salle dispo
-      poolStub.execute.onCall(4).resolves([[{ id: 5 }]]);
+      poolStub.execute.onCall(5).resolves([[{ id: 5 }]]);
       // UPDATE battle statut → planifie
-      poolStub.execute.onCall(5).resolves([{ affectedRows: 1 }]);
+      poolStub.execute.onCall(6).resolves([{ affectedRows: 1 }]);
 
       const players = [{ user_id: 10, equipe: 1 }, { user_id: 11, equipe: 2 }];
       const id = await Battle.create({ event_id: 1, game_id: 1 }, players);
       expect(id).to.equal(1);
 
       // Vérifie que l'UPDATE a été appelé (assignation de salle)
-      const updateCall = poolStub.execute.getCall(5);
+      const updateCall = poolStub.execute.getCall(6);
       expect(updateCall.args[0]).to.include('UPDATE battles');
       expect(updateCall.args[0]).to.include('planifie');
     });
@@ -141,29 +145,42 @@ describe('Battle Model', function () {
 
     it('doit retourner false si aucune salle disponible', async function () {
       poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
-      poolStub.execute.onSecondCall().resolves([[]]);
+      poolStub.execute.onSecondCall().resolves([[{ total: 0 }]]);
+      poolStub.execute.onThirdCall().resolves([[]]);
       const result = await Battle.assignRoomIfAvailable(1, 1, 1);
       expect(result).to.be.false;
     });
 
     it('doit retourner true et mettre à jour si une salle est disponible', async function () {
       poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
-      poolStub.execute.onSecondCall().resolves([[{ id: 3 }]]);
-      poolStub.execute.onThirdCall().resolves([{ affectedRows: 1 }]);
+      poolStub.execute.onSecondCall().resolves([[{ total: 0 }]]);
+      poolStub.execute.onThirdCall().resolves([[{ id: 3 }]]);
+      poolStub.execute.onCall(3).resolves([{ affectedRows: 1 }]);
       const result = await Battle.assignRoomIfAvailable(1, 1, 1);
       expect(result).to.be.true;
     });
 
     it('doit considérer une salle planifiée comme non disponible', async function () {
       poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
-      poolStub.execute.onSecondCall().resolves([[]]);
+      poolStub.execute.onSecondCall().resolves([[{ total: 0 }]]);
+      poolStub.execute.onThirdCall().resolves([[]]);
 
       await Battle.assignRoomIfAvailable(1, 1, 1);
 
-      const roomsQuery = poolStub.execute.getCall(1).args[0];
+      const roomsQuery = poolStub.execute.getCall(2).args[0];
       expect(roomsQuery).to.include("'planifie'");
       expect(roomsQuery).to.include("'installation'");
       expect(roomsQuery).to.include("'en_cours'");
+    });
+
+    it('doit ignorer une battle file_attente si un joueur est deja planifie/en_cours', async function () {
+      poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', event_id: 1, type_rencontre: '1v1' }]]);
+      poolStub.execute.onSecondCall().resolves([[{ total: 1 }]]);
+
+      const result = await Battle.assignRoomIfAvailable(1, 1, 1);
+
+      expect(result).to.be.false;
+      expect(poolStub.execute.callCount).to.equal(2);
     });
   });
 

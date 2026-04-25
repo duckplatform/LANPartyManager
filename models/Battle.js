@@ -231,7 +231,7 @@ const Battle = {
   async assignRoomIfAvailable(battleId, eventId, gameId) {
     // Vérifie que la battle est bien en file_attente
     const [battleRows] = await db.pool.execute(
-      `SELECT b.statut, g.type_rencontre
+      `SELECT b.statut, b.event_id, g.type_rencontre
          FROM battles b
          JOIN games g ON g.id = b.game_id
         WHERE b.id = ? AND b.game_id = ?`,
@@ -239,7 +239,26 @@ const Battle = {
     );
     if (!battleRows[0] || battleRows[0].statut !== 'file_attente') return false;
 
+    const targetEventId = battleRows[0].event_id || eventId;
     const typeRencontre = battleRows[0].type_rencontre;
+
+    // Regle metier: une rencontre en file d'attente n'est pas traitable
+    // si un de ses joueurs est deja engage sur une autre rencontre
+    // planifie/installation/en_cours dans le meme evenement.
+    const [conflicts] = await db.pool.execute(
+      `SELECT COUNT(*) AS total
+         FROM battle_players bp_wait
+         JOIN battle_players bp_other
+           ON bp_other.user_id = bp_wait.user_id
+          AND bp_other.battle_id <> bp_wait.battle_id
+         JOIN battles b_other ON b_other.id = bp_other.battle_id
+        WHERE bp_wait.battle_id = ?
+          AND b_other.event_id = ?
+          AND b_other.statut IN ('planifie', 'installation', 'en_cours')`,
+      [battleId, targetEventId]
+    );
+
+    if (conflicts[0] && conflicts[0].total > 0) return false;
 
     // Cherche une salle disponible pour planifier la prochaine rencontre.
     // Regle metier: une salle peut avoir au maximum
@@ -263,7 +282,7 @@ const Battle = {
           ) <= 1
         ORDER BY r.nom ASC
         LIMIT 1`,
-      [eventId, typeRencontre]
+      [targetEventId, typeRencontre]
     );
 
     if (!rooms[0]) return false;
