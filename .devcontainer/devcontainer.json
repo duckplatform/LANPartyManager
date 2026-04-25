@@ -58,5 +58,25 @@
         "files.eol": "\n"
       }
     }
+  },
+
+  // ─── Secrets GitHub Codespaces ─────────────────────────────────────────────
+  // Ces secrets doivent être créés dans :
+  //   GitHub → dépôt → Settings → Secrets and variables → Codespaces
+  // Ils sont injectés automatiquement comme variables d'environnement dans le
+  // conteneur. Aucune valeur n'est stockée ici (le nom suffit à déclarer la liaison).
+  "secrets": {
+    "DISCORD_BOT_TOKEN": {
+      "description": "Token du bot Discord (notifications événements/news)"
+    },
+    "DISCORD_CHANNEL_EVENTS": {
+      "description": "ID du canal Discord pour les notifications d'événements"
+    },
+    "DISCORD_CHANNEL_NEWS": {
+      "description": "ID du canal Discord pour les notifications d'actualités"
+    },
+    "APP_URL": {
+      "description": "URL publique de l'application (ex: https://lanparty.example.com)"
+    }
   }
 }
