@@ -131,6 +131,31 @@ const Battle = {
   },
 
   /**
+   * Retourne le conflit d'occupation de salle pour une rencontre, si present.
+   * Utilise quand une transition vers installation/en_cours est refusee.
+   * @param {number} battleId
+   * @returns {Promise<Object|null>}
+   */
+  async findRoomConflict(battleId) {
+    const [rows] = await db.pool.execute(
+      `SELECT r.nom AS room_nom,
+              b2.id AS conflicting_battle_id,
+              b2.statut AS conflicting_statut
+         FROM battles b
+         JOIN rooms r ON r.id = b.room_id
+         JOIN battles b2
+           ON b2.room_id = b.room_id
+          AND b2.id <> b.id
+          AND b2.statut IN ('installation', 'en_cours')
+        WHERE b.id = ?
+        LIMIT 1`,
+      [battleId]
+    );
+
+    return rows[0] || null;
+  },
+
+  /**
    * Retourne la vue récapitulative pour les annonces micro
    * (battles planifiées avec salle, triées par ordre de création)
    * @param {number} eventId
@@ -286,18 +311,69 @@ const Battle = {
   async changeStatut(id, newStatut, eventId) {
     if (!STATUTS_VALIDES.includes(newStatut)) return false;
 
-    const [result] = await db.pool.execute(
-      `UPDATE battles SET statut = ?, updated_at = NOW()
-        WHERE id = ?`,
-      [newStatut, id]
-    );
+    let affectedRows = 0;
+
+    // Verrouille la rencontre pour eviter qu'une meme salle passe en
+    // installation/en_cours sur 2 battles en concurrence.
+    if (newStatut === 'installation' || newStatut === 'en_cours') {
+      const conn = await db.pool.getConnection();
+      try {
+        await conn.beginTransaction();
+
+        const [battleRows] = await conn.execute(
+          'SELECT id, room_id FROM battles WHERE id = ? FOR UPDATE',
+          [id]
+        );
+        if (!battleRows[0] || !battleRows[0].room_id) {
+          await conn.rollback();
+          return false;
+        }
+
+        const roomId = battleRows[0].room_id;
+        const [busyRows] = await conn.execute(
+          `SELECT COUNT(*) AS total
+             FROM battles
+            WHERE room_id = ?
+              AND statut IN ('installation', 'en_cours')
+              AND id <> ?
+            FOR UPDATE`,
+          [roomId, id]
+        );
+
+        if ((busyRows[0] && busyRows[0].total > 0)) {
+          await conn.rollback();
+          return false;
+        }
+
+        const [result] = await conn.execute(
+          `UPDATE battles SET statut = ?, updated_at = NOW()
+            WHERE id = ?`,
+          [newStatut, id]
+        );
+        affectedRows = result.affectedRows;
+
+        await conn.commit();
+      } catch (err) {
+        await conn.rollback();
+        throw err;
+      } finally {
+        conn.release();
+      }
+    } else {
+      const [result] = await db.pool.execute(
+        `UPDATE battles SET statut = ?, updated_at = NOW()
+          WHERE id = ?`,
+        [newStatut, id]
+      );
+      affectedRows = result.affectedRows;
+    }
 
     // Si la rencontre vient de se terminer, réévalue la file d'attente
-    if (result.affectedRows > 0 && newStatut === 'termine') {
+    if (affectedRows > 0 && newStatut === 'termine') {
       await Battle.reevaluateQueue(eventId);
     }
 
-    return result.affectedRows > 0;
+    return affectedRows > 0;
   },
 
   /**

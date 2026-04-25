@@ -63,6 +63,15 @@ function ensureLiveEvent(event, req, res, redirectTo = '/battles') {
   return true;
 }
 
+function formatRoomConflictMessage(actionLabel, conflict) {
+  if (!conflict) {
+    return `Impossible de ${actionLabel} : la salle est deja occupee.`;
+  }
+
+  const statutLabel = conflict.conflicting_statut === 'en_cours' ? 'en cours' : 'en installation';
+  return `Impossible de ${actionLabel} : la salle ${conflict.room_nom} est occupee par la rencontre #${conflict.conflicting_battle_id} (${statutLabel}).`;
+}
+
 // ─── GET /battles ─────────────────────────────────────────────────────────────
 // Liste des événements disponibles pour la gestion des rencontres
 
@@ -427,7 +436,12 @@ router.post('/:id/ready', async (req, res) => {
       return res.redirect(`/battles/events/${battle.event_id}`);
     }
 
-    await Battle.changeStatut(battleId, 'installation', battle.event_id);
+    const changed = await Battle.changeStatut(battleId, 'installation', battle.event_id);
+    if (!changed) {
+      const conflict = await Battle.findRoomConflict(battleId);
+      req.flash('error', formatRoomConflictMessage('passer en installation', conflict));
+      return res.redirect(`/battles/events/${battle.event_id}`);
+    }
 
     logger.info(`[BATTLES] Rencontre #${battleId} → installation par #${req.session.userId}`);
     req.flash('success', 'Rencontre en cours d\'installation.');
@@ -467,7 +481,12 @@ router.post('/:id/start', async (req, res) => {
       return res.redirect(`/battles/events/${battle.event_id}`);
     }
 
-    await Battle.changeStatut(battleId, 'en_cours', battle.event_id);
+    const changed = await Battle.changeStatut(battleId, 'en_cours', battle.event_id);
+    if (!changed) {
+      const conflict = await Battle.findRoomConflict(battleId);
+      req.flash('error', formatRoomConflictMessage('lancer la rencontre', conflict));
+      return res.redirect(`/battles/events/${battle.event_id}`);
+    }
 
     logger.info(`[BATTLES] Rencontre #${battleId} → en_cours par #${req.session.userId}`);
     req.flash('success', 'Rencontre lancée !');

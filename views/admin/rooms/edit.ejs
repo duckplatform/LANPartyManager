@@ -64,6 +64,12 @@
             <% TYPES_RENCONTRE.forEach(function(t) { %>
               <option value="<%= t %>" <%= old.type_rencontre === t ? 'selected' : '' %>>
                 <%= t === '2v2' ? '2v2 — Équipes (4 joueurs)' : t === '1v1' ? '1v1 — Face à face (2 joueurs)' : 'Solo — Un seul joueur' %>
+              </option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label class="form-label">État</label>
           <label class="form-checkbox">
             <input type="checkbox" name="actif" value="1" <%= (old.actif == '1' || old.actif === 1) ? 'checked' : '' %> />
