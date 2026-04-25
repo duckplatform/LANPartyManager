@@ -1,5 +1,10 @@
-</main>
-<%- include('footer') %>
+<%
+	const isAnnouncePage = typeof pageClass === 'string' && pageClass.includes('page-announce');
+%>
+<% if (!isAnnouncePage) { %>
+	</main>
+	<%- include('footer') %>
+<% } %>
 <script src="/js/main.js"></script>
 </body>
 </html>
