@@ -592,57 +592,6 @@ describe('Routes - Tests d\'intégration', function () {
     });
   });
 
-  describe('POST /battles/:id/ready (handler)', function () {
-    let battleFindByIdStub;
-    let eventFindByIdStub;
-    let changeStatutWithQueueStub;
-    let notifyBattlePlannedStub;
-    let notifyBattleInstallationStub;
-
-    beforeEach(function () {
-      battleFindByIdStub = sinon.stub(Battle, 'findById');
-      eventFindByIdStub = sinon.stub(Event, 'findById');
-      changeStatutWithQueueStub = sinon.stub(Battle, 'changeStatutWithQueue');
-      notifyBattlePlannedStub = sinon.stub(discord, 'notifyBattlePlanned').resolves();
-      notifyBattleInstallationStub = sinon.stub(discord, 'notifyBattleInstallation').resolves();
-    });
-
-    afterEach(function () {
-      sinon.restore();
-    });
-
-    it('doit notifier la rencontre promue quand une salle libere son slot planifie', async function () {
-      const handler = getRouteHandler(battlesRouter, 'post', '/:id/ready');
-      const req = {
-        params: { id: '10' },
-        flash: sinon.stub(),
-        session: { userId: 99 },
-      };
-      const res = {
-        redirect: sinon.stub(),
-      };
-
-      const event = { id: 4, nom: 'LAN Test', statut: 'en_cours', discord_channel_id: '333333333333333333' };
-      const battle = { id: 10, event_id: 4, statut: 'planifie', room_id: 2 };
-      const promotedBattle = { id: 12, event_id: 4, statut: 'planifie', room_nom: 'Neo Tokyo' };
-      const updatedBattle = { id: 10, event_id: 4, statut: 'installation', room_id: 2 };
-
-      battleFindByIdStub.onCall(0).resolves(battle);
-      battleFindByIdStub.onCall(1).resolves(promotedBattle);
-      battleFindByIdStub.onCall(2).resolves(updatedBattle);
-      eventFindByIdStub.resolves(event);
-      changeStatutWithQueueStub.resolves({ success: true, promotedBattleIds: [12] });
-
-      await handler(req, res);
-
-      expect(changeStatutWithQueueStub.calledOnceWithExactly(10, 'installation', 4)).to.be.true;
-      expect(notifyBattlePlannedStub.calledOnceWithExactly({ event, battle: promotedBattle })).to.be.true;
-      expect(notifyBattleInstallationStub.calledOnceWithExactly({ event, battle: updatedBattle })).to.be.true;
-      expect(req.flash.calledOnceWithExactly('success', 'Rencontre en cours d\'installation.')).to.be.true;
-      expect(res.redirect.calledOnceWithExactly('/battles/events/4')).to.be.true;
-    });
-  });
-
   describe('POST /battles/:id/result (handler)', function () {
     let battleFindByIdStub;
     let eventFindByIdStub;

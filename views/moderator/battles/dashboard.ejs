@@ -259,24 +259,6 @@
 
             <!-- Actions -->
             <div class="battle-actions">
-              <% if (b.statut === 'planifie') { %>
-                <%
-                  const roomBusyForReady = b.room_id && active.some(function(other) {
-                    return other.id !== b.id
-                      && other.room_id === b.room_id
-                      && ['installation', 'en_cours'].includes(other.statut);
-                  });
-                %>
-                <form action="/battles/<%= b.id %>/ready" method="POST" class="form-inline">
-                  <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
-                  <button
-                    type="submit"
-                    class="btn btn--primary btn--sm"
-                    <%= roomBusyForReady ? 'disabled aria-disabled="true" title="Action indisponible : salle occupée par une rencontre active."' : '' %>>
-                    <i class="fas fa-users"></i> Joueurs en place
-                  </button>
-                </form>
-              <% } %>
               <% if (b.statut === 'installation') { %>
                 <form action="/battles/<%= b.id %>/start" method="POST" class="form-inline">
                   <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
