@@ -434,6 +434,14 @@ router.post('/events', eventValidation, async (req, res) => {
     req.flash('success', `L'événement "${nom}" a été créé.`);
     return res.redirect('/admin/events');
   } catch (err) {
+    if (err && err.code === 'EVENT_ACTIVE_CONFLICT') {
+      const conflictName = err.conflictEvent && err.conflictEvent.nom
+        ? ` (${err.conflictEvent.nom})`
+        : '';
+      req.flash('error', `Impossible de créer un deuxième événement en cours${conflictName}. Terminez d'abord l'événement actif.`);
+      return res.redirect('/admin/events/create');
+    }
+
     logger.error('[ADMIN/EVENTS] Erreur création :', err);
     req.flash('error', 'Erreur lors de la création de l\'événement.');
     return res.redirect('/admin/events/create');
@@ -511,6 +519,14 @@ router.post('/events/:id', eventValidation, async (req, res) => {
     req.flash('success', `L'événement "${nom}" a été mis à jour.`);
     return res.redirect('/admin/events');
   } catch (err) {
+    if (err && err.code === 'EVENT_ACTIVE_CONFLICT') {
+      const conflictName = err.conflictEvent && err.conflictEvent.nom
+        ? ` (${err.conflictEvent.nom})`
+        : '';
+      req.flash('error', `Impossible d'activer cet événement${conflictName}. Un seul événement peut être en cours à la fois.`);
+      return res.redirect(`/admin/events/${id}/edit`);
+    }
+
     logger.error(`[ADMIN/EVENTS] Erreur modification événement #${id} :`, err);
     req.flash('error', 'Erreur lors de la mise à jour de l\'événement.');
     return res.redirect(`/admin/events/${id}/edit`);

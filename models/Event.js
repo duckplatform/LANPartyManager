@@ -11,7 +11,40 @@ const db = require('../config/database');
 /** Valeurs autorisées pour le champ statut */
 const STATUTS_VALIDES = ['planifie', 'en_cours', 'termine'];
 
+function buildActiveEventConflictError(conflictEvent = null) {
+  const err = new Error('Un seul événement peut être en cours à la fois.');
+  err.code = 'EVENT_ACTIVE_CONFLICT';
+  err.conflictEvent = conflictEvent;
+  return err;
+}
+
 const Event = {
+
+  /**
+   * Retourne l'événement actuellement en cours (optionnellement hors ID donné).
+   * @param {number|null} excludeId
+   * @returns {Promise<Object|null>}
+   */
+  async findCurrentLive(excludeId = null) {
+    if (excludeId) {
+      const [rows] = await db.pool.execute(
+        `SELECT id, nom, date_heure, lieu, statut
+           FROM events
+          WHERE statut = 'en_cours' AND id <> ?
+          LIMIT 1`,
+        [excludeId]
+      );
+      return rows[0] || null;
+    }
+
+    const [rows] = await db.pool.execute(
+      `SELECT id, nom, date_heure, lieu, statut
+         FROM events
+        WHERE statut = 'en_cours'
+        LIMIT 1`
+    );
+    return rows[0] || null;
+  },
 
   /**
    * Retourne tous les événements, triés par date décroissante
@@ -87,12 +120,27 @@ const Event = {
    */
   async create({ nom, date_heure, lieu, statut = 'planifie' }) {
     const statutFinal = STATUTS_VALIDES.includes(statut) ? statut : 'planifie';
-    const [result] = await db.pool.execute(
-      `INSERT INTO events (nom, date_heure, lieu, statut)
-       VALUES (?, ?, ?, ?)`,
-      [nom.trim(), date_heure, lieu.trim(), statutFinal]
-    );
-    return result.insertId;
+
+    if (statutFinal === 'en_cours') {
+      const conflict = await Event.findCurrentLive();
+      if (conflict) {
+        throw buildActiveEventConflictError(conflict);
+      }
+    }
+
+    try {
+      const [result] = await db.pool.execute(
+        `INSERT INTO events (nom, date_heure, lieu, statut)
+         VALUES (?, ?, ?, ?)`,
+        [nom.trim(), date_heure, lieu.trim(), statutFinal]
+      );
+      return result.insertId;
+    } catch (err) {
+      if (err && err.code === 'ER_DUP_ENTRY') {
+        throw buildActiveEventConflictError();
+      }
+      throw err;
+    }
   },
 
   /**
@@ -103,13 +151,28 @@ const Event = {
    */
   async update(id, { nom, date_heure, lieu, statut = 'planifie' }) {
     const statutFinal = STATUTS_VALIDES.includes(statut) ? statut : 'planifie';
-    const [result] = await db.pool.execute(
-      `UPDATE events
-          SET nom = ?, date_heure = ?, lieu = ?, statut = ?, updated_at = NOW()
-        WHERE id = ?`,
-      [nom.trim(), date_heure, lieu.trim(), statutFinal, id]
-    );
-    return result.affectedRows > 0;
+
+    if (statutFinal === 'en_cours') {
+      const conflict = await Event.findCurrentLive(id);
+      if (conflict) {
+        throw buildActiveEventConflictError(conflict);
+      }
+    }
+
+    try {
+      const [result] = await db.pool.execute(
+        `UPDATE events
+            SET nom = ?, date_heure = ?, lieu = ?, statut = ?, updated_at = NOW()
+          WHERE id = ?`,
+        [nom.trim(), date_heure, lieu.trim(), statutFinal, id]
+      );
+      return result.affectedRows > 0;
+    } catch (err) {
+      if (err && err.code === 'ER_DUP_ENTRY') {
+        throw buildActiveEventConflictError();
+      }
+      throw err;
+    }
   },
 
   /**

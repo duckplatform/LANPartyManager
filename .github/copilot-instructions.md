@@ -29,3 +29,20 @@ Execute les tests complets avant livraison
 Fournis une documentation complete concernant: l'architecture, l'installation et la mise à jour.
 Fournis séparement une documentation d'utilisation.
 Si nécessaire, inclu des pages d'aide publique sur l'application.
+
+# Contraintes metier obligatoires
+
+Toujours appliquer et verifier ces regles de gestion cote serveur + base:
+
+1. Evenements:
+- Il ne peut exister qu'un seul evenement avec le statut `en_cours` a la fois.
+- Toute creation/mise a jour qui violerait cette regle doit etre refusee avec un message explicite.
+
+2. Salles et rencontres:
+- Une salle ne peut avoir qu'une seule rencontre active (`installation` ou `en_cours`) en meme temps.
+- Une salle peut avoir au maximum une rencontre `planifie` en attente du prochain slot.
+- La file d'attente doit rester FIFO (ordre chronologique de creation).
+
+3. Validation et robustesse:
+- Les contraintes critiques doivent etre protegees a 2 niveaux: logique applicative + contraintes SQL.
+- Les messages d'erreur doivent etre compréhensibles et exploitables en operation (admin/moderation).
