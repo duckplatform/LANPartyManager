@@ -14,7 +14,7 @@
  * Logique de file d'attente :
  *   - À chaque création, fin ou début de rencontre, reevaluateQueue() est appelé
  *   - Les rencontres en file_attente sont promues à 'planifie' si une salle est disponible
- *   - Une salle est disponible si elle n'a aucune battle en_attente ou en_cours
+ *   - Une salle est disponible si elle n'a aucune battle planifie, en_attente ou en_cours
  *   - Une salle attribuée ne peut plus changer (règle métier)
  */
 
@@ -194,7 +194,7 @@ const Battle = {
    * Une salle est disponible si :
    *   - Elle est active
    *   - Son type_rencontre correspond au jeu
-   *   - Elle n'a aucune battle en_attente ou en_cours
+   *   - Elle n'a aucune battle planifie, en_attente ou en_cours
    * Une salle attribuée ne change jamais (règle métier).
    * @param {number} battleId
    * @param {number} eventId
@@ -224,7 +224,7 @@ const Battle = {
           AND NOT EXISTS (
             SELECT 1 FROM battles b2
              WHERE b2.room_id = r.id
-               AND b2.statut IN ('en_attente', 'en_cours')
+               AND b2.statut IN ('planifie', 'en_attente', 'en_cours')
           )
         ORDER BY r.nom ASC
         LIMIT 1`,

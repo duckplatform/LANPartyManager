@@ -41,6 +41,9 @@ describe('Room Model', function () {
       const result = await Room.findByEvent(1);
       expect(result).to.deep.equal(fakeRows);
       expect(poolStub.execute.calledOnce).to.be.true;
+
+      const query = poolStub.execute.firstCall.args[0];
+      expect(query).to.include("'planifie'");
     });
   });
 
@@ -76,6 +79,11 @@ describe('Room Model', function () {
       const args = poolStub.execute.firstCall.args;
       expect(args[1][0]).to.equal(1);    // event_id
       expect(args[1][1]).to.equal('1v1'); // type_rencontre
+
+      const query = poolStub.execute.firstCall.args[0];
+      expect(query).to.include("'planifie'");
+      expect(query).to.include("'en_attente'");
+      expect(query).to.include("'en_cours'");
     });
 
     it('doit retourner un tableau vide si aucune salle disponible', async function () {

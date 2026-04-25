@@ -89,6 +89,8 @@ LANPartyManager/
 │
 ├── database/
 │   ├── install.sql           # Script SQL d'installation (tables + compte admin)
+│   ├── seeds/
+│   │   └── codespace.sql     # Jeu de donnees de demonstration pour Codespace
 │   └── migrations/
 │       ├── 001_add_announcements.sql  # Migration : ajout table announcements
 │       ├── 002_add_events.sql         # Migration : ajout table events
@@ -137,6 +139,17 @@ LANPartyManager/
 | Notifications Discord | discord.js v14 (REST uniquement, sans WebSocket) |
 
 ### Modèle de données
+
+### Initialisation Codespace
+
+Le bootstrap Codespace repose sur [.devcontainer/init-db.sh](.devcontainer/init-db.sh), execute via le postCreateCommand du conteneur. Il effectue, dans l'ordre :
+
+1. creation de la base si necessaire ;
+2. import du schema initial depuis [database/install.sql](database/install.sql) ;
+3. application des migrations SQL ;
+4. import du jeu de donnees de demonstration depuis [database/seeds/codespace.sql](database/seeds/codespace.sql).
+
+Le seed est idempotent : il ajoute uniquement des enregistrements de demonstration absents, sans supprimer les donnees deja saisies dans le Codespace.
 
 **Table `users`**
 

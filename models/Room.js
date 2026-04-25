@@ -41,7 +41,7 @@ const Room = {
               r.event_id, r.created_at, r.updated_at,
               (SELECT COUNT(*) FROM battles b
                 WHERE b.room_id = r.id
-                  AND b.statut IN ('en_attente','en_cours')) AS battles_actives
+                  AND b.statut IN ('planifie','en_attente','en_cours')) AS battles_actives
          FROM rooms r
         WHERE r.event_id = ?
         ORDER BY r.nom ASC`,
@@ -65,7 +65,7 @@ const Room = {
 
   /**
    * Retourne les salles disponibles pour un type de rencontre donné dans un événement.
-   * Une salle est "disponible" si elle est active ET n'a aucune battle en_attente ou en_cours.
+   * Une salle est "disponible" si elle est active ET n'a aucune battle planifie/en_attente/en_cours.
    * @param {number} eventId
    * @param {'1v1'|'2v2'} typeRencontre
    * @returns {Promise<Array>}
@@ -80,7 +80,7 @@ const Room = {
           AND NOT EXISTS (
             SELECT 1 FROM battles b
              WHERE b.room_id = r.id
-               AND b.statut IN ('en_attente', 'en_cours')
+               AND b.statut IN ('planifie', 'en_attente', 'en_cours')
           )
         ORDER BY r.nom ASC`,
       [eventId, typeRencontre]

@@ -24,6 +24,7 @@ DB_NAME="${DB_NAME:-lanpartymanager}"
 WORKSPACE="/workspace"
 SQL_INSTALL="${WORKSPACE}/database/install.sql"
 MIGRATIONS_DIR="${WORKSPACE}/database/migrations"
+SEED_CODESPACE="${WORKSPACE}/database/seeds/codespace.sql"
 
 # ── Couleurs pour la console ─────────────────────────────────
 GREEN='\033[0;32m'
@@ -127,6 +128,17 @@ fi
 
 # ── 5. Résumé ────────────────────────────────────────────────
 echo ""
+echo "🌱 Import du jeu de donnees Codespace..."
+
+if [ -f "${SEED_CODESPACE}" ]; then
+  mysql_cmd "${DB_NAME}" < "${SEED_CODESPACE}"
+  echo -e "${GREEN}✔ Jeu de donnees de demonstration importe.${NC}"
+else
+  echo -e "${YELLOW}⚠ Aucun seed Codespace trouve, etape ignoree.${NC}"
+fi
+
+# ── 6. Résumé ────────────────────────────────────────────────
+echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}  ✅ Environnement Codespace prêt !                   ${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -136,6 +148,10 @@ echo ""
 echo "  👤 Compte admin par défaut :"
 echo "       Email    : admin@lanparty.local"
 echo "       Password : Admin1234"
+echo ""
+echo "  👥 Comptes de demonstration :"
+echo "       Moderatrice : lea.martin@lanparty.local / Admin1234"
+echo "       Joueur      : hugo.bernard@lanparty.local / Admin1234"
 echo ""
 echo -e "  ${YELLOW}⚠️  Changez ce mot de passe dès la première connexion !${NC}"
 echo ""

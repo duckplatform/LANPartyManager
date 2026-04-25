@@ -27,6 +27,16 @@
           <i class="fas fa-door-open"></i> Salles
         </a>
       </li>
+      <li>
+        <a href="/moderator" class="admin-sidebar-link<%= activeSection === 'tickets' ? ' active' : '' %>" <%= activeSection === 'tickets' ? 'aria-current="page"' : '' %>>
+          <i class="fas fa-ticket"></i> Contrôle billets
+        </a>
+      </li>
+      <li>
+        <a href="/battles" class="admin-sidebar-link<%= activeSection === 'battles' ? ' active' : '' %>" <%= activeSection === 'battles' ? 'aria-current="page"' : '' %>>
+          <i class="fas fa-gamepad"></i> Rencontres
+        </a>
+      </li>
     </ul>
   </nav>
 </aside>

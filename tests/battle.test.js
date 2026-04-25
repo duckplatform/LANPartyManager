@@ -148,6 +148,18 @@ describe('Battle Model', function () {
       const result = await Battle.assignRoomIfAvailable(1, 1, 1);
       expect(result).to.be.true;
     });
+
+    it('doit considérer une salle planifiée comme non disponible', async function () {
+      poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
+      poolStub.execute.onSecondCall().resolves([[]]);
+
+      await Battle.assignRoomIfAvailable(1, 1, 1);
+
+      const roomsQuery = poolStub.execute.getCall(1).args[0];
+      expect(roomsQuery).to.include("'planifie'");
+      expect(roomsQuery).to.include("'en_attente'");
+      expect(roomsQuery).to.include("'en_cours'");
+    });
   });
 
   // ── changeStatut ─────────────────────────────────────────────────────────
