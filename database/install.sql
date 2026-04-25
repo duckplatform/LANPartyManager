@@ -107,11 +107,9 @@ CREATE TABLE IF NOT EXISTS `event_registrations` (
   `id`          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
   `event_id`    INT UNSIGNED  NOT NULL COMMENT 'Reference vers events.id',
   `user_id`     INT UNSIGNED  NOT NULL COMMENT 'Reference vers users.id',
-  `token`       CHAR(36)      NOT NULL COMMENT 'Token UUID d''inscription',
   `created_at`  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_event_user` (`event_id`, `user_id`),
-  UNIQUE KEY `uq_er_token` (`token`),
   KEY `idx_er_event_id` (`event_id`),
   KEY `idx_er_user_id` (`user_id`),
   CONSTRAINT `fk_er_event`

@@ -158,8 +158,8 @@ WHERE NOT EXISTS (
 -- Inscriptions a l'evenement public a venir
 -- ------------------------------------------------------------
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000001', '2026-04-11 08:00:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:00:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'lea.martin@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -167,8 +167,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000002', '2026-04-11 08:05:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:05:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'hugo.bernard@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -176,8 +176,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000003', '2026-04-11 08:10:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:10:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'ines.dubois@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -185,8 +185,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000004', '2026-04-11 08:15:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:15:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'lucas.petit@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -194,8 +194,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000005', '2026-04-11 08:20:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:20:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'sarah.garcia@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -203,8 +203,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000006', '2026-04-11 08:25:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:25:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'tom.moreau@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -212,8 +212,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000007', '2026-04-11 08:30:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:30:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'emma.roux@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -221,8 +221,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000008', '2026-04-11 08:35:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:35:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'nolan.faure@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -230,8 +230,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000009', '2026-04-11 08:40:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:40:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'mila.chevalier@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -239,8 +239,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000010', '2026-04-11 08:45:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:45:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'leo.andre@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -248,8 +248,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000011', '2026-04-11 08:50:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:50:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'jade.renard@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
@@ -257,8 +257,8 @@ WHERE e.nom = 'LAN Spring Showdown'
     SELECT 1 FROM `event_registrations` er WHERE er.event_id = e.id AND er.user_id = u.id
   );
 
-INSERT INTO `event_registrations` (`event_id`, `user_id`, `token`, `created_at`)
-SELECT e.id, u.id, '20000000-0000-4000-8000-000000000012', '2026-04-11 08:55:00'
+INSERT INTO `event_registrations` (`event_id`, `user_id`, `created_at`)
+SELECT e.id, u.id, '2026-04-11 08:55:00'
 FROM `events` e
 JOIN `users` u ON u.email = 'theo.lemoine@lanparty.local'
 WHERE e.nom = 'LAN Spring Showdown'
