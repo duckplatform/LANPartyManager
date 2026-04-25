@@ -354,6 +354,24 @@ describe('Discord Service', function () {
       expect(winnersField.value).to.include('AlphaDiscord');
     });
 
+    it('doit reconnaitre un gagnant quand est_gagnant remonte en Buffer MySQL', async function () {
+      const event = { id: 9, nom: 'LAN Test', discord_channel_id: '333333333333333333' };
+      const mysqlTypedBattle = {
+        ...battleFixture,
+        players: [
+          { user_id: 1, pseudo: 'AlphaDiscord', equipe: 1, est_gagnant: Buffer.from([1]) },
+          { user_id: 2, pseudo: 'BravoDiscord', equipe: 2, est_gagnant: Buffer.from([0]) },
+        ],
+      };
+
+      await discord.notifyBattleEnded({ event, battle: mysqlTypedBattle });
+
+      const embed = postCalls[0].options.body.embeds[0];
+      const winnersField = embed.fields.find(f => f.name === 'Gagnant(s)');
+      expect(winnersField.value).to.include('AlphaDiscord');
+      expect(winnersField.value).to.not.include('BravoDiscord');
+    });
+
   });
 
   // ── Comportement sans fakeRest injecté ────────────────────────────────

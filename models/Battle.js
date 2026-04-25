@@ -25,6 +25,10 @@ const db = require('../config/database');
 /** Statuts autorisés pour une battle */
 const STATUTS_VALIDES = ['file_attente', 'planifie', 'installation', 'en_cours', 'termine'];
 
+function shouldReevaluateQueueOnStatut(newStatut) {
+  return newStatut === 'installation' || newStatut === 'termine';
+}
+
 const Battle = {
 
   // ──────────────────────────────────────────────────────────────
@@ -327,15 +331,32 @@ const Battle = {
   },
 
   /**
-   * Change le statut d'une rencontre.
-   * Déclenche la réévaluation de la file si la rencontre se termine.
+  * Change le statut d'une rencontre.
+  * Déclenche la réévaluation de la file quand une salle libère un slot planifié
+  * (passage en installation) ou une place active (passage en terminé).
    * @param {number} id
    * @param {'installation'|'en_cours'|'termine'} newStatut
    * @param {number} eventId — nécessaire pour reevaluateQueue
    * @returns {Promise<boolean>}
    */
   async changeStatut(id, newStatut, eventId) {
-    if (!STATUTS_VALIDES.includes(newStatut)) return false;
+    const result = await Battle.changeStatutWithQueue(id, newStatut, eventId);
+    return result.success;
+  },
+
+  /**
+   * Variante détaillée de changeStatut qui expose les promotions de file d'attente.
+   * Le passage en installation libère le slot "planifie" de la salle et doit donc
+   * réévaluer la file, tout comme une fin de rencontre.
+   * @param {number} id
+   * @param {'installation'|'en_cours'|'termine'|'planifie'|'file_attente'} newStatut
+   * @param {number} eventId
+   * @returns {Promise<{success: boolean, promotedBattleIds: number[]}>}
+   */
+  async changeStatutWithQueue(id, newStatut, eventId) {
+    if (!STATUTS_VALIDES.includes(newStatut)) {
+      return { success: false, promotedBattleIds: [] };
+    }
 
     let affectedRows = 0;
 
@@ -352,7 +373,7 @@ const Battle = {
         );
         if (!battleRows[0] || !battleRows[0].room_id) {
           await conn.rollback();
-          return false;
+          return { success: false, promotedBattleIds: [] };
         }
 
         const roomId = battleRows[0].room_id;
@@ -368,7 +389,7 @@ const Battle = {
 
         if ((busyRows[0] && busyRows[0].total > 0)) {
           await conn.rollback();
-          return false;
+          return { success: false, promotedBattleIds: [] };
         }
 
         const [result] = await conn.execute(
@@ -394,12 +415,13 @@ const Battle = {
       affectedRows = result.affectedRows;
     }
 
-    // Si la rencontre vient de se terminer, réévalue la file d'attente
-    if (affectedRows > 0 && newStatut === 'termine') {
-      await Battle.reevaluateQueue(eventId);
+    // Une rencontre qui passe en installation ou se termine peut libérer un slot.
+    let promotedBattleIds = [];
+    if (affectedRows > 0 && shouldReevaluateQueueOnStatut(newStatut)) {
+      promotedBattleIds = await Battle.reevaluateQueue(eventId);
     }
 
-    return affectedRows > 0;
+    return { success: affectedRows > 0, promotedBattleIds };
   },
 
   /**

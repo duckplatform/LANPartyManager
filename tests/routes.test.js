@@ -27,6 +27,7 @@ const EventRegistration = require('../models/EventRegistration');
 const Game = require('../models/Game');
 const Room = require('../models/Room');
 const User = require('../models/User');
+const discord = require('../services/discord');
 
 function getRouteHandler(router, method, path, stackIndex = 0) {
   const layer = router.stack.find((entry) => entry.route && entry.route.path === path && entry.route.methods[method]);
@@ -383,17 +384,23 @@ describe('Routes - Tests d\'intégration', function () {
 
   describe('POST /battles/events/:id/store (handler)', function () {
     let battleCreateStub;
+    let battleFindByIdStub;
     let eventFindByIdStub;
     let gameFindByIdStub;
     let userFindByBadgeTokenStub;
     let registrationIsRegisteredStub;
+    let notifyBattleCreatedStub;
+    let notifyBattlePlannedStub;
 
     beforeEach(function () {
       battleCreateStub = sinon.stub(Battle, 'create');
+      battleFindByIdStub = sinon.stub(Battle, 'findById');
       eventFindByIdStub = sinon.stub(Event, 'findById');
       gameFindByIdStub = sinon.stub(Game, 'findById');
       userFindByBadgeTokenStub = sinon.stub(User, 'findByBadgeToken');
       registrationIsRegisteredStub = sinon.stub(EventRegistration, 'isRegistered');
+      notifyBattleCreatedStub = sinon.stub(discord, 'notifyBattleCreated').resolves();
+      notifyBattlePlannedStub = sinon.stub(discord, 'notifyBattlePlanned').resolves();
     });
 
     afterEach(function () {
@@ -466,6 +473,7 @@ describe('Routes - Tests d\'intégration', function () {
         .onSecondCall().resolves({ id: 22, pseudo: 'Bravo' });
       registrationIsRegisteredStub.resolves(true);
       battleCreateStub.resolves(77);
+      battleFindByIdStub.resolves({ id: 77, event_id: 4, statut: 'file_attente' });
 
       await handler(req, res);
 
@@ -477,7 +485,47 @@ describe('Routes - Tests d\'intégration', function () {
           { user_id: 22, equipe: 2 },
         ]
       )).to.be.true;
+      expect(notifyBattleCreatedStub.calledOnce).to.be.true;
+      expect(notifyBattlePlannedStub.notCalled).to.be.true;
       expect(req.flash.calledOnceWithExactly('success', 'Rencontre créée avec succès ! La salle sera attribuée automatiquement.')).to.be.true;
+      expect(res.redirect.calledOnceWithExactly('/battles/events/4')).to.be.true;
+    });
+
+    it('doit notifier Discord quand la rencontre est promue immediatement en planifie', async function () {
+      const handler = getRouteHandler(battlesRouter, 'post', '/events/:id/store', 2);
+      const req = {
+        params: { id: '4' },
+        body: {
+          game_id: '2',
+          badge_token: [
+            '550e8400-e29b-41d4-a716-446655440002',
+            '550e8400-e29b-41d4-a716-446655440003',
+          ],
+          equipe: ['1', '2'],
+        },
+        flash: sinon.stub(),
+        session: { userId: 99 },
+      };
+      const res = {
+        redirect: sinon.stub(),
+      };
+
+      const event = { id: 4, nom: 'LAN Test', statut: 'en_cours', discord_channel_id: '333333333333333333' };
+      const createdBattle = { id: 77, event_id: 4, statut: 'planifie', room_nom: 'Neo Tokyo' };
+
+      eventFindByIdStub.resolves(event);
+      gameFindByIdStub.resolves({ id: 2, nom: 'Tekken 8', type_rencontre: '1v1' });
+      userFindByBadgeTokenStub
+        .onFirstCall().resolves({ id: 21, pseudo: 'Alpha' })
+        .onSecondCall().resolves({ id: 22, pseudo: 'Bravo' });
+      registrationIsRegisteredStub.resolves(true);
+      battleCreateStub.resolves(77);
+      battleFindByIdStub.resolves(createdBattle);
+
+      await handler(req, res);
+
+      expect(notifyBattleCreatedStub.calledOnceWithExactly({ event, battle: createdBattle })).to.be.true;
+      expect(notifyBattlePlannedStub.calledOnceWithExactly({ event, battle: createdBattle })).to.be.true;
       expect(res.redirect.calledOnceWithExactly('/battles/events/4')).to.be.true;
     });
 
@@ -540,6 +588,115 @@ describe('Routes - Tests d\'intégration', function () {
       expect(req.flash.calledOnceWithExactly('error', 'Les rencontres ne sont disponibles que pour un événement en cours.')).to.be.true;
       expect(res.redirect.calledOnceWithExactly('/battles')).to.be.true;
       expect(res.render.notCalled).to.be.true;
+    });
+  });
+
+  describe('POST /battles/:id/ready (handler)', function () {
+    let battleFindByIdStub;
+    let eventFindByIdStub;
+    let changeStatutWithQueueStub;
+    let notifyBattlePlannedStub;
+    let notifyBattleInstallationStub;
+
+    beforeEach(function () {
+      battleFindByIdStub = sinon.stub(Battle, 'findById');
+      eventFindByIdStub = sinon.stub(Event, 'findById');
+      changeStatutWithQueueStub = sinon.stub(Battle, 'changeStatutWithQueue');
+      notifyBattlePlannedStub = sinon.stub(discord, 'notifyBattlePlanned').resolves();
+      notifyBattleInstallationStub = sinon.stub(discord, 'notifyBattleInstallation').resolves();
+    });
+
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('doit notifier la rencontre promue quand une salle libere son slot planifie', async function () {
+      const handler = getRouteHandler(battlesRouter, 'post', '/:id/ready');
+      const req = {
+        params: { id: '10' },
+        flash: sinon.stub(),
+        session: { userId: 99 },
+      };
+      const res = {
+        redirect: sinon.stub(),
+      };
+
+      const event = { id: 4, nom: 'LAN Test', statut: 'en_cours', discord_channel_id: '333333333333333333' };
+      const battle = { id: 10, event_id: 4, statut: 'planifie', room_id: 2 };
+      const promotedBattle = { id: 12, event_id: 4, statut: 'planifie', room_nom: 'Neo Tokyo' };
+      const updatedBattle = { id: 10, event_id: 4, statut: 'installation', room_id: 2 };
+
+      battleFindByIdStub.onCall(0).resolves(battle);
+      battleFindByIdStub.onCall(1).resolves(promotedBattle);
+      battleFindByIdStub.onCall(2).resolves(updatedBattle);
+      eventFindByIdStub.resolves(event);
+      changeStatutWithQueueStub.resolves({ success: true, promotedBattleIds: [12] });
+
+      await handler(req, res);
+
+      expect(changeStatutWithQueueStub.calledOnceWithExactly(10, 'installation', 4)).to.be.true;
+      expect(notifyBattlePlannedStub.calledOnceWithExactly({ event, battle: promotedBattle })).to.be.true;
+      expect(notifyBattleInstallationStub.calledOnceWithExactly({ event, battle: updatedBattle })).to.be.true;
+      expect(req.flash.calledOnceWithExactly('success', 'Rencontre en cours d\'installation.')).to.be.true;
+      expect(res.redirect.calledOnceWithExactly('/battles/events/4')).to.be.true;
+    });
+  });
+
+  describe('POST /battles/:id/result (handler)', function () {
+    let battleFindByIdStub;
+    let eventFindByIdStub;
+    let setResultWithQueueStub;
+    let notifyBattleEndedStub;
+
+    beforeEach(function () {
+      battleFindByIdStub = sinon.stub(Battle, 'findById');
+      eventFindByIdStub = sinon.stub(Event, 'findById');
+      setResultWithQueueStub = sinon.stub(Battle, 'setResultWithQueue');
+      notifyBattleEndedStub = sinon.stub(discord, 'notifyBattleEnded').resolves();
+    });
+
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('doit lire les gagnants depuis winner_ids comme soumis par express.urlencoded', async function () {
+      const handler = getRouteHandler(battlesRouter, 'post', '/:id/result', 1);
+      const req = {
+        params: { id: '12' },
+        body: {
+          score: '3-0',
+          winner_ids: ['10', '11'],
+        },
+        flash: sinon.stub(),
+        session: { userId: 99 },
+      };
+      const res = {
+        redirect: sinon.stub(),
+      };
+
+      const battle = { id: 12, event_id: 1, statut: 'en_cours' };
+      const event = { id: 1, nom: 'LAN Spring Showdown', statut: 'en_cours' };
+      const endedBattle = {
+        id: 12,
+        event_id: 1,
+        statut: 'termine',
+        score: '3-0',
+        players: [
+          { user_id: 10, pseudo: 'Blitz', est_gagnant: 1 },
+          { user_id: 11, pseudo: 'Orbit', est_gagnant: 1 },
+        ],
+      };
+
+      battleFindByIdStub.onCall(0).resolves(battle);
+      battleFindByIdStub.onCall(1).resolves(endedBattle);
+      eventFindByIdStub.resolves(event);
+      setResultWithQueueStub.resolves({ success: true, promotedBattleIds: [] });
+
+      await handler(req, res);
+
+      expect(setResultWithQueueStub.calledOnceWithExactly(12, '3-0', [10, 11], 1)).to.be.true;
+      expect(notifyBattleEndedStub.calledOnceWithExactly({ event, battle: endedBattle })).to.be.true;
+      expect(res.redirect.calledOnceWithExactly('/battles/events/1')).to.be.true;
     });
   });
 

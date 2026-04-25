@@ -41,16 +41,12 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        // Linting JavaScript / ESLint
         "dbaeumer.vscode-eslint",
-        // Client MySQL intégré (connexion localhost:3306)
         "cweijan.vscode-mysql-client2",
-        // Coloration syntaxique EJS
         "digitalbrainstem.javascript-ejs-support",
-        // Visualisation des fichiers de log
         "Tyriar.log-data-highlighter",
-        // Support Docker Compose (facilite la navigation dans docker-compose.yml)
-        "ms-azuretools.vscode-containers"
+        "ms-azuretools.vscode-containers",
+        "GitHub.copilot-chat"
       ],
       "settings": {
         "editor.tabSize": 2,

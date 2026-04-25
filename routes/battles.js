@@ -414,6 +414,9 @@ router.post(
 
       const createdBattle = await Battle.findById(battleId);
       discord.notifyBattleCreated({ event, battle: createdBattle }).catch(() => {});
+      if (createdBattle && createdBattle.statut === 'planifie') {
+        discord.notifyBattlePlanned({ event, battle: createdBattle }).catch(() => {});
+      }
 
       logger.info(
         `[BATTLES] Nouvelle rencontre #${battleId} créée par #${req.session.userId} — jeu: ${game.nom} — joueurs: ${players.map(p => p.user_id).join(',')}`
@@ -457,12 +460,14 @@ router.post('/:id/ready', async (req, res) => {
       return res.redirect(`/battles/events/${battle.event_id}`);
     }
 
-    const changed = await Battle.changeStatut(battleId, 'installation', battle.event_id);
-    if (!changed) {
+    const resultData = await Battle.changeStatutWithQueue(battleId, 'installation', battle.event_id);
+    if (!resultData.success) {
       const conflict = await Battle.findRoomConflict(battleId);
       req.flash('error', formatRoomConflictMessage('passer en installation', conflict));
       return res.redirect(`/battles/events/${battle.event_id}`);
     }
+
+    await notifyPromotedBattles(event, resultData.promotedBattleIds);
 
     const updatedBattle = await Battle.findById(battleId);
     discord.notifyBattleInstallation({ event, battle: updatedBattle }).catch(() => {});
@@ -548,10 +553,11 @@ router.post(
     }
 
     const score     = (req.body.score || '').trim() || null;
-    const winnerIds = Array.isArray(req.body['winner_ids[]'])
-      ? req.body['winner_ids[]'].map(Number).filter(n => n > 0)
-      : req.body['winner_ids[]']
-        ? [parseInt(req.body['winner_ids[]'], 10)].filter(n => n > 0)
+    const rawWinnerIds = req.body.winner_ids ?? req.body['winner_ids[]'];
+    const winnerIds = Array.isArray(rawWinnerIds)
+      ? rawWinnerIds.map(Number).filter(n => n > 0)
+      : rawWinnerIds
+        ? [parseInt(rawWinnerIds, 10)].filter(n => n > 0)
         : [];
 
     try {

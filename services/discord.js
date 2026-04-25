@@ -275,9 +275,26 @@ function buildBattlePlayersField(players = []) {
     .join('\n');
 }
 
+function isWinningPlayer(value) {
+  if (Buffer.isBuffer(value)) {
+    return value.length > 0 && value[0] !== 0;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === '1' || normalized === 'true';
+  }
+
+  return Number(value) === 1;
+}
+
 function buildBattleWinnersField(players = []) {
   const winners = (players || [])
-    .filter(player => Number(player.est_gagnant) === 1)
+    .filter(player => isWinningPlayer(player.est_gagnant))
     .map(player => (player.pseudo || `Joueur #${player.user_id || '?'}`).toString().trim());
 
   if (winners.length === 0) {

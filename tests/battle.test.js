@@ -242,7 +242,7 @@ describe('Battle Model', function () {
       expect(poolStub.execute.callCount).to.be.at.least(2);
     });
 
-    it('ne doit pas appeler reevaluateQueue si statut n\'est pas "termine"', async function () {
+    it('ne doit pas appeler reevaluateQueue si statut n\'est ni installation ni termine', async function () {
       poolStub.execute.resolves([{ affectedRows: 1 }]);
       await Battle.changeStatut(1, 'planifie', 1);
       // Une seule requête (UPDATE)
@@ -262,12 +262,37 @@ describe('Battle Model', function () {
       conn.execute.onCall(0).resolves([[{ id: 1, room_id: 3 }]]);
       conn.execute.onCall(1).resolves([[{ total: 0 }]]);
       conn.execute.onCall(2).resolves([{ affectedRows: 1 }]);
+      poolStub.execute.resolves([[]]);
 
       const result = await Battle.changeStatut(1, 'installation', 1);
 
       expect(result).to.be.true;
       expect(conn.commit.calledOnce).to.be.true;
       expect(conn.rollback.called).to.be.false;
+    });
+
+    it('doit réévaluer la file au passage en installation et retourner les promotions', async function () {
+      const conn = {
+        beginTransaction: sinon.stub().resolves(),
+        execute: sinon.stub(),
+        commit: sinon.stub().resolves(),
+        rollback: sinon.stub().resolves(),
+        release: sinon.stub(),
+      };
+      poolStub.getConnection.resolves(conn);
+
+      conn.execute.onCall(0).resolves([[{ id: 1, room_id: 3 }]]);
+      conn.execute.onCall(1).resolves([[{ total: 0 }]]);
+      conn.execute.onCall(2).resolves([{ affectedRows: 1 }]);
+
+      const reevaluateStub = sinon.stub(Battle, 'reevaluateQueue').resolves([12]);
+
+      const result = await Battle.changeStatutWithQueue(1, 'installation', 1);
+
+      expect(result).to.deep.equal({ success: true, promotedBattleIds: [12] });
+      expect(reevaluateStub.calledOnceWithExactly(1)).to.be.true;
+
+      reevaluateStub.restore();
     });
 
     it('doit bloquer installation si une autre battle est deja active dans la salle', async function () {
