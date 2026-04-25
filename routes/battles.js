@@ -163,16 +163,17 @@ router.get('/events/:id/announce', async (req, res) => {
         b => b.room_id === room.id && activeStatuts.includes(b.statut)
       );
 
-      const currentBattle = roomBattles.find(b => b.statut === 'en_cours') || null;
-      const readyBattle = roomBattles.find(b => b.statut === 'installation') || null;
+      const liveBattle = roomBattles.find(b => b.statut === 'en_cours') || null;
+      const installBattle = roomBattles.find(b => b.statut === 'installation') || null;
       const waitingBattle = roomBattles.find(b => b.statut === 'planifie') || null;
+      const currentBattle = liveBattle || installBattle;
 
       let roomState = { key: 'libre', label: 'Libre', color: 'var(--color-success)' };
       if (!room.actif) {
         roomState = { key: 'inactive', label: 'Inactive', color: 'var(--color-danger)' };
-      } else if (currentBattle) {
+      } else if (liveBattle) {
         roomState = { key: 'en_jeu', label: 'En jeu', color: 'var(--color-success)' };
-      } else if (readyBattle) {
+      } else if (installBattle) {
         roomState = { key: 'installation', label: 'Installation', color: 'var(--color-neon)' };
       } else if (waitingBattle) {
         roomState = { key: 'planifiee', label: 'Planifiee', color: 'var(--color-warning)' };
@@ -182,8 +183,8 @@ router.get('/events/:id/announce', async (req, res) => {
         ...room,
         state: roomState,
         currentBattle,
-        // Une "partie suivante" en salle doit deja avoir une salle attribuee.
-        nextBattle: readyBattle || waitingBattle || null,
+        // Une "partie suivante" en salle ne montre que les rencontres planifiees.
+        nextBattle: waitingBattle || null,
       };
     });
 

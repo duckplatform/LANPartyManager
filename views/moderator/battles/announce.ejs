@@ -52,14 +52,15 @@
       });
 
       return Array.from(roomMap.values()).map((room) => {
-        const currentBattle = room._battles.find(b => b.statut === 'en_cours') || null;
-        const readyBattle = room._battles.find(b => b.statut === 'installation') || null;
+        const liveBattle = room._battles.find(b => b.statut === 'en_cours') || null;
+        const installBattle = room._battles.find(b => b.statut === 'installation') || null;
         const waitingBattle = room._battles.find(b => b.statut === 'planifie') || null;
+        const currentBattle = liveBattle || installBattle;
 
         let roomState = { key: 'libre', label: 'Libre', color: 'var(--color-success)' };
-        if (currentBattle) {
+        if (liveBattle) {
           roomState = { key: 'en_jeu', label: 'En jeu', color: 'var(--color-success)' };
-        } else if (readyBattle) {
+        } else if (installBattle) {
           roomState = { key: 'pret', label: 'Pret', color: 'var(--color-neon)' };
         } else if (waitingBattle) {
           roomState = { key: 'planifie', label: 'Planifiée', color: 'var(--color-warning)' };
@@ -71,7 +72,7 @@
           type_rencontre: room.type_rencontre,
           state: roomState,
           currentBattle,
-          nextBattle: readyBattle || waitingBattle || null,
+          nextBattle: waitingBattle || null,
         };
       });
     })();
@@ -196,6 +197,9 @@
               <% if (room.currentBattle) { %>
                 <div class="match-line"><%= room.currentBattle.game_nom %> — <%= room.currentBattle.game_console %></div>
                 <div class="match-sub">
+                  Statut: <%= room.currentBattle.statut === 'installation' ? 'Installation' : room.currentBattle.statut === 'en_cours' ? 'En cours' : room.currentBattle.statut %>
+                </div>
+                <div class="match-sub">
                   <%= formatPlayers(room.currentBattle, room.currentBattle.type_rencontre === '2v2' ? ' | ' : ' VS ') %>
                 </div>
               <% } else { %>
@@ -208,7 +212,7 @@
               <% if (room.nextBattle) { %>
                 <div class="match-line"><%= room.nextBattle.game_nom %> — <%= room.nextBattle.game_console %></div>
                 <div class="match-sub">
-                  Statut: <%= room.nextBattle.statut === 'installation' ? 'Installation' : room.nextBattle.statut === 'planifie' ? 'Planifiee' : room.nextBattle.statut %>
+                  Statut: <%= room.nextBattle.statut === 'planifie' ? 'Planifiee' : room.nextBattle.statut %>
                 </div>
                 <div class="match-sub">
                   <%= formatPlayers(room.nextBattle, room.nextBattle.type_rencontre === '2v2' ? ' | ' : ' VS ') %>
