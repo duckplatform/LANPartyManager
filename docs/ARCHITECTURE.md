@@ -88,16 +88,9 @@ LANPartyManager/
 │   └── js/main.js            # JavaScript frontend (menu, flash, tabs, pwd toggle)
 │
 ├── database/
-│   ├── install.sql           # Script SQL d'installation (tables + compte admin)
+│   ├── install.sql           # Schéma SQL complet (tables + contraintes + compte admin)
 │   ├── seeds/
 │   │   └── codespace.sql     # Jeu de donnees de demonstration pour Codespace
-│   └── migrations/
-│       ├── 001_add_announcements.sql  # Migration : ajout table announcements
-│       ├── 002_add_events.sql         # Migration : ajout table events
-│       ├── 003_event_statut.sql       # Migration : statuts événements
-│       ├── 004_add_moderator_and_badge_token.sql  # Migration : rôle modérateur + badge QR
-│       ├── 005_add_user_badge_token.sql  # Migration : token badge utilisateur
-│       └── 006_battle_system.sql      # Migration : système rencontres (Étape 5)
 │
 ├── tests/
 │   ├── game.test.js          # Tests unitaires modèle Game — Étape 5
@@ -145,9 +138,8 @@ LANPartyManager/
 Le bootstrap Codespace repose sur [.devcontainer/init-db.sh](.devcontainer/init-db.sh), execute via le postCreateCommand du conteneur. Il effectue, dans l'ordre :
 
 1. creation de la base si necessaire ;
-2. import du schema initial depuis [database/install.sql](database/install.sql) ;
-3. application des migrations SQL ;
-4. import du jeu de donnees de demonstration depuis [database/seeds/codespace.sql](database/seeds/codespace.sql).
+2. import du schema complet depuis [database/install.sql](database/install.sql) ;
+3. import du jeu de donnees de demonstration depuis [database/seeds/codespace.sql](database/seeds/codespace.sql).
 
 Le seed est idempotent : il ajoute uniquement des enregistrements de demonstration absents, sans supprimer les donnees deja saisies dans le Codespace.
 
@@ -356,7 +348,7 @@ MYSQL_PWD=lanparty_dev mysql -h mysql -u lanparty lanpartymanager
 4. Importez le fichier `database/install.sql`
 5. Vérifiez la création des tables `users` et `announcements`, et du compte admin
 
-> **Mise à jour d'une installation existante** : si vous avez déjà une installation, importez uniquement les fichiers de migration manquants dans `database/migrations/` (en ordre croissant). La migration `006_battle_system.sql` est nécessaire pour activer le système de rencontres (Étape 5).
+> **Mise à jour d'une installation existante** : réimportez le schéma complet via `database/install.sql` puis redémarrez l'application.
 
 ### 2. Application
 

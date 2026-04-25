@@ -1,119 +1,219 @@
 -- ============================================================
--- LANPartyManager - Script d'installation de la base de données
+-- LANPartyManager - Script unique d'installation de la base
 -- ============================================================
 -- Instructions :
 --   1. Créer la base de données dans PHPMyAdmin
---   2. Sélectionner la base de données
+--   2. Sélectionner la base
 --   3. Importer ce fichier via l'onglet "Importer"
+--
+-- Ce fichier contient le schéma complet actuel (sans migrations).
 -- ============================================================
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- ------------------------------------------------------------
--- Création de la table `users`
+-- Table `users`
 -- ------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `users` (
-  `id`         INT UNSIGNED     NOT NULL AUTO_INCREMENT,
-  `nom`        VARCHAR(100)     NOT NULL COMMENT 'Nom de famille',
-  `prenom`     VARCHAR(100)     NOT NULL COMMENT 'Prénom',
-  `pseudo`     VARCHAR(50)      NOT NULL COMMENT 'Surnom / Pseudo en jeu',
-  `email`      VARCHAR(255)     NOT NULL COMMENT 'Adresse e-mail (unique, utilisée pour la connexion)',
-  `password`   VARCHAR(255)     NOT NULL COMMENT 'Mot de passe hashé (bcrypt)',
-  `is_admin`   TINYINT(1)       NOT NULL DEFAULT 0 COMMENT '1 = administrateur, 0 = membre',
-  `created_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id`            INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  `nom`           VARCHAR(100)  NOT NULL COMMENT 'Nom de famille',
+  `prenom`        VARCHAR(100)  NOT NULL COMMENT 'Prenom',
+  `pseudo`        VARCHAR(50)   NOT NULL COMMENT 'Pseudo en jeu',
+  `email`         VARCHAR(255)  NOT NULL COMMENT 'Adresse e-mail de connexion',
+  `password`      VARCHAR(255)  NOT NULL COMMENT 'Mot de passe hashé (bcrypt)',
+  `is_admin`      TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = administrateur',
+  `is_moderator`  TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = moderateur',
+  `badge_token`   CHAR(36)      NOT NULL COMMENT 'Token UUID permanent pour badge membre',
+  `created_at`    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_users_email` (`email`),
-  KEY `idx_users_is_admin` (`is_admin`)
+  UNIQUE KEY `uq_users_badge_token` (`badge_token`),
+  KEY `idx_users_is_admin` (`is_admin`),
+  KEY `idx_users_is_moderator` (`is_moderator`)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
-  COMMENT='Table des utilisateurs de l''association';
+  COMMENT='Utilisateurs de l''association';
 
--- ------------------------------------------------------------
--- Compte administrateur par défaut
--- Identifiants : admin@lanparty.local / Admin1234
--- !! CHANGER LE MOT DE PASSE DÈS LA PREMIÈRE CONNEXION !!
--- Hash bcrypt 12 rounds du mot de passe : Admin1234
--- ------------------------------------------------------------
-
+-- Compte admin par défaut : admin@lanparty.local / Admin1234
+-- Changer ce mot de passe dès la première connexion.
 INSERT IGNORE INTO `users`
-  (`nom`, `prenom`, `pseudo`, `email`, `password`, `is_admin`)
-VALUES (
-  'Administrateur',
-  'Super',
-  'Admin',
-  'admin@lanparty.local',
-  '$2a$12$xLvrzkyO/kJTg4sb8qt8VeSDWYfKmC4t.Ii0gku1ZI3pCC6Pa3ffC',
-  1
-);
+  (`nom`, `prenom`, `pseudo`, `email`, `password`, `is_admin`, `is_moderator`, `badge_token`)
+VALUES
+  (
+    'Administrateur',
+    'Super',
+    'Admin',
+    'admin@lanparty.local',
+    '$2a$12$xLvrzkyO/kJTg4sb8qt8VeSDWYfKmC4t.Ii0gku1ZI3pCC6Pa3ffC',
+    1,
+    1,
+    '00000000-0000-4000-8000-000000000001'
+  );
 
 -- ------------------------------------------------------------
--- Création de la table `announcements`
+-- Table `announcements`
 -- ------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `announcements` (
-  `id`         INT UNSIGNED     NOT NULL AUTO_INCREMENT,
-  `titre`      VARCHAR(255)     NOT NULL COMMENT 'Titre de l''annonce',
-  `contenu`    LONGTEXT         NOT NULL COMMENT 'Contenu en Markdown',
-  `statut`     ENUM('publie','brouillon') NOT NULL DEFAULT 'brouillon'
-                                COMMENT 'Statut de publication',
-  `created_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id`          INT UNSIGNED               NOT NULL AUTO_INCREMENT,
+  `titre`       VARCHAR(255)               NOT NULL COMMENT 'Titre de l''annonce',
+  `contenu`     LONGTEXT                   NOT NULL COMMENT 'Contenu en Markdown',
+  `statut`      ENUM('publie','brouillon') NOT NULL DEFAULT 'brouillon',
+  `created_at`  DATETIME                   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`  DATETIME                   NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_announcements_statut`     (`statut`),
+  KEY `idx_announcements_statut` (`statut`),
   KEY `idx_announcements_created_at` (`created_at`)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
-  COMMENT='Annonces / articles de blog de l''association';
+  COMMENT='Actualites publiees et brouillons';
 
 -- ------------------------------------------------------------
--- Création de la table `events`
+-- Table `events`
 -- ------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `events` (
-  `id`         INT UNSIGNED     NOT NULL AUTO_INCREMENT,
-  `nom`        VARCHAR(255)     NOT NULL COMMENT 'Nom de l''événement',
-  `date_heure` DATETIME         NOT NULL COMMENT 'Date et heure de début de l''événement',
-  `lieu`       VARCHAR(255)     NOT NULL COMMENT 'Lieu de l''événement',
-  `statut`     ENUM('planifie','en_cours','termine')
-               NOT NULL DEFAULT 'planifie'
-               COMMENT 'Statut de l''événement : planifie | en_cours | termine',
-  `created_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id`          INT UNSIGNED                           NOT NULL AUTO_INCREMENT,
+  `nom`         VARCHAR(255)                           NOT NULL COMMENT 'Nom de l''evenement',
+  `date_heure`  DATETIME                               NOT NULL COMMENT 'Date et heure de debut',
+  `lieu`        VARCHAR(255)                           NOT NULL COMMENT 'Lieu de l''evenement',
+  `statut`      ENUM('planifie','en_cours','termine') NOT NULL DEFAULT 'planifie',
+  `created_at`  DATETIME                               NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`  DATETIME                               NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `idx_events_statut`     (`statut`),
+  KEY `idx_events_statut` (`statut`),
   KEY `idx_events_date_heure` (`date_heure`)
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
-  COMMENT='Événements organisés par l''association';
+  COMMENT='Evenements organises par l''association';
 
 -- ------------------------------------------------------------
--- Création de la table `event_registrations`
+-- Table `event_registrations`
 -- ------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `event_registrations` (
-  `id`         INT UNSIGNED     NOT NULL AUTO_INCREMENT,
-  `event_id`   INT UNSIGNED     NOT NULL COMMENT 'Référence vers events.id',
-  `user_id`    INT UNSIGNED     NOT NULL COMMENT 'Référence vers users.id',
-  `created_at` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `id`          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  `event_id`    INT UNSIGNED  NOT NULL COMMENT 'Reference vers events.id',
+  `user_id`     INT UNSIGNED  NOT NULL COMMENT 'Reference vers users.id',
+  `token`       CHAR(36)      NOT NULL COMMENT 'Token UUID d''inscription',
+  `created_at`  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE  KEY `uq_event_user`    (`event_id`, `user_id`),
+  UNIQUE KEY `uq_event_user` (`event_id`, `user_id`),
+  UNIQUE KEY `uq_er_token` (`token`),
   KEY `idx_er_event_id` (`event_id`),
-  KEY `idx_er_user_id`  (`user_id`),
-  CONSTRAINT `fk_er_event` FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_er_user`  FOREIGN KEY (`user_id`)  REFERENCES `users`  (`id`) ON DELETE CASCADE
+  KEY `idx_er_user_id` (`user_id`),
+  CONSTRAINT `fk_er_event`
+    FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_er_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
-  COMMENT='Inscriptions des membres aux événements';
+  COMMENT='Inscriptions des membres aux evenements';
+
+-- ------------------------------------------------------------
+-- Table `games`
+-- ------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `games` (
+  `id`              INT UNSIGNED      NOT NULL AUTO_INCREMENT,
+  `nom`             VARCHAR(100)      NOT NULL COMMENT 'Nom du jeu',
+  `console`         VARCHAR(100)      NOT NULL COMMENT 'Plateforme',
+  `type_rencontre`  ENUM('1v1','2v2') NOT NULL DEFAULT '1v1',
+  `created_at`      DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`      DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_games_type` (`type_rencontre`)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='Jeux disponibles pour les rencontres';
+
+-- ------------------------------------------------------------
+-- Table `rooms`
+-- ------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `rooms` (
+  `id`              INT UNSIGNED                 NOT NULL AUTO_INCREMENT,
+  `nom`             VARCHAR(100)                 NOT NULL COMMENT 'Nom de la salle',
+  `type`            ENUM('console','simulation') NOT NULL DEFAULT 'console',
+  `type_rencontre`  ENUM('1v1','2v2')            NOT NULL DEFAULT '1v1',
+  `actif`           TINYINT(1)                   NOT NULL DEFAULT 1,
+  `event_id`        INT UNSIGNED                 NOT NULL,
+  `created_at`      DATETIME                     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`      DATETIME                     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_rooms_event` (`event_id`),
+  KEY `idx_rooms_actif` (`actif`),
+  KEY `idx_rooms_type_r` (`type_rencontre`),
+  CONSTRAINT `fk_rooms_event`
+    FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='Salles de jeu disponibles par evenement';
+
+-- ------------------------------------------------------------
+-- Table `battles`
+-- ------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `battles` (
+  `id`          INT UNSIGNED                                                          NOT NULL AUTO_INCREMENT,
+  `event_id`    INT UNSIGNED                                                          NOT NULL,
+  `game_id`     INT UNSIGNED                                                          NOT NULL,
+  `room_id`     INT UNSIGNED                                                          NULL,
+  `statut`      ENUM('file_attente','planifie','en_attente','en_cours','termine')    NOT NULL DEFAULT 'file_attente',
+  `score`       VARCHAR(100)                                                          NULL,
+  `notes`       TEXT                                                                  NULL,
+  `created_at`  DATETIME                                                              NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`  DATETIME                                                              NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_battles_event` (`event_id`),
+  KEY `idx_battles_game` (`game_id`),
+  KEY `idx_battles_room` (`room_id`),
+  KEY `idx_battles_statut` (`statut`),
+  CONSTRAINT `fk_battles_event`
+    FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_battles_game`
+    FOREIGN KEY (`game_id`) REFERENCES `games` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_battles_room`
+    FOREIGN KEY (`room_id`) REFERENCES `rooms` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='Rencontres entre joueurs';
+
+-- ------------------------------------------------------------
+-- Table `battle_players`
+-- ------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `battle_players` (
+  `id`           INT UNSIGNED  NOT NULL AUTO_INCREMENT,
+  `battle_id`    INT UNSIGNED  NOT NULL,
+  `user_id`      INT UNSIGNED  NOT NULL,
+  `equipe`       TINYINT(1)    NOT NULL DEFAULT 1,
+  `est_gagnant`  TINYINT(1)    NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_battle_player` (`battle_id`, `user_id`),
+  KEY `idx_bp_battle` (`battle_id`),
+  KEY `idx_bp_user` (`user_id`),
+  CONSTRAINT `fk_bp_battle`
+    FOREIGN KEY (`battle_id`) REFERENCES `battles` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_bp_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='Participants de chaque rencontre';
+
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================
 -- FIN DU SCRIPT
 -- ============================================================
-
-SET FOREIGN_KEY_CHECKS = 1;

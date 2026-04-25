@@ -5,7 +5,7 @@
 # Ce script :
 #   1. Attend que MySQL soit disponible
 #   2. Supprime toutes les tables de la base cible
-#   3. Relance l'initialisation standard (schema + migrations + seed)
+#   3. Relance l'initialisation standard (schema + seed)
 #
 # Il ne depend pas de privileges CREATE/DROP DATABASE : il opere
 # uniquement dans la base deja configuree pour le Codespace.
