@@ -60,9 +60,15 @@
                   </td>
                   <td><%= event.registrationCount || 0 %></td>
                   <td class="td-actions">
-                    <a href="/battles/events/<%= event.id %>" class="btn btn--primary btn--sm">
-                      <i class="fas fa-swords"></i> Rencontres
-                    </a>
+                    <% if (event.statut === 'en_cours') { %>
+                      <a href="/battles/events/<%= event.id %>" class="btn btn--primary btn--sm">
+                        <i class="fas fa-swords"></i> Rencontres
+                      </a>
+                    <% } else { %>
+                      <span class="btn btn--ghost btn--sm" aria-disabled="true" title="Disponible uniquement pour un événement en cours">
+                        <i class="fas fa-lock"></i> Inactif
+                      </span>
+                    <% } %>
                   </td>
                 </tr>
               <% }); %>

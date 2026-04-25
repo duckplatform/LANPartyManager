@@ -133,9 +133,9 @@ WHERE NOT EXISTS (
 -- ------------------------------------------------------------
 
 INSERT INTO `events` (`nom`, `date_heure`, `lieu`, `statut`, `created_at`, `updated_at`)
-SELECT 'LAN Spring Showdown', '2026-05-02 10:00:00', 'Salle Polyvalente - Lyon', 'planifie', '2026-04-01 09:00:00', '2026-04-01 09:00:00'
+SELECT 'LAN Spring Showdown', '2026-04-25 10:00:00', 'Salle Polyvalente - Lyon', 'en_cours', '2026-04-01 09:00:00', '2026-04-25 10:00:00'
 WHERE NOT EXISTS (
-  SELECT 1 FROM `events` WHERE `nom` = 'LAN Spring Showdown' AND `date_heure` = '2026-05-02 10:00:00'
+  SELECT 1 FROM `events` WHERE `nom` = 'LAN Spring Showdown'
 );
 
 INSERT INTO `events` (`nom`, `date_heure`, `lieu`, `statut`, `created_at`, `updated_at`)

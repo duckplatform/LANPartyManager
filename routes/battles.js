@@ -47,6 +47,22 @@ function parseId(value) {
   return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+function ensureLiveEvent(event, req, res, redirectTo = '/battles') {
+  if (!event) {
+    req.flash('error', 'Événement introuvable.');
+    res.redirect(redirectTo);
+    return false;
+  }
+
+  if (event.statut !== 'en_cours') {
+    req.flash('error', 'Les rencontres ne sont disponibles que pour un événement en cours.');
+    res.redirect('/battles');
+    return false;
+  }
+
+  return true;
+}
+
 // ─── GET /battles ─────────────────────────────────────────────────────────────
 // Liste des événements disponibles pour la gestion des rencontres
 
@@ -76,17 +92,16 @@ router.get('/events/:id', async (req, res) => {
   }
 
   try {
-    const [event, battles, rooms, stats] = await Promise.all([
-      Event.findById(eventId),
+    const event = await Event.findById(eventId);
+    if (!ensureLiveEvent(event, req, res)) {
+      return;
+    }
+
+    const [battles, rooms, stats] = await Promise.all([
       Battle.findByEvent(eventId),
       Room.findByEvent(eventId),
       Battle.countByStatut(eventId),
     ]);
-
-    if (!event) {
-      req.flash('error', 'Événement introuvable.');
-      return res.redirect('/battles');
-    }
 
     res.render('moderator/battles/dashboard', {
       title:     `Rencontres — ${event.nom}`,
@@ -114,15 +129,14 @@ router.get('/events/:id/announce', async (req, res) => {
   }
 
   try {
-    const [event, battles] = await Promise.all([
-      Event.findById(eventId),
+    const event = await Event.findById(eventId);
+    if (!ensureLiveEvent(event, req, res)) {
+      return;
+    }
+
+    const [battles] = await Promise.all([
       Battle.findForAnnounce(eventId),
     ]);
-
-    if (!event) {
-      req.flash('error', 'Événement introuvable.');
-      return res.redirect('/battles');
-    }
 
     res.render('moderator/battles/announce', {
       title:     `Annonces — ${event.nom}`,
@@ -153,9 +167,8 @@ router.get('/events/:id/create', async (req, res) => {
       Game.findAll(),
     ]);
 
-    if (!event) {
-      req.flash('error', 'Événement introuvable.');
-      return res.redirect('/battles');
+    if (!ensureLiveEvent(event, req, res)) {
+      return;
     }
 
     res.render('moderator/battles/create-step1', {
@@ -200,7 +213,7 @@ router.post(
         Game.findById(gameId),
       ]);
 
-      if (!event || !game) {
+      if (!ensureLiveEvent(event, req, res) || !game) {
         req.flash('error', 'Événement ou jeu introuvable.');
         return res.redirect(`/battles/events/${eventId}/create`);
       }
@@ -267,6 +280,11 @@ router.post(
       .map(equipe => (equipe || '').toString().trim());
 
     try {
+      const event = await Event.findById(eventId);
+      if (!ensureLiveEvent(event, req, res)) {
+        return;
+      }
+
       const game = await Game.findById(gameId);
       if (!game) {
         req.flash('error', 'Jeu introuvable.');
@@ -350,6 +368,11 @@ router.post('/:id/ready', async (req, res) => {
       return res.redirect('/battles');
     }
 
+    const event = await Event.findById(battle.event_id);
+    if (!ensureLiveEvent(event, req, res)) {
+      return;
+    }
+
     if (battle.statut !== 'planifie') {
       req.flash('error', 'Cette rencontre ne peut pas passer en phase d\'installation.');
       return res.redirect(`/battles/events/${battle.event_id}`);
@@ -383,6 +406,11 @@ router.post('/:id/start', async (req, res) => {
     if (!battle) {
       req.flash('error', 'Rencontre introuvable.');
       return res.redirect('/battles');
+    }
+
+    const event = await Event.findById(battle.event_id);
+    if (!ensureLiveEvent(event, req, res)) {
+      return;
     }
 
     if (battle.statut !== 'en_attente') {
@@ -438,6 +466,11 @@ router.post(
         return res.redirect('/battles');
       }
 
+      const event = await Event.findById(battle.event_id);
+      if (!ensureLiveEvent(event, req, res)) {
+        return;
+      }
+
       if (!['en_attente', 'en_cours'].includes(battle.statut)) {
         req.flash('error', 'Cette rencontre ne peut pas être terminée (statut incorrect).');
         return res.redirect(`/battles/events/${battle.event_id}`);
@@ -474,6 +507,11 @@ router.delete('/:id', async (req, res) => {
     if (!battle) {
       req.flash('error', 'Rencontre introuvable.');
       return res.redirect('/battles');
+    }
+
+    const event = await Event.findById(battle.event_id);
+    if (!ensureLiveEvent(event, req, res)) {
+      return;
     }
 
     const eventId = battle.event_id;

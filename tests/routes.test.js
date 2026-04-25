@@ -22,6 +22,7 @@ const app = require('../app');
 const adminRouter = require('../routes/admin');
 const battlesRouter = require('../routes/battles');
 const Battle = require('../models/Battle');
+const Event = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
 const Game = require('../models/Game');
 const User = require('../models/User');
@@ -381,12 +382,14 @@ describe('Routes - Tests d\'intégration', function () {
 
   describe('POST /battles/events/:id/store (handler)', function () {
     let battleCreateStub;
+    let eventFindByIdStub;
     let gameFindByIdStub;
     let userFindByBadgeTokenStub;
     let registrationIsRegisteredStub;
 
     beforeEach(function () {
       battleCreateStub = sinon.stub(Battle, 'create');
+      eventFindByIdStub = sinon.stub(Event, 'findById');
       gameFindByIdStub = sinon.stub(Game, 'findById');
       userFindByBadgeTokenStub = sinon.stub(User, 'findByBadgeToken');
       registrationIsRegisteredStub = sinon.stub(EventRegistration, 'isRegistered');
@@ -415,6 +418,7 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
+      eventFindByIdStub.resolves({ id: 3, statut: 'en_cours' });
       gameFindByIdStub.resolves({ id: 1, nom: 'Street Fighter 6', type_rencontre: '1v1' });
       userFindByBadgeTokenStub
         .onFirstCall().resolves({ id: 10, pseudo: 'Player1' })
@@ -454,6 +458,7 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
+      eventFindByIdStub.resolves({ id: 4, statut: 'en_cours' });
       gameFindByIdStub.resolves({ id: 2, nom: 'Tekken 8', type_rencontre: '1v1' });
       userFindByBadgeTokenStub
         .onFirstCall().resolves({ id: 21, pseudo: 'Alpha' })
@@ -473,6 +478,67 @@ describe('Routes - Tests d\'intégration', function () {
       )).to.be.true;
       expect(req.flash.calledOnceWithExactly('success', 'Rencontre créée avec succès ! La salle sera attribuée automatiquement.')).to.be.true;
       expect(res.redirect.calledOnceWithExactly('/battles/events/4')).to.be.true;
+    });
+
+    it('doit refuser la creation si l\'evenement n\'est pas en cours', async function () {
+      const handler = getRouteHandler(battlesRouter, 'post', '/events/:id/store', 2);
+      const req = {
+        params: { id: '5' },
+        body: {
+          game_id: '2',
+          badge_token: [
+            '550e8400-e29b-41d4-a716-446655440002',
+            '550e8400-e29b-41d4-a716-446655440003',
+          ],
+          equipe: ['1', '2'],
+        },
+        flash: sinon.stub(),
+        session: { userId: 99 },
+      };
+      const res = {
+        redirect: sinon.stub(),
+      };
+
+      eventFindByIdStub.resolves({ id: 5, statut: 'planifie' });
+
+      await handler(req, res);
+
+      expect(gameFindByIdStub.notCalled).to.be.true;
+      expect(battleCreateStub.notCalled).to.be.true;
+      expect(req.flash.calledOnceWithExactly('error', 'Les rencontres ne sont disponibles que pour un événement en cours.')).to.be.true;
+      expect(res.redirect.calledOnceWithExactly('/battles')).to.be.true;
+    });
+  });
+
+  describe('GET /battles/events/:id (handler)', function () {
+    let eventFindByIdStub;
+
+    beforeEach(function () {
+      eventFindByIdStub = sinon.stub(Event, 'findById');
+    });
+
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('doit refuser l\'acces au tableau si l\'evenement n\'est pas en cours', async function () {
+      const handler = getRouteHandler(battlesRouter, 'get', '/events/:id');
+      const req = {
+        params: { id: '7' },
+        flash: sinon.stub(),
+      };
+      const res = {
+        render: sinon.stub(),
+        redirect: sinon.stub(),
+      };
+
+      eventFindByIdStub.resolves({ id: 7, statut: 'planifie' });
+
+      await handler(req, res);
+
+      expect(req.flash.calledOnceWithExactly('error', 'Les rencontres ne sont disponibles que pour un événement en cours.')).to.be.true;
+      expect(res.redirect.calledOnceWithExactly('/battles')).to.be.true;
+      expect(res.render.notCalled).to.be.true;
     });
   });
 
