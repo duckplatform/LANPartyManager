@@ -139,10 +139,14 @@ WHERE NOT EXISTS (
 );
 
 INSERT INTO `events` (`nom`, `date_heure`, `lieu`, `statut`, `created_at`, `updated_at`)
-SELECT 'Retro Arena Weekend', '2026-04-26 14:00:00', 'Maison des Associations - Lille', 'en_cours', '2026-03-28 14:00:00', '2026-04-25 10:00:00'
+SELECT 'Retro Arena Weekend', '2026-04-26 14:00:00', 'Maison des Associations - Lille', 'planifie', '2026-03-28 14:00:00', '2026-04-25 10:00:00'
 WHERE NOT EXISTS (
   SELECT 1 FROM `events` WHERE `nom` = 'Retro Arena Weekend' AND `date_heure` = '2026-04-26 14:00:00'
 );
+
+UPDATE `events`
+SET `statut` = 'planifie', `updated_at` = NOW()
+WHERE `nom` = 'Retro Arena Weekend' AND `statut` <> 'planifie';
 
 INSERT INTO `events` (`nom`, `date_heure`, `lieu`, `statut`, `created_at`, `updated_at`)
 SELECT 'Finales Hiver 2025', '2025-12-14 09:30:00', 'Centre Numerique - Bordeaux', 'termine', '2025-11-20 08:00:00', '2025-12-14 23:00:00'
@@ -354,8 +358,8 @@ WHERE e.nom = 'LAN Spring Showdown'
   );
 
 INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
-SELECT e.id, g.id, r.id, 'planifie', NULL,
-       'Rencontre 2v2 prete a etre lancee depuis le tableau moderateur.',
+SELECT e.id, g.id, r.id, 'en_cours', NULL,
+       'Rencontre 2v2 en cours sur Mario pour preparer la partie suivante.',
        '2026-04-24 18:10:00', '2026-04-25 10:20:00'
 FROM `events` e
 JOIN `games` g ON g.nom = 'Mario Kart 8 Deluxe' AND g.console = 'Nintendo Switch'
@@ -363,8 +367,20 @@ JOIN `rooms` r ON r.event_id = e.id AND r.nom = 'Mario'
 WHERE e.nom = 'LAN Spring Showdown'
   AND NOT EXISTS (
     SELECT 1 FROM `battles` b
-    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Rencontre 2v2 prete a etre lancee depuis le tableau moderateur.'
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Rencontre 2v2 en cours sur Mario pour preparer la partie suivante.'
   );
+
+UPDATE `battles` b
+JOIN `events` e ON e.id = b.event_id
+JOIN `games` g ON g.id = b.game_id
+JOIN `rooms` r ON r.id = b.room_id
+SET b.statut = 'en_cours', b.updated_at = NOW(),
+    b.notes = 'Rencontre 2v2 en cours sur Mario pour preparer la partie suivante.'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND g.nom = 'Mario Kart 8 Deluxe'
+  AND g.console = 'Nintendo Switch'
+  AND r.nom = 'Mario'
+  AND b.notes = 'Rencontre 2v2 prete a etre lancee depuis le tableau moderateur.';
 
 INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
 SELECT e.id, g.id, NULL, 'file_attente', NULL,
@@ -532,6 +548,42 @@ SELECT b.id, u.id, 2, 0
 FROM `battles` b
 JOIN `users` u ON u.email = 'tom.moreau@lanparty.local'
 WHERE b.notes = 'Rencontre 2v2 prete a etre lancee depuis le tableau moderateur.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'lea.martin@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en cours sur Mario pour preparer la partie suivante.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'lucas.petit@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en cours sur Mario pour preparer la partie suivante.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'sarah.garcia@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en cours sur Mario pour preparer la partie suivante.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'tom.moreau@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en cours sur Mario pour preparer la partie suivante.'
   AND NOT EXISTS (
     SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
   );

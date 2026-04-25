@@ -25,6 +25,7 @@ const Battle = require('../models/Battle');
 const Event = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
 const Game = require('../models/Game');
+const Room = require('../models/Room');
 const User = require('../models/User');
 
 function getRouteHandler(router, method, path, stackIndex = 0) {
@@ -539,6 +540,54 @@ describe('Routes - Tests d\'intégration', function () {
       expect(req.flash.calledOnceWithExactly('error', 'Les rencontres ne sont disponibles que pour un événement en cours.')).to.be.true;
       expect(res.redirect.calledOnceWithExactly('/battles')).to.be.true;
       expect(res.render.notCalled).to.be.true;
+    });
+  });
+
+  describe('GET /battles/events/:id/announce (handler)', function () {
+    let eventFindByIdStub;
+    let battleFindByEventStub;
+    let battleCountByStatutStub;
+    let roomFindByEventStub;
+
+    beforeEach(function () {
+      eventFindByIdStub = sinon.stub(Event, 'findById');
+      battleFindByEventStub = sinon.stub(Battle, 'findByEvent');
+      battleCountByStatutStub = sinon.stub(Battle, 'countByStatut');
+      roomFindByEventStub = sinon.stub(Room, 'findByEvent');
+    });
+
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('doit rendre la vue announce avec des valeurs par défaut si stats est absent', async function () {
+      const handler = getRouteHandler(battlesRouter, 'get', '/events/:id/announce');
+      const req = {
+        params: { id: '9' },
+        flash: sinon.stub(),
+      };
+      const res = {
+        render: sinon.stub(),
+        redirect: sinon.stub(),
+      };
+
+      eventFindByIdStub.resolves({ id: 9, nom: 'LAN Test', statut: 'en_cours' });
+      battleFindByEventStub.resolves([]);
+      roomFindByEventStub.resolves([]);
+      battleCountByStatutStub.resolves(undefined);
+
+      await handler(req, res);
+
+      expect(res.redirect.notCalled).to.be.true;
+      expect(res.render.calledOnce).to.be.true;
+      expect(res.render.firstCall.args[0]).to.equal('moderator/battles/announce');
+
+      const payload = res.render.firstCall.args[1];
+      expect(payload).to.include.keys('event', 'stats', 'roomBoards', 'globalQueue', 'recentResults', 'now');
+      expect(payload.stats).to.deep.equal({ en_cours: 0, en_attente: 0, planifie: 0, file_attente: 0, termine: 0 });
+      expect(payload.roomBoards).to.deep.equal([]);
+      expect(payload.globalQueue).to.deep.equal([]);
+      expect(payload.recentResults).to.deep.equal([]);
     });
   });
 

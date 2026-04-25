@@ -97,6 +97,8 @@ router.get('/events/:id', async (req, res) => {
       return;
     }
 
+    await Battle.reevaluateQueue(eventId);
+
     const [battles, rooms, stats] = await Promise.all([
       Battle.findByEvent(eventId),
       Room.findByEvent(eventId),
@@ -119,7 +121,7 @@ router.get('/events/:id', async (req, res) => {
 });
 
 // ─── GET /battles/events/:id/announce ─────────────────────────────────────────
-// Vue récapitulative pour les annonces micro
+// Vue dynamique pour projection écran géant
 
 router.get('/events/:id/announce', async (req, res) => {
   const eventId = parseId(req.params.id);
@@ -134,15 +136,62 @@ router.get('/events/:id/announce', async (req, res) => {
       return;
     }
 
-    const [battles] = await Promise.all([
-      Battle.findForAnnounce(eventId),
+    await Battle.reevaluateQueue(eventId);
+
+    const [battles, rooms, stats] = await Promise.all([
+      Battle.findByEvent(eventId),
+      Room.findByEvent(eventId),
+      Battle.countByStatut(eventId),
     ]);
 
+    const activeStatuts = ['planifie', 'en_attente', 'en_cours'];
+    const globalQueue = battles
+      .filter(b => b.statut === 'file_attente')
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    const roomBoards = rooms.map((room) => {
+      const roomBattles = battles.filter(
+        b => b.room_id === room.id && activeStatuts.includes(b.statut)
+      );
+
+      const currentBattle = roomBattles.find(b => b.statut === 'en_cours') || null;
+      const readyBattle = roomBattles.find(b => b.statut === 'en_attente') || null;
+      const waitingBattle = roomBattles.find(b => b.statut === 'planifie') || null;
+
+      let roomState = { key: 'libre', label: 'Libre', color: 'var(--color-success)' };
+      if (!room.actif) {
+        roomState = { key: 'inactive', label: 'Inactive', color: 'var(--color-danger)' };
+      } else if (currentBattle) {
+        roomState = { key: 'en_jeu', label: 'En jeu', color: 'var(--color-success)' };
+      } else if (readyBattle) {
+        roomState = { key: 'installation', label: 'Installation', color: 'var(--color-neon)' };
+      } else if (waitingBattle) {
+        roomState = { key: 'planifiee', label: 'Planifiee', color: 'var(--color-warning)' };
+      }
+
+      return {
+        ...room,
+        state: roomState,
+        currentBattle,
+        // Une "partie suivante" en salle doit deja avoir une salle attribuee.
+        nextBattle: readyBattle || waitingBattle || null,
+      };
+    });
+
+    const recentResults = battles
+      .filter(b => b.statut === 'termine')
+      .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+      .slice(0, 12);
+
     res.render('moderator/battles/announce', {
-      title:     `Annonces — ${event.nom}`,
+      title:     `Ecran geant — ${event.nom}`,
       pageClass: 'page-moderator page-battles page-announce',
       event,
-      battles,
+      stats: stats || { en_cours: 0, en_attente: 0, planifie: 0, file_attente: 0, termine: 0 },
+      roomBoards: Array.isArray(roomBoards) ? roomBoards : [],
+      globalQueue: Array.isArray(globalQueue) ? globalQueue : [],
+      recentResults: Array.isArray(recentResults) ? recentResults : [],
+      now: new Date(),
     });
   } catch (err) {
     logger.error(`[BATTLES] Erreur chargement annonces événement #${eventId} :`, err);

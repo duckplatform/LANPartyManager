@@ -1,132 +1,275 @@
 <%- include('../../partials/head') %>
 
+<%
+  const safeEvent = (typeof event !== 'undefined' && event) ? event : { id: '', nom: 'Evenement' };
+  const safeNow = (typeof now !== 'undefined' && now) ? now : new Date();
+
+  const safeBattles = (typeof battles !== 'undefined' && Array.isArray(battles)) ? battles : [];
+  const safeStatsInput = (typeof stats !== 'undefined' && stats) ? stats : null;
+  const safeStats = safeStatsInput || {
+    en_cours: safeBattles.filter(b => b && b.statut === 'en_cours').length,
+    en_attente: safeBattles.filter(b => b && b.statut === 'en_attente').length,
+    planifie: safeBattles.filter(b => b && b.statut === 'planifie').length,
+    file_attente: safeBattles.filter(b => b && b.statut === 'file_attente').length,
+    termine: safeBattles.filter(b => b && b.statut === 'termine').length,
+  };
+
+  const safeRoomBoards = (typeof roomBoards !== 'undefined' && Array.isArray(roomBoards)) ? roomBoards : [];
+  const safeGlobalQueue = (typeof globalQueue !== 'undefined' && Array.isArray(globalQueue))
+    ? globalQueue
+    : safeBattles.filter(b => b && b.statut === 'file_attente');
+  const safeRecentResults = (typeof recentResults !== 'undefined' && Array.isArray(recentResults))
+    ? recentResults
+    : safeBattles.filter(b => b && b.statut === 'termine').slice(0, 12);
+
+  const formatPlayers = (battle, separator) => {
+    const players = battle && Array.isArray(battle.players) ? battle.players : [];
+    return players.map(p => (p && p.pseudo) ? p.pseudo : '?').join(separator);
+  };
+
+  const computedRoomBoards = safeRoomBoards.length > 0
+    ? safeRoomBoards
+    : (() => {
+      const activeBattles = safeBattles.filter(
+        b => b && ['planifie', 'en_attente', 'en_cours'].includes(b.statut)
+      );
+
+      const roomMap = new Map();
+      activeBattles.forEach((battle, idx) => {
+        const roomKey = battle.room_nom || `inconnue-${idx}`;
+        if (!roomMap.has(roomKey)) {
+          roomMap.set(roomKey, {
+            nom: battle.room_nom || 'Salle non attribuee',
+            type: battle.room_type || 'N/A',
+            type_rencontre: battle.type_rencontre || 'N/A',
+            state: { key: 'libre', label: 'Libre', color: 'var(--color-success)' },
+            currentBattle: null,
+            nextBattle: null,
+            _battles: [],
+          });
+        }
+        roomMap.get(roomKey)._battles.push(battle);
+      });
+
+      return Array.from(roomMap.values()).map((room) => {
+        const currentBattle = room._battles.find(b => b.statut === 'en_cours') || null;
+        const readyBattle = room._battles.find(b => b.statut === 'en_attente') || null;
+        const waitingBattle = room._battles.find(b => b.statut === 'planifie') || null;
+
+        let roomState = { key: 'libre', label: 'Libre', color: 'var(--color-success)' };
+        if (currentBattle) {
+          roomState = { key: 'en_jeu', label: 'En jeu', color: 'var(--color-success)' };
+        } else if (readyBattle) {
+          roomState = { key: 'pret', label: 'Pret', color: 'var(--color-neon)' };
+        } else if (waitingBattle) {
+          roomState = { key: 'en_attente', label: 'En attente', color: 'var(--color-warning)' };
+        }
+
+        return {
+          nom: room.nom,
+          type: room.type,
+          type_rencontre: room.type_rencontre,
+          state: roomState,
+          currentBattle,
+          nextBattle: readyBattle || waitingBattle || null,
+        };
+      });
+    })();
+%>
+
 <style>
-  /* Vue épurée optimisée pour lecture rapide */
   body { font-size: 1.05rem; }
-  .announce-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-md); }
-  .announce-card { border: 2px solid var(--color-border); border-radius: 12px; padding: var(--space-md);
-                    background: var(--color-surface); }
-  .announce-card.statut-planifie   { border-color: #3b82f6; }
-  .announce-card.statut-en_attente { border-color: #8b5cf6; }
-  .announce-card.statut-en_cours   { border-color: #10b981; }
-  .announce-room { font-size: 2rem; font-weight: 900; letter-spacing: .02em; color: var(--color-primary); }
-  .announce-game { font-size: 1.1rem; font-weight: 700; margin: .25rem 0; }
-  .announce-players { margin-top: .5rem; display: flex; flex-wrap: wrap; gap: .4rem; }
-  .announce-player { display: inline-flex; align-items: center; gap: .35rem; background: var(--color-surface-2,#f1f5f9);
-                      border: 1px solid var(--color-border); border-radius: 20px; padding: .25rem .75rem;
-                      font-size: .95rem; font-weight: 600; }
-  .vs-separator { align-self: center; font-weight: 900; color: var(--color-text-muted); }
+  .wall-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
+  }
+  .wall-title { font-size: 2rem; margin-bottom: .2rem; }
+  .wall-meta { color: var(--color-text-muted); font-size: .9rem; }
+  .wall-kpis { display: flex; gap: .6rem; flex-wrap: wrap; }
+  .wall-kpi {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: .5rem .8rem;
+    min-width: 90px;
+    text-align: center;
+  }
+  .wall-kpi strong { display: block; font-size: 1.2rem; }
+  .wall-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--space-md);
+  }
+  .wall-panel {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: var(--space-md);
+  }
+  .wall-panel h2 {
+    font-size: 1.15rem;
+    margin-bottom: .6rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: .7rem;
+  }
+  .room-card {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: .8rem;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .room-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+  .room-name { font-size: 1.2rem; font-weight: 800; letter-spacing: .02em; }
+  .room-state { font-size: .85rem; font-weight: 700; text-transform: uppercase; }
+  .room-block { margin-top: .6rem; }
+  .room-label { font-size: .72rem; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: .2rem; }
+  .match-line { font-weight: 700; font-size: .95rem; }
+  .match-sub { color: var(--color-text-muted); font-size: .8rem; }
+  .queue-list, .results-list { display: flex; flex-direction: column; gap: .5rem; }
+  .queue-item, .result-item {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: .6rem .7rem;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .empty-note { color: var(--color-text-muted); font-style: italic; }
+  .wall-actions { display: flex; gap: .5rem; }
+  @media (max-width: 1200px) {
+    .wall-grid { grid-template-columns: 1fr; }
+  }
   @media print {
-    .site-header, .admin-header-actions, .no-print { display: none !important; }
-    .announce-card { page-break-inside: avoid; }
+    .site-header, .wall-actions, .no-print { display: none !important; }
+    .wall-panel, .room-card { page-break-inside: avoid; }
   }
 </style>
 
 <div class="container admin-container">
-
-  <!-- En-tête -->
-  <div class="admin-header">
+  <div class="wall-header">
     <div>
-      <h1 class="admin-title">
-        <i class="fas fa-bullhorn"></i> Annonces — <%= event.nom %>
-      </h1>
-      <p class="admin-subtitle">
-        Vue récapitulative pour les annonces au micro — <strong><%= battles.length %></strong> rencontre(s) à annoncer
-      </p>
+      <h1 class="wall-title"><i class="fas fa-tv"></i> Ecran Geant — <%= safeEvent.nom %></h1>
+      <div class="wall-meta">
+        Projection dynamique des salles, rencontres et file d'attente.
+        Derniere mise a jour: <%= safeNow.toLocaleTimeString('fr-FR') %>
+      </div>
     </div>
-    <div class="admin-header-actions no-print">
-      <button onclick="window.print()" class="btn btn--ghost btn--sm">
-        <i class="fas fa-print"></i> Imprimer
-      </button>
-      <button onclick="window.location.reload()" class="btn btn--ghost btn--sm">
-        <i class="fas fa-rotate-right"></i> Actualiser
-      </button>
-      <a href="/battles/events/<%= event.id %>" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Retour
-      </a>
+    <div class="wall-actions no-print">
+      <button onclick="window.location.reload()" class="btn btn--ghost btn--sm"><i class="fas fa-rotate-right"></i> Actualiser</button>
+      <a href="/battles/events/<%= safeEvent.id %>" class="btn btn--ghost btn--sm"><i class="fas fa-arrow-left"></i> Retour</a>
     </div>
   </div>
 
-  <% if (battles.length === 0) { %>
-    <div class="card">
-      <div class="card-body" style="text-align:center; color:var(--color-text-muted); padding:var(--space-xl);">
-        <i class="fas fa-inbox" style="font-size:2rem; display:block; margin-bottom:.75rem;"></i>
-        Aucune rencontre planifiée, en installation ou en cours.
-      </div>
-    </div>
-  <% } else { %>
-    <div class="announce-grid">
-      <% battles.forEach(function(b) { %>
-        <div class="announce-card statut-<%= b.statut %>">
-          <!-- Salle -->
-          <div class="announce-room">
-            <i class="fas fa-door-open"></i> SALLE <%= b.room_nom || '?' %>
-          </div>
+  <div class="wall-kpis">
+    <div class="wall-kpi"><strong><%= safeStats.en_cours || 0 %></strong><span>En jeu</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.en_attente || 0 %></strong><span>Installation</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.planifie || 0 %></strong><span>Planifiees</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.file_attente || 0 %></strong><span>File globale</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.termine || 0 %></strong><span>Resultats</span></div>
+  </div>
 
-          <!-- Statut -->
-          <div style="font-size:.8rem; color:var(--color-text-muted); margin-bottom:.5rem;">
-            <% const statutLabels = { planifie: 'Planifiée — En attente d\'installation', en_attente: 'Installation en cours', en_cours: 'En cours' }; %>
-            <i class="fas fa-circle" style="color:<%= {planifie:'#3b82f6', en_attente:'#8b5cf6', en_cours:'#10b981'}[b.statut] %>;"></i>
-            <%= statutLabels[b.statut] || b.statut %>
-          </div>
+  <div class="wall-grid" style="margin-top: var(--space-md);">
+    <section class="wall-panel">
+      <h2><i class="fas fa-door-open"></i> Etat des salles</h2>
+      <div class="rooms-grid">
+        <% computedRoomBoards.forEach(function(room) { 
+             const roomState = room && room.state ? room.state : { color: 'var(--color-text-muted)', label: 'Inconnu' };
+             const roomType = room && room.type_rencontre ? room.type_rencontre : 'N/A';
+             const roomHardware = room && room.type ? room.type : 'N/A';
+        %>
+          <article class="room-card">
+            <div class="room-head">
+              <div class="room-name"><%= room && room.nom ? room.nom : 'Salle' %></div>
+              <div class="room-state" style="color:<%= roomState.color %>"><%= roomState.label %></div>
+            </div>
+            <div class="match-sub"><%= roomType %> • <%= roomHardware %></div>
 
-          <!-- Jeu -->
-          <div class="announce-game">
-            <i class="fas fa-gamepad"></i> <%= b.game_nom %>
-            <span style="font-weight:400; font-size:.85rem; color:var(--color-text-muted);">
-              — <%= b.game_console %> — <%= b.type_rencontre %>
-            </span>
-          </div>
-
-          <!-- Joueurs -->
-          <div class="announce-players">
-            <% if (b.type_rencontre === '2v2') {
-                const team1 = b.players.filter(p => p.equipe === 1);
-                const team2 = b.players.filter(p => p.equipe === 2);
-            %>
-              <div>
-                <div style="font-size:.72rem; color:var(--color-text-muted); text-transform:uppercase; margin-bottom:.2rem;">Équipe 1</div>
-                <% team1.forEach(function(p) { %>
-                  <div class="announce-player">
-                    <i class="fas fa-circle-user" style="color:#3b82f6;"></i> <%= p.pseudo %>
-                    <small style="color:var(--color-text-muted);">(<%= p.prenom %>)</small>
-                  </div>
-                <% }); %>
-              </div>
-              <div class="vs-separator">VS</div>
-              <div>
-                <div style="font-size:.72rem; color:var(--color-text-muted); text-transform:uppercase; margin-bottom:.2rem;">Équipe 2</div>
-                <% team2.forEach(function(p) { %>
-                  <div class="announce-player">
-                    <i class="fas fa-circle-user" style="color:#f59e0b;"></i> <%= p.pseudo %>
-                    <small style="color:var(--color-text-muted);">(<%= p.prenom %>)</small>
-                  </div>
-                <% }); %>
-              </div>
-            <% } else { %>
-              <% b.players.forEach(function(p, i) { %>
-                <% if (i === 1) { %><span class="vs-separator">VS</span><% } %>
-                <div class="announce-player">
-                  <i class="fas fa-circle-user"></i> <%= p.pseudo %>
-                  <small style="color:var(--color-text-muted);">(<%= p.prenom %>)</small>
+            <div class="room-block">
+              <div class="room-label">Partie en cours</div>
+              <% if (room.currentBattle) { %>
+                <div class="match-line"><%= room.currentBattle.game_nom %> — <%= room.currentBattle.game_console %></div>
+                <div class="match-sub">
+                  <%= formatPlayers(room.currentBattle, room.currentBattle.type_rencontre === '2v2' ? ' | ' : ' VS ') %>
                 </div>
-              <% }); %>
-            <% } %>
-          </div>
-        </div>
-      <% }); %>
-    </div>
-  <% } %>
+              <% } else { %>
+                <div class="empty-note">Aucune partie en jeu</div>
+              <% } %>
+            </div>
 
+            <div class="room-block">
+              <div class="room-label">Partie suivante</div>
+              <% if (room.nextBattle) { %>
+                <div class="match-line"><%= room.nextBattle.game_nom %> — <%= room.nextBattle.game_console %></div>
+                <div class="match-sub">
+                  Statut: <%= room.nextBattle.statut === 'en_attente' ? 'Installation' : room.nextBattle.statut === 'planifie' ? 'Planifiee' : room.nextBattle.statut %>
+                </div>
+                <div class="match-sub">
+                  <%= formatPlayers(room.nextBattle, room.nextBattle.type_rencontre === '2v2' ? ' | ' : ' VS ') %>
+                </div>
+              <% } else { %>
+                <div class="empty-note">Aucune partie suivante</div>
+              <% } %>
+            </div>
+          </article>
+        <% }); %>
+        <% if (computedRoomBoards.length === 0) { %>
+          <div class="empty-note">Aucune salle/rencontre active a afficher pour cet evenement.</div>
+        <% } %>
+      </div>
+    </section>
+
+    <aside class="wall-panel">
+      <h2><i class="fas fa-list-ol"></i> File d'attente globale</h2>
+      <% if (safeGlobalQueue.length === 0) { %>
+        <div class="empty-note">Aucune rencontre en file d'attente.</div>
+      <% } else { %>
+        <div class="queue-list">
+          <% safeGlobalQueue.forEach(function(b, idx) { %>
+            <div class="queue-item">
+              <div class="match-line">#<%= idx + 1 %> • <%= b.game_nom %></div>
+              <div class="match-sub"><%= b.game_console %> • <%= b.type_rencontre %></div>
+              <div class="match-sub">
+                <%= formatPlayers(b, b.type_rencontre === '2v2' ? ' | ' : ' VS ') %>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+
+      <h2 style="margin-top:1rem;"><i class="fas fa-flag-checkered"></i> Derniers resultats</h2>
+      <% if (safeRecentResults.length === 0) { %>
+        <div class="empty-note">Aucun resultat enregistre.</div>
+      <% } else { %>
+        <div class="results-list">
+          <% safeRecentResults.forEach(function(b) { %>
+            <div class="result-item">
+              <div class="match-line"><%= b.game_nom %> — <%= b.game_console %></div>
+              <div class="match-sub">Salle: <%= b.room_nom || 'N/A' %> • Score: <%= b.score || 'N/A' %></div>
+              <div class="match-sub">
+                <%= (Array.isArray(b.players) ? b.players : []).map(function(p){ return (p && p.pseudo ? p.pseudo : '?') + (p && p.est_gagnant ? ' (G)' : ''); }).join(b.type_rencontre === '2v2' ? ' | ' : ' VS ') %>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </aside>
+  </div>
 </div>
 
-<!-- Auto-refresh toutes les 30 secondes pour maintenir la vue à jour -->
 <script>
 (function () {
   'use strict';
-  // Délai d'actualisation automatique en millisecondes
-  var REFRESH_DELAY_MS = 30000;
-  setTimeout(function() { window.location.reload(); }, REFRESH_DELAY_MS);
+  var REFRESH_DELAY_MS = 15000;
+  setTimeout(function () {
+    window.location.reload();
+  }, REFRESH_DELAY_MS);
 }());
 </script>
 

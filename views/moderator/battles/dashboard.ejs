@@ -156,8 +156,12 @@
                 #<%= b.id %>
                 <% if (b.room_nom) { %>
                   &nbsp;|&nbsp;<i class="fas fa-door-open"></i> <strong><%= b.room_nom %></strong>
-                <% } else { %>
+                <% } else if (b.statut === 'file_attente') { %>
                   &nbsp;|&nbsp;<i class="fas fa-hourglass-half" style="color:#f59e0b;"></i> En attente d'une salle
+                <% } else if (b.room_id) { %>
+                  &nbsp;|&nbsp;<i class="fas fa-door-open"></i> <strong>Salle #<%= b.room_id %></strong>
+                <% } else { %>
+                  &nbsp;|&nbsp;<i class="fas fa-triangle-exclamation" style="color:#ef4444;"></i> Salle non attribuee (incoherence)
                 <% } %>
               </div>
             </div>

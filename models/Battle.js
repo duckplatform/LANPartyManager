@@ -14,7 +14,8 @@
  * Logique de file d'attente :
  *   - À chaque création, fin ou début de rencontre, reevaluateQueue() est appelé
  *   - Les rencontres en file_attente sont promues à 'planifie' si une salle est disponible
- *   - Une salle est disponible si elle n'a aucune battle planifie, en_attente ou en_cours
+ *   - Une salle est disponible pour planification si elle n'a pas déjà de battle planifie
+ *     et possède au plus une battle en cours/installation (en_cours ou en_attente)
  *   - Une salle attribuée ne peut plus changer (règle métier)
  */
 
@@ -214,7 +215,10 @@ const Battle = {
 
     const typeRencontre = battleRows[0].type_rencontre;
 
-    // Cherche une salle libre correspondant au type
+    // Cherche une salle disponible pour planifier la prochaine rencontre.
+    // Regle metier: une salle peut avoir au maximum
+    // - 1 rencontre en cours/installation (en_cours ou en_attente)
+    // - 1 rencontre planifiee (prochaine partie)
     const [rooms] = await db.pool.execute(
       `SELECT r.id
          FROM rooms r
@@ -224,8 +228,13 @@ const Battle = {
           AND NOT EXISTS (
             SELECT 1 FROM battles b2
              WHERE b2.room_id = r.id
-               AND b2.statut IN ('planifie', 'en_attente', 'en_cours')
+               AND b2.statut = 'planifie'
           )
+          AND (
+            SELECT COUNT(*) FROM battles b3
+             WHERE b3.room_id = r.id
+               AND b3.statut IN ('en_attente', 'en_cours')
+          ) <= 1
         ORDER BY r.nom ASC
         LIMIT 1`,
       [eventId, typeRencontre]
