@@ -18,7 +18,7 @@
                   padding: var(--space-md); background: var(--color-surface); }
   .battle-card.statut-file_attente { border-left: 4px solid #f59e0b; }
   .battle-card.statut-planifie     { border-left: 4px solid #3b82f6; }
-  .battle-card.statut-en_attente   { border-left: 4px solid #8b5cf6; }
+  .battle-card.statut-installation   { border-left: 4px solid #8b5cf6; }
   .battle-card.statut-en_cours     { border-left: 4px solid #10b981; }
   .battle-card.statut-termine      { border-left: 4px solid #6b7280; opacity: .7; }
   .battle-card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: .5rem; }
@@ -82,7 +82,7 @@
       <div class="stat-lbl"><i class="fas fa-clock"></i> Planifiées</div>
     </div>
     <div class="battles-stat color-wait">
-      <div class="stat-num"><%= stats.en_attente %></div>
+      <div class="stat-num"><%= stats.installation %></div>
       <div class="stat-lbl"><i class="fas fa-users"></i> Installation</div>
     </div>
     <div class="battles-stat color-live">
@@ -143,8 +143,8 @@
           <div class="battle-card statut-<%= b.statut %>">
             <div class="battle-card-header">
               <div>
-                <span class="badge badge--<%= {file_attente:'warning', planifie:'info', en_attente:'purple', en_cours:'success', termine:'muted'}[b.statut] || 'muted' %>">
-                  <% const statutLabels = { file_attente: 'File d\'attente', planifie: 'Planifiée', en_attente: 'Installation', en_cours: 'En cours', termine: 'Terminée' }; %>
+                <span class="badge badge--<%= {file_attente:'warning', planifie:'info', installation:'purple', en_cours:'success', termine:'muted'}[b.statut] || 'muted' %>">
+                  <% const statutLabels = { file_attente: 'File d\'attente', planifie: 'Planifiée', installation: 'Installation', en_cours: 'En cours', termine: 'Terminée' }; %>
                   <%= statutLabels[b.statut] || b.statut %>
                 </span>
                 <strong style="margin-left:.5rem;"><%= b.game_nom %></strong>
@@ -210,7 +210,7 @@
                   </button>
                 </form>
               <% } %>
-              <% if (b.statut === 'en_attente') { %>
+              <% if (b.statut === 'installation') { %>
                 <form action="/battles/<%= b.id %>/start" method="POST" class="form-inline">
                   <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                   <button type="submit" class="btn btn--success btn--sm">
@@ -218,7 +218,7 @@
                   </button>
                 </form>
               <% } %>
-              <% if (['en_attente', 'en_cours'].includes(b.statut)) { %>
+              <% if (['installation', 'en_cours'].includes(b.statut)) { %>
                 <button type="button" class="btn btn--warning btn--sm btn-open-result"
                         data-battle-id="<%= b.id %>"
                         data-players="<%- JSON.stringify(b.players).replace(/"/g, '&quot;') %>"

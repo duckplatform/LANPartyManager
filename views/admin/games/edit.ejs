@@ -51,11 +51,7 @@
           <select id="type_rencontre" name="type_rencontre" class="form-select" required>
             <% TYPES_RENCONTRE.forEach(function(t) { %>
               <option value="<%= t %>" <%= old.type_rencontre === t ? 'selected' : '' %>>
-                <%= t === '1v1' ? '1v1 — Face à face (2 joueurs)' : '2v2 — Équipes (4 joueurs)' %>
-              </option>
-            <% }); %>
-          </select>
-        </div>
+                <%= t === '1v1' ? '1v1 — Face à face (2 joueurs)' : t === '2v2' ? '2v2 — Équipes (4 joueurs)' : 'Solo — Un seul joueur' %>
 
         <div class="form-actions">
           <button type="submit" class="btn btn--primary">

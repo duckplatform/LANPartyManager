@@ -395,7 +395,7 @@ WHERE e.nom = 'LAN Spring Showdown'
   );
 
 INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
-SELECT e.id, g.id, r.id, 'en_attente', NULL,
+SELECT e.id, g.id, r.id, 'installation', NULL,
        'Duel 1v1 en installation pour occuper la seconde salle active.',
        '2026-04-24 18:22:00', '2026-04-25 10:27:00'
 FROM `events` e

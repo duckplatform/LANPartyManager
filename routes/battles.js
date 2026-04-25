@@ -10,8 +10,8 @@
  * GET  /battles/events/:id/create       → wizard étape 1 (choix du jeu)
  * POST /battles/events/:id/create       → wizard étape 2 (identification joueurs)
  * POST /battles/events/:id/store        → enregistre la rencontre
- * POST /battles/:id/start               → passe en_attente → en_cours
- * POST /battles/:id/ready               → passe planifie → en_attente
+ * POST /battles/:id/start               → passe installation → en_cours
+ * POST /battles/:id/ready               → passe planifie → installation
  * POST /battles/:id/result              → enregistre le résultat et termine
  * DELETE /battles/:id                   → annule une rencontre (file_attente/planifie seulement)
  */
@@ -144,7 +144,7 @@ router.get('/events/:id/announce', async (req, res) => {
       Battle.countByStatut(eventId),
     ]);
 
-    const activeStatuts = ['planifie', 'en_attente', 'en_cours'];
+    const activeStatuts = ['planifie', 'installation', 'en_cours'];
     const globalQueue = battles
       .filter(b => b.statut === 'file_attente')
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
@@ -155,7 +155,7 @@ router.get('/events/:id/announce', async (req, res) => {
       );
 
       const currentBattle = roomBattles.find(b => b.statut === 'en_cours') || null;
-      const readyBattle = roomBattles.find(b => b.statut === 'en_attente') || null;
+      const readyBattle = roomBattles.find(b => b.statut === 'installation') || null;
       const waitingBattle = roomBattles.find(b => b.statut === 'planifie') || null;
 
       let roomState = { key: 'libre', label: 'Libre', color: 'var(--color-success)' };
@@ -187,7 +187,7 @@ router.get('/events/:id/announce', async (req, res) => {
       title:     `Ecran geant — ${event.nom}`,
       pageClass: 'page-moderator page-battles page-announce',
       event,
-      stats: stats || { en_cours: 0, en_attente: 0, planifie: 0, file_attente: 0, termine: 0 },
+      stats: stats || { en_cours: 0, installation: 0, planifie: 0, file_attente: 0, termine: 0 },
       roomBoards: Array.isArray(roomBoards) ? roomBoards : [],
       globalQueue: Array.isArray(globalQueue) ? globalQueue : [],
       recentResults: Array.isArray(recentResults) ? recentResults : [],
@@ -268,7 +268,7 @@ router.post(
       }
 
       // Nombre de joueurs selon le type de rencontre
-      const nbJoueurs = game.type_rencontre === '2v2' ? 4 : 2;
+      const nbJoueurs = game.type_rencontre === '2v2' ? 4 : game.type_rencontre === 'solo' ? 1 : 2;
 
       res.render('moderator/battles/create-step2', {
         title:     `Nouvelle rencontre — ${event.nom}`,
@@ -340,7 +340,7 @@ router.post(
         return res.redirect(`/battles/events/${eventId}/create`);
       }
 
-      const nbJoueurs = game.type_rencontre === '2v2' ? 4 : 2;
+      const nbJoueurs = game.type_rencontre === '2v2' ? 4 : game.type_rencontre === 'solo' ? 1 : 2;
 
       // Validation du nombre de joueurs
       if (tokens.length !== nbJoueurs) {
@@ -401,7 +401,7 @@ router.post(
 );
 
 // ─── POST /battles/:id/ready ──────────────────────────────────────────────────
-// Passe une rencontre de 'planifie' à 'en_attente' (joueurs qui s'installent)
+// Passe une rencontre de 'planifie' à 'installation' (joueurs qui s'installent)
 
 router.post('/:id/ready', async (req, res) => {
   const battleId = parseId(req.params.id);
@@ -427,21 +427,21 @@ router.post('/:id/ready', async (req, res) => {
       return res.redirect(`/battles/events/${battle.event_id}`);
     }
 
-    await Battle.changeStatut(battleId, 'en_attente', battle.event_id);
+    await Battle.changeStatut(battleId, 'installation', battle.event_id);
 
-    logger.info(`[BATTLES] Rencontre #${battleId} → en_attente par #${req.session.userId}`);
+    logger.info(`[BATTLES] Rencontre #${battleId} → installation par #${req.session.userId}`);
     req.flash('success', 'Rencontre en cours d\'installation.');
     return res.redirect(`/battles/events/${battle.event_id}`);
 
   } catch (err) {
-    logger.error(`[BATTLES] Erreur passage en_attente rencontre #${battleId} :`, err);
+    logger.error(`[BATTLES] Erreur passage installation rencontre #${battleId} :`, err);
     req.flash('error', 'Erreur lors du changement de statut.');
     return res.redirect('/battles');
   }
 });
 
 // ─── POST /battles/:id/start ──────────────────────────────────────────────────
-// Lance officiellement la rencontre (en_attente → en_cours)
+// Lance officiellement la rencontre (installation → en_cours)
 
 router.post('/:id/start', async (req, res) => {
   const battleId = parseId(req.params.id);
@@ -462,7 +462,7 @@ router.post('/:id/start', async (req, res) => {
       return;
     }
 
-    if (battle.statut !== 'en_attente') {
+    if (battle.statut !== 'installation') {
       req.flash('error', 'Cette rencontre ne peut pas être lancée (statut incorrect).');
       return res.redirect(`/battles/events/${battle.event_id}`);
     }
@@ -520,7 +520,7 @@ router.post(
         return;
       }
 
-      if (!['en_attente', 'en_cours'].includes(battle.statut)) {
+      if (!['installation', 'en_cours'].includes(battle.statut)) {
         req.flash('error', 'Cette rencontre ne peut pas être terminée (statut incorrect).');
         return res.redirect(`/battles/events/${battle.event_id}`);
       }

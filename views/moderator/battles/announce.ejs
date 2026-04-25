@@ -8,7 +8,7 @@
   const safeStatsInput = (typeof stats !== 'undefined' && stats) ? stats : null;
   const safeStats = safeStatsInput || {
     en_cours: safeBattles.filter(b => b && b.statut === 'en_cours').length,
-    en_attente: safeBattles.filter(b => b && b.statut === 'en_attente').length,
+    installation: safeBattles.filter(b => b && b.statut === 'installation').length,
     planifie: safeBattles.filter(b => b && b.statut === 'planifie').length,
     file_attente: safeBattles.filter(b => b && b.statut === 'file_attente').length,
     termine: safeBattles.filter(b => b && b.statut === 'termine').length,
@@ -31,7 +31,7 @@
     ? safeRoomBoards
     : (() => {
       const activeBattles = safeBattles.filter(
-        b => b && ['planifie', 'en_attente', 'en_cours'].includes(b.statut)
+        b => b && ['planifie', 'installation', 'en_cours'].includes(b.statut)
       );
 
       const roomMap = new Map();
@@ -53,7 +53,7 @@
 
       return Array.from(roomMap.values()).map((room) => {
         const currentBattle = room._battles.find(b => b.statut === 'en_cours') || null;
-        const readyBattle = room._battles.find(b => b.statut === 'en_attente') || null;
+        const readyBattle = room._battles.find(b => b.statut === 'installation') || null;
         const waitingBattle = room._battles.find(b => b.statut === 'planifie') || null;
 
         let roomState = { key: 'libre', label: 'Libre', color: 'var(--color-success)' };
@@ -62,7 +62,7 @@
         } else if (readyBattle) {
           roomState = { key: 'pret', label: 'Pret', color: 'var(--color-neon)' };
         } else if (waitingBattle) {
-          roomState = { key: 'en_attente', label: 'En attente', color: 'var(--color-warning)' };
+          roomState = { key: 'planifie', label: 'Planifiée', color: 'var(--color-warning)' };
         }
 
         return {
@@ -169,7 +169,7 @@
 
   <div class="wall-kpis">
     <div class="wall-kpi"><strong><%= safeStats.en_cours || 0 %></strong><span>En jeu</span></div>
-    <div class="wall-kpi"><strong><%= safeStats.en_attente || 0 %></strong><span>Installation</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.installation || 0 %></strong><span>Installation</span></div>
     <div class="wall-kpi"><strong><%= safeStats.planifie || 0 %></strong><span>Planifiees</span></div>
     <div class="wall-kpi"><strong><%= safeStats.file_attente || 0 %></strong><span>File globale</span></div>
     <div class="wall-kpi"><strong><%= safeStats.termine || 0 %></strong><span>Resultats</span></div>
@@ -208,7 +208,7 @@
               <% if (room.nextBattle) { %>
                 <div class="match-line"><%= room.nextBattle.game_nom %> — <%= room.nextBattle.game_console %></div>
                 <div class="match-sub">
-                  Statut: <%= room.nextBattle.statut === 'en_attente' ? 'Installation' : room.nextBattle.statut === 'planifie' ? 'Planifiee' : room.nextBattle.statut %>
+                  Statut: <%= room.nextBattle.statut === 'installation' ? 'Installation' : room.nextBattle.statut === 'planifie' ? 'Planifiee' : room.nextBattle.statut %>
                 </div>
                 <div class="match-sub">
                   <%= formatPlayers(room.nextBattle, room.nextBattle.type_rencontre === '2v2' ? ' | ' : ' VS ') %>

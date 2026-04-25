@@ -15,6 +15,7 @@ const Event             = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
 const Game              = require('../models/Game');
 const Room              = require('../models/Room');
+const Battle            = require('../models/Battle');
 const { renderMarkdown } = require('../config/markdown');
 const logger       = require('../config/logger');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
@@ -891,14 +892,19 @@ router.post(
     }
 
     try {
+      const eventId = parseInt(req.body.event_id, 10);
       const id = await Room.create({
         nom:            req.body.nom,
         type:           req.body.type,
         type_rencontre: req.body.type_rencontre,
         actif:          req.body.actif === '1' ? 1 : 0,
-        event_id:       parseInt(req.body.event_id, 10),
+        event_id:       eventId,
       });
       logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a créé la salle #${id} : ${req.body.nom}`);
+
+      // Une nouvelle salle disponible peut libérer des rencontres en file d'attente
+      await Battle.reevaluateQueue(eventId).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
+
       req.flash('success', `Salle "${req.body.nom}" créée avec succès.`);
       return res.redirect(`/admin/rooms?event_id=${req.body.event_id}`);
     } catch (err) {
@@ -985,6 +991,10 @@ router.put(
       }
       const room = await Room.findById(id);
       logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a modifié la salle #${id}`);
+
+      // Une salle modifiée (activée/désactivée ou type changé) peut impacter la file d'attente
+      await Battle.reevaluateQueue(room.event_id).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
+
       req.flash('success', 'Salle mise à jour.');
       return res.redirect(`/admin/rooms?event_id=${room.event_id}`);
     } catch (err) {
@@ -1008,6 +1018,10 @@ router.post('/rooms/:id/toggle', async (req, res) => {
     }
     await Room.setActif(id, !room.actif);
     logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a ${room.actif ? 'désactivé' : 'activé'} la salle #${id}`);
+
+    // Un changement d'état de salle doit réévaluer la file d'attente
+    await Battle.reevaluateQueue(room.event_id).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
+
     req.flash('success', `Salle "${room.nom}" ${room.actif ? 'désactivée' : 'activée'}.`);
     return res.redirect(`/admin/rooms?event_id=${room.event_id}`);
   } catch (err) {
@@ -1034,6 +1048,10 @@ router.delete('/rooms/:id', async (req, res) => {
       req.flash('error', 'Impossible de supprimer cette salle.');
     } else {
       logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a supprimé la salle #${id}`);
+
+      // La suppression d'une salle peut libérer des places dans la file d'attente
+      await Battle.reevaluateQueue(eventId).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
+
       req.flash('success', 'Salle supprimée.');
     }
     return res.redirect(`/admin/rooms?event_id=${eventId}`);

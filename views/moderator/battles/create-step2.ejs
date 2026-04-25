@@ -44,7 +44,7 @@
       <div>
         <strong><i class="fas fa-gamepad"></i> <%= game.nom %></strong>
         <span style="color:var(--color-text-muted); margin-left:.5rem;"><%= game.console %></span>
-        <span class="badge badge--<%= game.type_rencontre === '2v2' ? 'info' : 'primary' %>" style="margin-left:.5rem;">
+        <span class="badge badge--<%= game.type_rencontre === '2v2' ? 'info' : game.type_rencontre === 'solo' ? 'warning' : 'primary' %>" style="margin-left:.5rem;">
           <%= game.type_rencontre %>
         </span>
       </div>
@@ -84,6 +84,8 @@
             slots.push({ label: 'Joueur 2 — Équipe 1', equipe: 1 });
             slots.push({ label: 'Joueur 3 — Équipe 2', equipe: 2 });
             slots.push({ label: 'Joueur 4 — Équipe 2', equipe: 2 });
+          } else if (game.type_rencontre === 'solo') {
+            slots.push({ label: 'Joueur Solo', equipe: 1 });
           } else {
             slots.push({ label: 'Joueur 1', equipe: 1 });
             slots.push({ label: 'Joueur 2', equipe: 2 });

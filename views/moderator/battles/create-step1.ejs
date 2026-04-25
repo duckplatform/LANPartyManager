@@ -62,7 +62,7 @@
               <% }); %>
             </select>
             <p class="form-hint">
-              Le format (1v1 ou 2v2) détermine le nombre de joueurs à identifier à l'étape suivante.
+              Le format (1v1, 2v2 ou solo) détermine le nombre de joueurs à identifier à l'étape suivante.
             </p>
           </div>
 
@@ -107,10 +107,12 @@
     previewNom.textContent     = game.nom;
     previewConsole.textContent = '— ' + game.console;
     previewType.textContent    = game.type_rencontre;
-    previewType.className      = 'badge badge--' + (game.type_rencontre === '2v2' ? 'info' : 'primary');
+    previewType.className      = 'badge badge--' + (game.type_rencontre === '2v2' ? 'info' : game.type_rencontre === 'solo' ? 'warning' : 'primary');
     previewInfo.textContent    = game.type_rencontre === '2v2'
       ? '4 joueurs à identifier (2 équipes de 2)'
-      : '2 joueurs à identifier (face à face)';
+      : game.type_rencontre === 'solo'
+        ? '1 joueur à identifier (compétition individuelle)'
+        : '2 joueurs à identifier (face à face)';
     preview.style.display = 'block';
   }
 

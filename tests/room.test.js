@@ -82,7 +82,7 @@ describe('Room Model', function () {
 
       const query = poolStub.execute.firstCall.args[0];
       expect(query).to.include("'planifie'");
-      expect(query).to.include("'en_attente'");
+      expect(query).to.include("'installation'");
       expect(query).to.include("'en_cours'");
     });
 
@@ -211,9 +211,10 @@ describe('Room Model', function () {
       expect(Room.TYPES_SALLE).to.include('simulation');
     });
 
-    it('TYPES_RENCONTRE doit contenir 1v1 et 2v2', function () {
+    it('TYPES_RENCONTRE doit contenir 1v1, 2v2 et solo', function () {
       expect(Room.TYPES_RENCONTRE).to.include('1v1');
       expect(Room.TYPES_RENCONTRE).to.include('2v2');
+      expect(Room.TYPES_RENCONTRE).to.include('solo');
     });
 
     it('ROOM_NAMES doit être un tableau non vide', function () {

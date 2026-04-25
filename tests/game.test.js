@@ -118,6 +118,13 @@ describe('Game Model', function () {
       expect(args[2]).to.equal('2v2');
     });
 
+    it('doit accepter "solo" comme type_rencontre', async function () {
+      poolStub.execute.resolves([{ insertId: 3 }]);
+      await Game.create({ nom: 'Tetris Sprint', console: 'PC', type_rencontre: 'solo' });
+      const args = poolStub.execute.firstCall.args[1];
+      expect(args[2]).to.equal('solo');
+    });
+
     it('doit trim le nom et la console', async function () {
       poolStub.execute.resolves([{ insertId: 1 }]);
       await Game.create({ nom: '  SF6  ', console: '  PS5  ', type_rencontre: '1v1' });
@@ -172,9 +179,10 @@ describe('Game Model', function () {
   // ── TYPES_RENCONTRE ───────────────────────────────────────────────────────
 
   describe('TYPES_RENCONTRE', function () {
-    it('doit contenir 1v1 et 2v2', function () {
+    it('doit contenir 1v1, 2v2 et solo', function () {
       expect(Game.TYPES_RENCONTRE).to.include('1v1');
       expect(Game.TYPES_RENCONTRE).to.include('2v2');
+      expect(Game.TYPES_RENCONTRE).to.include('solo');
     });
   });
 

@@ -70,8 +70,8 @@
                 <th>Nom</th>
                 <th>Type</th>
                 <th>Format</th>
-                <th>État</th>
-                <th>Battle active</th>
+                <th>Disponibilité</th>
+                <th>Statut</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -92,22 +92,27 @@
                       <%= room.type === 'simulation' ? 'Simulation' : 'Console' %>
                     </td>
                     <td>
-                      <span class="badge badge--<%= room.type_rencontre === '2v2' ? 'info' : 'primary' %>">
+                      <span class="badge badge--<%= room.type_rencontre === '2v2' ? 'info' : room.type_rencontre === 'solo' ? 'warning' : 'primary' %>">
                         <%= room.type_rencontre %>
                       </span>
+                    </td>
+                    <td>
+                      <% if (!room.actif) { %>
+                        <%/* Salle inactive → toujours "Hors service" */%>
+                        <span class="badge badge--muted"><i class="fas fa-times-circle"></i> Hors service</span>
+                      <% } else if (room.battles_actives > 0) { %>
+                        <%/* Salle active avec battle en cours ou planifiée → Occupée */%>
+                        <span class="badge badge--warning"><i class="fas fa-lock"></i> Occupée</span>
+                      <% } else { %>
+                        <%/* Salle active et aucune battle → Libre */%>
+                        <span class="badge badge--success"><i class="fas fa-unlock"></i> Libre</span>
+                      <% } %>
                     </td>
                     <td>
                       <% if (room.actif) { %>
                         <span class="badge badge--success"><i class="fas fa-circle"></i> Active</span>
                       <% } else { %>
                         <span class="badge badge--muted"><i class="fas fa-circle"></i> Inactive</span>
-                      <% } %>
-                    </td>
-                    <td>
-                      <% if (room.battles_actives > 0) { %>
-                        <span class="badge badge--warning"><i class="fas fa-swords"></i> En cours</span>
-                      <% } else { %>
-                        <span class="badge badge--muted"><i class="fas fa-check"></i> Libre</span>
                       <% } %>
                     </td>
                     <td class="td-actions">

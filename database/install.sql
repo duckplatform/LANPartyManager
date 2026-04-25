@@ -122,15 +122,14 @@ CREATE TABLE IF NOT EXISTS `event_registrations` (
 -- ------------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `games` (
-  `id`              INT UNSIGNED      NOT NULL AUTO_INCREMENT,
-  `nom`             VARCHAR(100)      NOT NULL COMMENT 'Nom du jeu',
-  `console`         VARCHAR(100)      NOT NULL COMMENT 'Plateforme',
-  `type_rencontre`  ENUM('1v1','2v2') NOT NULL DEFAULT '1v1',
-  `created_at`      DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at`      DATETIME          NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id`              INT UNSIGNED           NOT NULL AUTO_INCREMENT,
+  `nom`             VARCHAR(100)           NOT NULL COMMENT 'Nom du jeu',
+  `console`         VARCHAR(100)           NOT NULL COMMENT 'Plateforme',
+  `type_rencontre`  ENUM('1v1','2v2','solo') NOT NULL DEFAULT '1v1',
+  `created_at`      DATETIME               NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at`      DATETIME               NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_games_type` (`type_rencontre`)
-) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
   COMMENT='Jeux disponibles pour les rencontres';
@@ -143,7 +142,7 @@ CREATE TABLE IF NOT EXISTS `rooms` (
   `id`              INT UNSIGNED                 NOT NULL AUTO_INCREMENT,
   `nom`             VARCHAR(100)                 NOT NULL COMMENT 'Nom de la salle',
   `type`            ENUM('console','simulation') NOT NULL DEFAULT 'console',
-  `type_rencontre`  ENUM('1v1','2v2')            NOT NULL DEFAULT '1v1',
+  `type_rencontre`  ENUM('1v1','2v2','solo')      NOT NULL DEFAULT '1v1',
   `actif`           TINYINT(1)                   NOT NULL DEFAULT 1,
   `event_id`        INT UNSIGNED                 NOT NULL,
   `created_at`      DATETIME                     NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -168,7 +167,7 @@ CREATE TABLE IF NOT EXISTS `battles` (
   `event_id`    INT UNSIGNED                                                          NOT NULL,
   `game_id`     INT UNSIGNED                                                          NOT NULL,
   `room_id`     INT UNSIGNED                                                          NULL,
-  `statut`      ENUM('file_attente','planifie','en_attente','en_cours','termine')    NOT NULL DEFAULT 'file_attente',
+  `statut`      ENUM('file_attente','planifie','installation','en_cours','termine') NOT NULL DEFAULT 'file_attente',
   `score`       VARCHAR(100)                                                          NULL,
   `notes`       TEXT                                                                  NULL,
   `created_at`  DATETIME                                                              NOT NULL DEFAULT CURRENT_TIMESTAMP,

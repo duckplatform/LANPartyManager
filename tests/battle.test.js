@@ -157,7 +157,7 @@ describe('Battle Model', function () {
 
       const roomsQuery = poolStub.execute.getCall(1).args[0];
       expect(roomsQuery).to.include("'planifie'");
-      expect(roomsQuery).to.include("'en_attente'");
+      expect(roomsQuery).to.include("'installation'");
       expect(roomsQuery).to.include("'en_cours'");
     });
   });
@@ -264,7 +264,7 @@ describe('Battle Model', function () {
       expect(result.file_attente).to.equal(2);
       expect(result.planifie).to.equal(1);
       expect(result.en_cours).to.equal(3);
-      expect(result.en_attente).to.equal(0);  // non présent → défaut 0
+      expect(result.installation).to.equal(0);  // non présent → défaut 0
       expect(result.termine).to.equal(0);
     });
   });
@@ -275,7 +275,7 @@ describe('Battle Model', function () {
     it('doit contenir tous les statuts attendus', function () {
       expect(Battle.STATUTS_VALIDES).to.include('file_attente');
       expect(Battle.STATUTS_VALIDES).to.include('planifie');
-      expect(Battle.STATUTS_VALIDES).to.include('en_attente');
+      expect(Battle.STATUTS_VALIDES).to.include('installation');
       expect(Battle.STATUTS_VALIDES).to.include('en_cours');
       expect(Battle.STATUTS_VALIDES).to.include('termine');
     });

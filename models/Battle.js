@@ -6,23 +6,24 @@
  *
  * Statuts possibles :
  *   file_attente : aucune salle disponible, en attente dans la file
- *   planifie     : salle attribuée, en attente de la fin d'une rencontre précédente
- *   en_attente   : joueurs en train de s'installer
+ *   planifie     : salle attribuée, planifiée (salle active et compatible, sans rencontre planifiée)
+ *   installation : joueurs en train de s'installer dans la salle
  *   en_cours     : partie lancée
  *   termine      : partie terminée
  *
  * Logique de file d'attente :
- *   - À chaque création, fin ou début de rencontre, reevaluateQueue() est appelé
+ *   - À chaque création, annulation, changement de statut de rencontre → reevaluateQueue()
+ *   - À chaque changement d'état d'une salle (actif/inactif, ajout/suppression) → reevaluateQueue()
  *   - Les rencontres en file_attente sont promues à 'planifie' si une salle est disponible
- *   - Une salle est disponible pour planification si elle n'a pas déjà de battle planifie
- *     et possède au plus une battle en cours/installation (en_cours ou en_attente)
+ *   - Une salle est disponible si elle est active, compatible avec le jeu,
+ *     et n'a pas de battle déjà planifiée ou en cours/installation
  *   - Une salle attribuée ne peut plus changer (règle métier)
  */
 
 const db = require('../config/database');
 
 /** Statuts autorisés pour une battle */
-const STATUTS_VALIDES = ['file_attente', 'planifie', 'en_attente', 'en_cours', 'termine'];
+const STATUTS_VALIDES = ['file_attente', 'planifie', 'installation', 'en_cours', 'termine'];
 
 const Battle = {
 
@@ -46,7 +47,7 @@ const Battle = {
          LEFT JOIN rooms r ON r.id = b.room_id
         WHERE b.event_id = ?
         ORDER BY
-          FIELD(b.statut, 'en_cours','en_attente','planifie','file_attente','termine'),
+          FIELD(b.statut, 'en_cours','installation','planifie','file_attente','termine'),
           b.created_at ASC`,
       [eventId]
     );
@@ -76,7 +77,7 @@ const Battle = {
         WHERE b.event_id = ?
           AND b.statut != 'termine'
         ORDER BY
-          FIELD(b.statut, 'en_cours','en_attente','planifie','file_attente'),
+          FIELD(b.statut, 'en_cours','installation','planifie','file_attente'),
           b.created_at ASC`,
       [eventId]
     );
@@ -144,7 +145,7 @@ const Battle = {
          JOIN games g ON g.id = b.game_id
          LEFT JOIN rooms r ON r.id = b.room_id
         WHERE b.event_id = ?
-          AND b.statut IN ('planifie', 'en_attente', 'en_cours')
+          AND b.statut IN ('planifie', 'installation', 'en_cours')
         ORDER BY b.created_at ASC`,
       [eventId]
     );
@@ -195,7 +196,7 @@ const Battle = {
    * Une salle est disponible si :
    *   - Elle est active
    *   - Son type_rencontre correspond au jeu
-   *   - Elle n'a aucune battle planifie, en_attente ou en_cours
+   *   - Elle n'a aucune battle planifie, installation ou en_cours
    * Une salle attribuée ne change jamais (règle métier).
    * @param {number} battleId
    * @param {number} eventId
@@ -217,7 +218,7 @@ const Battle = {
 
     // Cherche une salle disponible pour planifier la prochaine rencontre.
     // Regle metier: une salle peut avoir au maximum
-    // - 1 rencontre en cours/installation (en_cours ou en_attente)
+    // - 1 rencontre en cours/installation (en_cours ou installation)
     // - 1 rencontre planifiee (prochaine partie)
     const [rooms] = await db.pool.execute(
       `SELECT r.id
@@ -233,7 +234,7 @@ const Battle = {
           AND (
             SELECT COUNT(*) FROM battles b3
              WHERE b3.room_id = r.id
-               AND b3.statut IN ('en_attente', 'en_cours')
+               AND b3.statut IN ('installation', 'en_cours')
           ) <= 1
         ORDER BY r.nom ASC
         LIMIT 1`,
@@ -278,7 +279,7 @@ const Battle = {
    * Change le statut d'une rencontre.
    * Déclenche la réévaluation de la file si la rencontre se termine.
    * @param {number} id
-   * @param {'en_attente'|'en_cours'|'termine'} newStatut
+   * @param {'installation'|'en_cours'|'termine'} newStatut
    * @param {number} eventId — nécessaire pour reevaluateQueue
    * @returns {Promise<boolean>}
    */
@@ -367,7 +368,7 @@ const Battle = {
         GROUP BY statut`,
       [eventId]
     );
-    const result = { file_attente: 0, planifie: 0, en_attente: 0, en_cours: 0, termine: 0 };
+    const result = { file_attente: 0, planifie: 0, installation: 0, en_cours: 0, termine: 0 };
     for (const row of rows) result[row.statut] = row.total;
     return result;
   },

@@ -3,13 +3,13 @@
 /**
  * Modèle Game — Jeux disponibles pour les rencontres
  * CRUD sur la table `games`
- * Types de rencontre : '1v1' | '2v2'
+ * Types de rencontre : '1v1' | '2v2' | 'solo'
  */
 
 const db = require('../config/database');
 
 /** Types de rencontre autorisés */
-const TYPES_RENCONTRE = ['1v1', '2v2'];
+const TYPES_RENCONTRE = ['1v1', '2v2', 'solo'];
 
 const Game = {
 
@@ -41,7 +41,7 @@ const Game = {
 
   /**
    * Retourne les jeux filtrés par type de rencontre
-   * @param {'1v1'|'2v2'} typeRencontre
+   * @param {'1v1'|'2v2'|'solo'} typeRencontre
    * @returns {Promise<Array>}
    */
   async findByType(typeRencontre) {
