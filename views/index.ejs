@@ -172,6 +172,228 @@
 </script>
 <% } %>
 
+<% if (activeEvent && typeof eventRanking !== 'undefined' && eventRanking && eventRanking.length > 0) { %>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var eventId = Number.parseInt('<%= activeEvent.id %>', 10);
+  if (!Number.isInteger(eventId) || eventId <= 0 || typeof window.io !== 'function') {
+    return;
+  }
+
+  var reloadTimer = null;
+  function scheduleReload() {
+    if (reloadTimer) {
+      window.clearTimeout(reloadTimer);
+    }
+    reloadTimer = window.setTimeout(function () {
+      window.location.reload();
+    }, 450);
+  }
+
+  var socket = window.io({
+    path: '/socket.io',
+    transports: ['websocket', 'polling'],
+  });
+
+  socket.on('connect', function () {
+    socket.emit('ranking:join-event', { eventId: eventId });
+  });
+
+  socket.on('ranking:update', function (payload) {
+    if (!payload || Number(payload.eventId) !== eventId) {
+      return;
+    }
+    scheduleReload();
+  });
+}());
+</script>
+<% } %>
+
+<!-- ═══════════════════ CLASSEMENT ═══════════════════ -->
+<% if (activeEvent && typeof eventRanking !== 'undefined' && eventRanking && eventRanking.length > 0) { %>
+<section class="section ranking-section">
+  <div class="container">
+    <div class="ranking-card">
+      <div class="ranking-header">
+        <h2><i class="fas fa-trophy"></i> Classement Live</h2>
+        <p class="ranking-subtitle">Solo = 1pt • 1v1 = 2pts • 2v2 = 3pts</p>
+      </div>
+      <div class="ranking-body">
+        <div style="overflow-x:auto;">
+          <table class="ranking-table">
+            <thead>
+              <tr>
+                <th class="ranking-col-rank">Rang</th>
+                <th class="ranking-col-player">Joueur</th>
+                <th class="ranking-col-points"><i class="fas fa-star"></i> Points</th>
+                <th class="ranking-col-wins"><i class="fas fa-circle-check"></i> Victoires</th>
+                <th class="ranking-col-battles"><i class="fas fa-gamepad"></i> Rencontres</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% eventRanking.forEach(function(entry) { %>
+              <tr class="ranking-row<% if (entry.rang === 1) { %> ranking-row--gold<% } else if (entry.rang === 2) { %> ranking-row--silver<% } else if (entry.rang === 3) { %> ranking-row--bronze<% } %>">
+                <td class="ranking-cell ranking-cell-rank">
+                  <div class="rank-badge">
+                    <% if (entry.rang === 1) { %><i class="fas fa-medal" style="color:#facc15;"></i><% } else if (entry.rang === 2) { %><i class="fas fa-medal" style="color:#d1d5db;"></i><% } else if (entry.rang === 3) { %><i class="fas fa-medal" style="color:#d97706;"></i><% } else { %><span><%= entry.rang %></span><% } %>
+                  </div>
+                </td>
+                <td class="ranking-cell ranking-cell-player">
+                  <span class="player-name"><%= entry.pseudo %></span>
+                </td>
+                <td class="ranking-cell ranking-cell-points">
+                  <span class="badge badge-points"><%= entry.points %> pts</span>
+                </td>
+                <td class="ranking-cell ranking-cell-wins">
+                  <span class="badge badge-wins"><%= entry.wins %></span>
+                </td>
+                <td class="ranking-cell ranking-cell-battles">
+                  <span class="badge badge-battles"><%= entry.battles_played %></span>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+.ranking-section { padding: var(--space-lg) 0; }
+.ranking-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+.ranking-header {
+  background: linear-gradient(135deg, var(--color-primary) 0%, rgba(59, 130, 246, 0.8) 100%);
+  padding: var(--space-md) var(--space-lg);
+  color: white;
+}
+.ranking-header h2 {
+  font-size: 1.65rem;
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.ranking-subtitle {
+  font-size: 0.92rem;
+  opacity: 0.9;
+  margin-top: 0.5rem;
+  letter-spacing: 0.02em;
+}
+.ranking-body {
+  padding: var(--space-lg);
+}
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.ranking-table thead {
+  background: rgba(59, 130, 246, 0.05);
+  border-bottom: 2px solid var(--color-border);
+}
+.ranking-table th {
+  padding: 1rem var(--space-md);
+  text-align: left;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+}
+.ranking-table tbody tr {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+.ranking-table tbody tr:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+.ranking-row--gold { background: rgba(250, 204, 21, 0.08); }
+.ranking-row--gold:hover { background: rgba(250, 204, 21, 0.12); }
+.ranking-row--silver { background: rgba(209, 213, 219, 0.06); }
+.ranking-row--silver:hover { background: rgba(209, 213, 219, 0.1); }
+.ranking-row--bronze { background: rgba(217, 119, 6, 0.06); }
+.ranking-row--bronze:hover { background: rgba(217, 119, 6, 0.1); }
+.ranking-cell {
+  padding: 1.2rem var(--space-md);
+  vertical-align: middle;
+}
+.ranking-cell-rank { width: 70px; }
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-primary);
+}
+.ranking-row--gold .rank-badge {
+  background: linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(250, 204, 21, 0.1));
+  border-color: rgba(250, 204, 21, 0.4);
+  color: #facc15;
+}
+.ranking-row--silver .rank-badge {
+  background: linear-gradient(135deg, rgba(209, 213, 219, 0.2), rgba(209, 213, 219, 0.1));
+  border-color: rgba(209, 213, 219, 0.4);
+  color: #d1d5db;
+}
+.ranking-row--bronze .rank-badge {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.2), rgba(217, 119, 6, 0.1));
+  border-color: rgba(217, 119, 6, 0.4);
+  color: #d97706;
+}
+.player-name {
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+.badge-points {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+.badge-wins {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+.badge-battles {
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+@media (max-width: 768px) {
+  .ranking-header h2 { font-size: 1.35rem; }
+  .ranking-table th, .ranking-cell { padding: 0.75rem 0.5rem; }
+  .ranking-col-rank, .ranking-col-battles { display: none; }
+  .rank-badge { width: 36px; height: 36px; }
+}
+</style>
+<% } %>
+
 <!-- ═══════════════════ FEATURES ═══════════════════ -->
 <section class="section features-section">
   <div class="container">

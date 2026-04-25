@@ -130,7 +130,7 @@ describe('Battle Model', function () {
       // Vérifie que l'UPDATE a été appelé (assignation de salle)
       const updateCall = poolStub.execute.getCall(6);
       expect(updateCall.args[0]).to.include('UPDATE battles');
-      expect(updateCall.args[0]).to.include('planifie');
+      expect(updateCall.args[1][1]).to.equal('installation');
     });
   });
 
@@ -158,6 +158,19 @@ describe('Battle Model', function () {
       poolStub.execute.onCall(3).resolves([{ affectedRows: 1 }]);
       const result = await Battle.assignRoomIfAvailable(1, 1, 1);
       expect(result).to.be.true;
+    });
+
+    it('doit passer en installation si la salle est libre immediatement', async function () {
+      poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
+      poolStub.execute.onSecondCall().resolves([[{ total: 0 }]]);
+      poolStub.execute.onThirdCall().resolves([[{ id: 3, active_count: 0 }]]);
+      poolStub.execute.onCall(3).resolves([{ affectedRows: 1 }]);
+
+      const result = await Battle.assignRoomIfAvailable(1, 1, 1);
+
+      expect(result).to.be.true;
+      const updateCallArgs = poolStub.execute.getCall(3).args[1];
+      expect(updateCallArgs[1]).to.equal('installation');
     });
 
     it('doit considérer une salle planifiée comme non disponible', async function () {
@@ -320,14 +333,16 @@ describe('Battle Model', function () {
 
   describe('setResult()', function () {
     it('doit enregistrer le résultat et marquer les gagnants', async function () {
+      const reevaluateStub = sinon.stub(Battle, 'reevaluateQueue').resolves([]);
+
       // UPDATE battle (score + statut)
       poolStub.execute.onCall(0).resolves([{ affectedRows: 1 }]);
       // RESET gagnants
       poolStub.execute.onCall(1).resolves([{ affectedRows: 2 }]);
       // UPDATE gagnant #10
       poolStub.execute.onCall(2).resolves([{ affectedRows: 1 }]);
-      // reevaluateQueue → SELECT battles file_attente
-      poolStub.execute.onCall(3).resolves([[]]); // aucune en file_attente
+      // SELECT room_id de la battle terminee
+      poolStub.execute.onCall(3).resolves([[{ room_id: null }]]);
 
       const result = await Battle.setResult(1, '3-1', [10], 1);
       expect(result).to.be.true;
@@ -336,12 +351,41 @@ describe('Battle Model', function () {
       const scoreQuery = poolStub.execute.getCall(0).args;
       expect(scoreQuery[0]).to.include('UPDATE battles');
       expect(scoreQuery[1][0]).to.equal('3-1');
+
+      reevaluateStub.restore();
     });
 
     it('doit retourner false si la battle est introuvable', async function () {
       poolStub.execute.resolves([{ affectedRows: 0 }]);
       const result = await Battle.setResult(999, '3-1', [10], 1);
       expect(result).to.be.false;
+    });
+
+    it('doit passer automatiquement la suivante en installation puis reevaluer la file', async function () {
+      const reevaluateStub = sinon.stub(Battle, 'reevaluateQueue').resolves([88]);
+
+      // UPDATE battle terminee
+      poolStub.execute.onCall(0).resolves([{ affectedRows: 1 }]);
+      // RESET gagnants
+      poolStub.execute.onCall(1).resolves([{ affectedRows: 2 }]);
+      // room_id de la battle terminee
+      poolStub.execute.onCall(2).resolves([[{ room_id: 4 }]]);
+      // prochaine battle planifiee dans la meme salle
+      poolStub.execute.onCall(3).resolves([[{ id: 22 }]]);
+      // passage auto en installation
+      poolStub.execute.onCall(4).resolves([{ affectedRows: 1 }]);
+
+      const result = await Battle.setResultWithQueue(1, '2-0', [], 1);
+
+      expect(result.success).to.be.true;
+      expect(result.autoInstalledBattleId).to.equal(22);
+      expect(result.promotedBattleIds).to.deep.equal([88]);
+      expect(reevaluateStub.calledOnceWithExactly(1)).to.be.true;
+
+      const installQuery = poolStub.execute.getCall(4).args[0];
+      expect(installQuery).to.include("statut = 'installation'");
+
+      reevaluateStub.restore();
     });
   });
 

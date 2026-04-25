@@ -182,12 +182,24 @@ async function notifyEventStarted(event) {
   );
 }
 
+function buildRankingField(rankings = []) {
+  if (!Array.isArray(rankings) || rankings.length === 0) {
+    return 'Aucun point attribue pour le moment.';
+  }
+
+  return rankings
+    .slice(0, 10)
+    .map((entry, index) => `${index + 1}. ${entry.pseudo} — ${entry.points} pts`)
+    .join('\n');
+}
+
 /**
  * Notifie la fin d'un événement LAN (passage en statut 'termine').
  * @param {{ id: number, nom: string, date_heure: string|Date, lieu: string }} event
+ * @param {Array} [rankings] classement pre-calcule de l'evenement
  * @returns {Promise<void>}
  */
-async function notifyEventEnded(event) {
+async function notifyEventEnded(event, rankings = []) {
   const channelId = resolveBattleChannel(event);
 
   const embed = {
@@ -197,6 +209,7 @@ async function notifyEventEnded(event) {
     fields: [
       { name: '📍 Lieu', value: event.lieu, inline: true },
       { name: '📊 Statut', value: '🏁 Terminé', inline: true },
+      { name: '🏆 Classement final', value: buildRankingField(rankings), inline: false },
     ],
     footer: { text: 'LANPartyManager' },
     timestamp: new Date().toISOString(),

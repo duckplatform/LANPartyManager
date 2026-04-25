@@ -24,6 +24,7 @@ const battlesRouter = require('../routes/battles');
 const Battle = require('../models/Battle');
 const Event = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
+const EventRanking = require('../models/EventRanking');
 const Game = require('../models/Game');
 const Room = require('../models/Room');
 const User = require('../models/User');
@@ -591,67 +592,18 @@ describe('Routes - Tests d\'intégration', function () {
     });
   });
 
-  describe('POST /battles/:id/ready (handler)', function () {
-    let battleFindByIdStub;
-    let eventFindByIdStub;
-    let changeStatutWithQueueStub;
-    let notifyBattlePlannedStub;
-    let notifyBattleInstallationStub;
-
-    beforeEach(function () {
-      battleFindByIdStub = sinon.stub(Battle, 'findById');
-      eventFindByIdStub = sinon.stub(Event, 'findById');
-      changeStatutWithQueueStub = sinon.stub(Battle, 'changeStatutWithQueue');
-      notifyBattlePlannedStub = sinon.stub(discord, 'notifyBattlePlanned').resolves();
-      notifyBattleInstallationStub = sinon.stub(discord, 'notifyBattleInstallation').resolves();
-    });
-
-    afterEach(function () {
-      sinon.restore();
-    });
-
-    it('doit notifier la rencontre promue quand une salle libere son slot planifie', async function () {
-      const handler = getRouteHandler(battlesRouter, 'post', '/:id/ready');
-      const req = {
-        params: { id: '10' },
-        flash: sinon.stub(),
-        session: { userId: 99 },
-      };
-      const res = {
-        redirect: sinon.stub(),
-      };
-
-      const event = { id: 4, nom: 'LAN Test', statut: 'en_cours', discord_channel_id: '333333333333333333' };
-      const battle = { id: 10, event_id: 4, statut: 'planifie', room_id: 2 };
-      const promotedBattle = { id: 12, event_id: 4, statut: 'planifie', room_nom: 'Neo Tokyo' };
-      const updatedBattle = { id: 10, event_id: 4, statut: 'installation', room_id: 2 };
-
-      battleFindByIdStub.onCall(0).resolves(battle);
-      battleFindByIdStub.onCall(1).resolves(promotedBattle);
-      battleFindByIdStub.onCall(2).resolves(updatedBattle);
-      eventFindByIdStub.resolves(event);
-      changeStatutWithQueueStub.resolves({ success: true, promotedBattleIds: [12] });
-
-      await handler(req, res);
-
-      expect(changeStatutWithQueueStub.calledOnceWithExactly(10, 'installation', 4)).to.be.true;
-      expect(notifyBattlePlannedStub.calledOnceWithExactly({ event, battle: promotedBattle })).to.be.true;
-      expect(notifyBattleInstallationStub.calledOnceWithExactly({ event, battle: updatedBattle })).to.be.true;
-      expect(req.flash.calledOnceWithExactly('success', 'Rencontre en cours d\'installation.')).to.be.true;
-      expect(res.redirect.calledOnceWithExactly('/battles/events/4')).to.be.true;
-    });
-  });
-
   describe('POST /battles/:id/result (handler)', function () {
     let battleFindByIdStub;
     let eventFindByIdStub;
     let setResultWithQueueStub;
+    let recalculateRankingStub;
     let notifyBattleEndedStub;
 
     beforeEach(function () {
       battleFindByIdStub = sinon.stub(Battle, 'findById');
       eventFindByIdStub = sinon.stub(Event, 'findById');
       setResultWithQueueStub = sinon.stub(Battle, 'setResultWithQueue');
+      recalculateRankingStub = sinon.stub(EventRanking, 'recalculateForEvent').resolves();
       notifyBattleEndedStub = sinon.stub(discord, 'notifyBattleEnded').resolves();
     });
 
@@ -695,6 +647,7 @@ describe('Routes - Tests d\'intégration', function () {
       await handler(req, res);
 
       expect(setResultWithQueueStub.calledOnceWithExactly(12, '3-0', [10, 11], 1)).to.be.true;
+      expect(recalculateRankingStub.calledOnceWithExactly(1)).to.be.true;
       expect(notifyBattleEndedStub.calledOnceWithExactly({ event, battle: endedBattle })).to.be.true;
       expect(res.redirect.calledOnceWithExactly('/battles/events/1')).to.be.true;
     });
@@ -705,12 +658,16 @@ describe('Routes - Tests d\'intégration', function () {
     let battleFindByEventStub;
     let battleCountByStatutStub;
     let roomFindByEventStub;
+    let battleReevaluateQueueStub;
+    let rankingFindByEventStub;
 
     beforeEach(function () {
       eventFindByIdStub = sinon.stub(Event, 'findById');
       battleFindByEventStub = sinon.stub(Battle, 'findByEvent');
       battleCountByStatutStub = sinon.stub(Battle, 'countByStatut');
       roomFindByEventStub = sinon.stub(Room, 'findByEvent');
+      battleReevaluateQueueStub = sinon.stub(Battle, 'reevaluateQueue');
+      rankingFindByEventStub = sinon.stub(EventRanking, 'findByEvent');
     });
 
     afterEach(function () {
@@ -732,6 +689,8 @@ describe('Routes - Tests d\'intégration', function () {
       battleFindByEventStub.resolves([]);
       roomFindByEventStub.resolves([]);
       battleCountByStatutStub.resolves(undefined);
+      battleReevaluateQueueStub.resolves([]);
+      rankingFindByEventStub.resolves([]);
 
       await handler(req, res);
 
@@ -740,11 +699,12 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.render.firstCall.args[0]).to.equal('moderator/battles/announce');
 
       const payload = res.render.firstCall.args[1];
-      expect(payload).to.include.keys('event', 'stats', 'roomBoards', 'globalQueue', 'recentResults', 'now');
+      expect(payload).to.include.keys('event', 'stats', 'roomBoards', 'globalQueue', 'recentResults', 'rankingBoard', 'now');
       expect(payload.stats).to.deep.equal({ en_cours: 0, installation: 0, planifie: 0, file_attente: 0, termine: 0 });
       expect(payload.roomBoards).to.deep.equal([]);
       expect(payload.globalQueue).to.deep.equal([]);
       expect(payload.recentResults).to.deep.equal([]);
+      expect(payload.rankingBoard).to.deep.equal([]);
     });
   });
 

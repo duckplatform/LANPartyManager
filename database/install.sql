@@ -107,11 +107,9 @@ CREATE TABLE IF NOT EXISTS `event_registrations` (
   `id`          INT UNSIGNED  NOT NULL AUTO_INCREMENT,
   `event_id`    INT UNSIGNED  NOT NULL COMMENT 'Reference vers events.id',
   `user_id`     INT UNSIGNED  NOT NULL COMMENT 'Reference vers users.id',
-  `token`       CHAR(36)      NOT NULL COMMENT 'Token UUID d''inscription',
   `created_at`  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_event_user` (`event_id`, `user_id`),
-  UNIQUE KEY `uq_er_token` (`token`),
   KEY `idx_er_event_id` (`event_id`),
   KEY `idx_er_user_id` (`user_id`),
   CONSTRAINT `fk_er_event`
@@ -177,6 +175,8 @@ CREATE TABLE IF NOT EXISTS `battles` (
   `statut`      ENUM('file_attente','planifie','installation','en_cours','termine') NOT NULL DEFAULT 'file_attente',
   `score`       VARCHAR(100)                                                          NULL,
   `notes`       TEXT                                                                  NULL,
+  `started_at`  DATETIME                                                              NULL COMMENT 'Quand la partie a commencé (statut=en_cours)',
+  `ended_at`    DATETIME                                                              NULL COMMENT 'Quand la partie s''est terminée (statut=termine)',
   `created_at`  DATETIME                                                              NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`  DATETIME                                                              NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -217,6 +217,31 @@ CREATE TABLE IF NOT EXISTS `battle_players` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
   COMMENT='Participants de chaque rencontre';
+
+-- ------------------------------------------------------------
+-- Table `event_rankings`
+-- ------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `event_rankings` (
+  `event_id`        INT UNSIGNED NOT NULL,
+  `user_id`         INT UNSIGNED NOT NULL,
+  `points`          INT UNSIGNED NOT NULL DEFAULT 0,
+  `wins`            INT UNSIGNED NOT NULL DEFAULT 0,
+  `battles_played`  INT UNSIGNED NOT NULL DEFAULT 0,
+  `updated_at`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`event_id`, `user_id`),
+  KEY `idx_rankings_event_points` (`event_id`, `points`),
+  CONSTRAINT `fk_rankings_event`
+    FOREIGN KEY (`event_id`) REFERENCES `events` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_rankings_user`
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_rankings_points_nonneg` CHECK (`points` >= 0),
+  CONSTRAINT `chk_rankings_wins_nonneg` CHECK (`wins` >= 0),
+  CONSTRAINT `chk_rankings_battles_nonneg` CHECK (`battles_played` >= 0)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='Classement des joueurs par evenement, recalcule apres chaque resultat';
 
 SET FOREIGN_KEY_CHECKS = 1;
 

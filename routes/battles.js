@@ -11,7 +11,6 @@
  * POST /battles/events/:id/create       → wizard étape 2 (identification joueurs)
  * POST /battles/events/:id/store        → enregistre la rencontre
  * POST /battles/:id/start               → passe installation → en_cours
- * POST /battles/:id/ready               → passe planifie → installation
  * POST /battles/:id/result              → enregistre le résultat et termine
  * DELETE /battles/:id                   → annule une rencontre (file_attente/planifie seulement)
  */
@@ -25,6 +24,7 @@ const Game   = require('../models/Game');
 const Room   = require('../models/Room');
 const Event  = require('../models/Event');
 const User   = require('../models/User');
+const EventRanking = require('../models/EventRanking');
 const EventRegistration = require('../models/EventRegistration');
 const logger = require('../config/logger');
 const discord = require('../services/discord');
@@ -85,6 +85,36 @@ async function notifyPromotedBattles(event, promotedBattleIds = []) {
     }
     discord.notifyBattlePlanned({ event, battle: promotedBattle }).catch(() => {});
   }
+}
+
+function emitAnnounceUpdate(req, eventId, reason, battleId = null) {
+  const io = req && req.app && req.app.locals ? req.app.locals.io : null;
+  if (!io || !eventId) {
+    return;
+  }
+
+  io.to(`event:${eventId}:announce`).emit('announce:update', {
+    eventId,
+    reason,
+    battleId,
+    at: new Date().toISOString(),
+  });
+}
+
+function emitRankingUpdate(req, eventId, battleId = null) {
+  const io = req && req.app && req.app.locals ? req.app.locals.io : null;
+  if (!io || !eventId) {
+    return;
+  }
+
+  const payload = {
+    eventId,
+    battleId,
+    at: new Date().toISOString(),
+  };
+
+  io.to(`event:${eventId}:ranking`).emit('ranking:update', payload);
+  io.to('ranking:all').emit('ranking:update', payload);
 }
 
 // ─── GET /battles ─────────────────────────────────────────────────────────────
@@ -164,10 +194,11 @@ router.get('/events/:id/announce', async (req, res) => {
     const promotedBattleIds = await Battle.reevaluateQueue(eventId);
     await notifyPromotedBattles(event, promotedBattleIds);
 
-    const [battles, rooms, stats] = await Promise.all([
+    const [battles, rooms, stats, rankingBoard] = await Promise.all([
       Battle.findByEvent(eventId),
       Room.findByEvent(eventId),
       Battle.countByStatut(eventId),
+      EventRanking.findByEvent(eventId),
     ]);
 
     const activeStatuts = ['planifie', 'installation', 'en_cours'];
@@ -218,6 +249,7 @@ router.get('/events/:id/announce', async (req, res) => {
       roomBoards: Array.isArray(roomBoards) ? roomBoards : [],
       globalQueue: Array.isArray(globalQueue) ? globalQueue : [],
       recentResults: Array.isArray(recentResults) ? recentResults : [],
+      rankingBoard: Array.isArray(rankingBoard) ? rankingBoard : [],
       now: new Date(),
     });
   } catch (err) {
@@ -422,6 +454,8 @@ router.post(
         `[BATTLES] Nouvelle rencontre #${battleId} créée par #${req.session.userId} — jeu: ${game.nom} — joueurs: ${players.map(p => p.user_id).join(',')}`
       );
 
+      emitAnnounceUpdate(req, eventId, 'battle_created', battleId);
+
       req.flash('success', 'Rencontre créée avec succès ! La salle sera attribuée automatiquement.');
       return res.redirect(`/battles/events/${eventId}`);
 
@@ -432,56 +466,6 @@ router.post(
     }
   }
 );
-
-// ─── POST /battles/:id/ready ──────────────────────────────────────────────────
-// Passe une rencontre de 'planifie' à 'installation' (joueurs qui s'installent)
-
-router.post('/:id/ready', async (req, res) => {
-  const battleId = parseId(req.params.id);
-  if (!battleId) {
-    req.flash('error', 'Rencontre invalide.');
-    return res.redirect('/battles');
-  }
-
-  try {
-    const battle = await Battle.findById(battleId);
-    if (!battle) {
-      req.flash('error', 'Rencontre introuvable.');
-      return res.redirect('/battles');
-    }
-
-    const event = await Event.findById(battle.event_id);
-    if (!ensureLiveEvent(event, req, res)) {
-      return;
-    }
-
-    if (battle.statut !== 'planifie') {
-      req.flash('error', 'Cette rencontre ne peut pas passer en phase d\'installation.');
-      return res.redirect(`/battles/events/${battle.event_id}`);
-    }
-
-    const resultData = await Battle.changeStatutWithQueue(battleId, 'installation', battle.event_id);
-    if (!resultData.success) {
-      const conflict = await Battle.findRoomConflict(battleId);
-      req.flash('error', formatRoomConflictMessage('passer en installation', conflict));
-      return res.redirect(`/battles/events/${battle.event_id}`);
-    }
-
-    await notifyPromotedBattles(event, resultData.promotedBattleIds);
-
-    const updatedBattle = await Battle.findById(battleId);
-    discord.notifyBattleInstallation({ event, battle: updatedBattle }).catch(() => {});
-
-    logger.info(`[BATTLES] Rencontre #${battleId} → installation par #${req.session.userId}`);
-    req.flash('success', 'Rencontre en cours d\'installation.');
-    return res.redirect(`/battles/events/${battle.event_id}`);
-
-  } catch (err) {
-    logger.error(`[BATTLES] Erreur passage installation rencontre #${battleId} :`, err);
-    req.flash('error', 'Erreur lors du changement de statut.');
-    return res.redirect('/battles');
-  }
-});
 
 // ─── POST /battles/:id/start ──────────────────────────────────────────────────
 // Lance officiellement la rencontre (installation → en_cours)
@@ -521,6 +505,7 @@ router.post('/:id/start', async (req, res) => {
     discord.notifyBattleStarted({ event, battle: updatedBattle }).catch(() => {});
 
     logger.info(`[BATTLES] Rencontre #${battleId} → en_cours par #${req.session.userId}`);
+    emitAnnounceUpdate(req, battle.event_id, 'battle_started', battleId);
     req.flash('success', 'Rencontre lancée !');
     return res.redirect(`/battles/events/${battle.event_id}`);
 
@@ -583,14 +568,26 @@ router.post(
         return res.redirect(`/battles/events/${battle.event_id}`);
       }
 
+      // Recalcule le classement de l'evenement a chaque fin de rencontre.
+      await EventRanking.recalculateForEvent(battle.event_id);
+
       await notifyPromotedBattles(event, resultData.promotedBattleIds);
 
       const endedBattle = await Battle.findById(battleId);
       discord.notifyBattleEnded({ event, battle: endedBattle }).catch(() => {});
 
+      if (resultData.autoInstalledBattleId) {
+        const autoInstalledBattle = await Battle.findById(resultData.autoInstalledBattleId);
+        if (autoInstalledBattle && autoInstalledBattle.statut === 'installation') {
+          discord.notifyBattleInstallation({ event, battle: autoInstalledBattle }).catch(() => {});
+        }
+      }
+
       logger.info(
         `[BATTLES] Rencontre #${battleId} terminée par #${req.session.userId} — score: ${score} — gagnants: ${winnerIds.join(',')}`
       );
+      emitAnnounceUpdate(req, battle.event_id, 'battle_finished', battleId);
+      emitRankingUpdate(req, battle.event_id, battleId);
       req.flash('success', 'Résultat enregistré. La file d\'attente a été mise à jour.');
       return res.redirect(`/battles/events/${battle.event_id}`);
 
@@ -637,6 +634,7 @@ router.delete('/:id', async (req, res) => {
     await notifyPromotedBattles(event, promotedBattleIds);
 
     logger.info(`[BATTLES] Rencontre #${battleId} annulée par #${req.session.userId}`);
+    emitAnnounceUpdate(req, eventId, 'battle_deleted', battleId);
     req.flash('success', 'Rencontre annulée.');
     return res.redirect(`/battles/events/${eventId}`);
 

@@ -43,7 +43,7 @@ const Battle = {
   async findByEvent(eventId) {
     const [rows] = await db.pool.execute(
       `SELECT b.id, b.event_id, b.game_id, b.room_id, b.statut,
-              b.score, b.notes, b.created_at, b.updated_at,
+              b.score, b.notes, b.started_at, b.ended_at, b.created_at, b.updated_at,
               g.nom AS game_nom, g.console AS game_console, g.type_rencontre,
               r.nom AS room_nom, r.type AS room_type
          FROM battles b
@@ -72,7 +72,7 @@ const Battle = {
   async findActiveByEvent(eventId) {
     const [rows] = await db.pool.execute(
       `SELECT b.id, b.event_id, b.game_id, b.room_id, b.statut,
-              b.score, b.notes, b.created_at, b.updated_at,
+              b.score, b.notes, b.started_at, b.ended_at, b.created_at, b.updated_at,
               g.nom AS game_nom, g.console AS game_console, g.type_rencontre,
               r.nom AS room_nom, r.type AS room_type
          FROM battles b
@@ -101,7 +101,7 @@ const Battle = {
   async findById(id) {
     const [rows] = await db.pool.execute(
       `SELECT b.id, b.event_id, b.game_id, b.room_id, b.statut,
-              b.score, b.notes, b.created_at, b.updated_at,
+              b.score, b.notes, b.started_at, b.ended_at, b.created_at, b.updated_at,
               g.nom AS game_nom, g.console AS game_console, g.type_rencontre,
               r.nom AS room_nom, r.type AS room_type
          FROM battles b
@@ -167,15 +167,15 @@ const Battle = {
    */
   async findForAnnounce(eventId) {
     const [rows] = await db.pool.execute(
-      `SELECT b.id, b.statut, b.created_at,
+      `SELECT b.id, b.statut, b.created_at, b.started_at, b.ended_at,
               g.nom AS game_nom, g.console AS game_console, g.type_rencontre,
-              r.nom AS room_nom, r.type AS room_type
+              r.nom AS room_nom, r.type AS room_type, b.score
          FROM battles b
          JOIN games g ON g.id = b.game_id
          LEFT JOIN rooms r ON r.id = b.room_id
         WHERE b.event_id = ?
-          AND b.statut IN ('planifie', 'installation', 'en_cours')
-        ORDER BY b.created_at ASC`,
+          AND b.statut IN ('planifie', 'installation', 'en_cours', 'termine')
+        ORDER BY FIELD(b.statut, 'en_cours','installation','planifie','file_attente','termine'), b.created_at DESC`,
       [eventId]
     );
 
@@ -269,7 +269,12 @@ const Battle = {
     // - 1 rencontre en cours/installation (en_cours ou installation)
     // - 1 rencontre planifiee (prochaine partie)
     const [rooms] = await db.pool.execute(
-      `SELECT r.id
+      `SELECT r.id,
+              (
+                SELECT COUNT(*) FROM battles b3
+                 WHERE b3.room_id = r.id
+                   AND b3.statut IN ('installation', 'en_cours')
+              ) AS active_count
          FROM rooms r
         WHERE r.event_id = ?
           AND r.type_rencontre = ?
@@ -292,10 +297,12 @@ const Battle = {
     if (!rooms[0]) return false;
 
     const roomId = rooms[0].id;
+    const activeCount = Number(rooms[0].active_count) || 0;
+    const nextStatut = activeCount === 0 ? 'installation' : 'planifie';
     await db.pool.execute(
-      `UPDATE battles SET room_id = ?, statut = 'planifie', updated_at = NOW()
+      `UPDATE battles SET room_id = ?, statut = ?, updated_at = NOW()
         WHERE id = ? AND statut = 'file_attente'`,
-      [roomId, battleId]
+      [roomId, nextStatut, battleId]
     );
     return true;
   },
@@ -393,9 +400,9 @@ const Battle = {
         }
 
         const [result] = await conn.execute(
-          `UPDATE battles SET statut = ?, updated_at = NOW()
+          `UPDATE battles SET statut = ?, started_at = IF(? = 'en_cours', NOW(), started_at), updated_at = NOW()
             WHERE id = ?`,
-          [newStatut, id]
+          [newStatut, newStatut, id]
         );
         affectedRows = result.affectedRows;
 
@@ -408,9 +415,9 @@ const Battle = {
       }
     } else {
       const [result] = await db.pool.execute(
-        `UPDATE battles SET statut = ?, updated_at = NOW()
+        `UPDATE battles SET statut = ?, started_at = IF(? = 'en_cours', NOW(), started_at), updated_at = NOW()
           WHERE id = ?`,
-        [newStatut, id]
+        [newStatut, newStatut, id]
       );
       affectedRows = result.affectedRows;
     }
@@ -448,7 +455,7 @@ const Battle = {
   async setResultWithQueue(id, score, winnerIds, eventId) {
     // Met à jour le score et le statut
     const [result] = await db.pool.execute(
-      `UPDATE battles SET score = ?, statut = 'termine', updated_at = NOW()
+      `UPDATE battles SET score = ?, statut = 'termine', ended_at = NOW(), updated_at = NOW()
         WHERE id = ?`,
       [score || null, id]
     );
@@ -473,10 +480,55 @@ const Battle = {
       }
     }
 
+    // Automatise l'etape "Joueurs en place":
+    // la prochaine rencontre planifiee dans la meme salle passe en installation.
+    // Cela libere ensuite un slot planifie pour la file d'attente.
+    let autoInstalledBattleId = null;
+    const [roomRows] = await db.pool.execute(
+      'SELECT room_id FROM battles WHERE id = ?',
+      [id]
+    );
+    const roomId = roomRows[0] ? roomRows[0].room_id : null;
+
+    if (roomId) {
+      const [plannedRows] = await db.pool.execute(
+        `SELECT id
+           FROM battles
+          WHERE event_id = ?
+            AND room_id = ?
+            AND statut = 'planifie'
+          ORDER BY created_at ASC
+          LIMIT 1`,
+        [eventId, roomId]
+      );
+
+      if (plannedRows[0]) {
+        const plannedBattleId = plannedRows[0].id;
+        const [installResult] = await db.pool.execute(
+          `UPDATE battles
+              SET statut = 'installation', updated_at = NOW()
+            WHERE id = ?
+              AND statut = 'planifie'
+              AND (
+                SELECT active_count FROM (
+                  SELECT COUNT(*) AS active_count FROM battles bx
+                   WHERE bx.room_id = ?
+                     AND bx.statut IN ('installation', 'en_cours')
+                ) AS subq
+              ) = 0`,
+          [plannedBattleId, roomId]
+        );
+
+        if (installResult.affectedRows > 0) {
+          autoInstalledBattleId = plannedBattleId;
+        }
+      }
+    }
+
     // Réévalue la file d'attente
     const promotedBattleIds = await Battle.reevaluateQueue(eventId);
 
-    return { success: true, promotedBattleIds };
+    return { success: true, promotedBattleIds, autoInstalledBattleId };
   },
 
   /**

@@ -9,6 +9,7 @@
  */
 
 const express        = require('express');
+const http           = require('http');
 const path           = require('path');
 const morgan         = require('morgan');
 const helmet         = require('helmet');
@@ -16,6 +17,7 @@ const session        = require('express-session');
 const flash          = require('connect-flash');
 const methodOverride = require('method-override');
 const { csrfSync }   = require('csrf-sync');
+const { Server }     = require('socket.io');
 
 const logger             = require('./config/logger');
 const { testConnection } = require('./config/database');
@@ -55,7 +57,7 @@ app.use(helmet({
       styleSrc:    ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
       fontSrc:     ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com'],
       imgSrc:      ["'self'", 'data:', 'https:'],
-      connectSrc:  ["'self'"],
+      connectSrc:  ["'self'", 'ws:', 'wss:'],
     },
   },
 }));
@@ -228,7 +230,43 @@ async function refreshDatabaseState() {
 
 function listenAsync() {
   return new Promise((resolve, reject) => {
-    const server = app.listen(PORT, () => {
+    const server = http.createServer(app);
+
+    const io = new Server(server, {
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+      cors: {
+        origin: false,
+      },
+    });
+
+    app.locals.io = io;
+
+    io.on('connection', (socket) => {
+      socket.on('announce:join', (payload = {}) => {
+        const eventId = Number.parseInt(payload.eventId, 10);
+        if (!Number.isInteger(eventId) || eventId <= 0) {
+          return;
+        }
+
+        socket.join(`event:${eventId}:announce`);
+      });
+
+      socket.on('ranking:join-event', (payload = {}) => {
+        const eventId = Number.parseInt(payload.eventId, 10);
+        if (!Number.isInteger(eventId) || eventId <= 0) {
+          return;
+        }
+
+        socket.join(`event:${eventId}:ranking`);
+      });
+
+      socket.on('ranking:join-all', () => {
+        socket.join('ranking:all');
+      });
+    });
+
+    server.listen(PORT, () => {
       logger.info(`[SERVER] LANPartyManager demarre sur le port ${PORT} (${ENV})`);
       resolve(server);
     });

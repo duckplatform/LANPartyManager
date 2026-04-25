@@ -1,5 +1,29 @@
 <%- include('../../partials/head') %>
 
+<%
+  const formatDuration = (milliseconds) => {
+    if (!milliseconds || milliseconds <= 0) return '--:--';
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const getGameDuration = (started_at, ended_at) => {
+    if (!started_at || !ended_at) return null;
+    const start = new Date(started_at).getTime();
+    const end = new Date(ended_at).getTime();
+    return formatDuration(end - start);
+  };
+
+  const getGameElapsedTime = (started_at) => {
+    if (!started_at) return null;
+    const start = new Date(started_at).getTime();
+    const now = new Date().getTime();
+    return formatDuration(now - start);
+  };
+%>
+
 <style>
   /* Colonnes de statuts */
   .battles-stats { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: var(--space-lg); }
@@ -22,6 +46,10 @@
   .battle-card.statut-en_cours     { border-left: 4px solid #10b981; }
   .battle-card.statut-termine      { border-left: 4px solid #6b7280; opacity: .7; }
   .battle-card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: .5rem; }
+  .battle-duration { font-size: .82rem; color: var(--color-text-muted); margin-top: .4rem; }
+  .battle-duration-item { display: inline-flex; align-items: center; gap: .35rem; margin-right: 1rem; }
+  .battle-duration-label { text-transform: uppercase; font-size: .7rem; font-weight: 700; opacity: 0.75; }
+  .battle-duration-value { font-weight: 600; color: #ffffff; font-family: 'Courier New', monospace; }
   .battle-players { display: flex; gap: 1.5rem; margin-top: .5rem; flex-wrap: wrap; }
   .battle-team { flex: 1; min-width: 120px; }
   .battle-team-label { font-size: .75rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
@@ -35,6 +63,16 @@
                border-radius: 8px; padding: .5rem .85rem; min-width: 130px; text-align: center; color: #0f172a; }
   .room-pill-meta { font-size: .75rem; color: #475569; }
   .battle-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+  .battle-actions .btn[disabled],
+  .battle-actions .btn[disabled]:hover,
+  .battle-actions .btn[disabled]:focus {
+    background: #6b7280;
+    border-color: #6b7280;
+    color: #e5e7eb;
+    opacity: 1;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
   /* Modal résultat */
   .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; align-items:center; justify-content:center; }
   .modal-backdrop.open { display:flex; }
@@ -166,6 +204,25 @@
               </div>
             </div>
 
+            <!-- Durée de jeu -->
+            <% if (b.statut === 'en_cours' && b.started_at) { %>
+              <div class="battle-duration">
+                <div class="battle-duration-item">
+                  <i class="fas fa-hourglass-start"></i>
+                  <span class="battle-duration-label">Durée:</span>
+                  <span class="battle-duration-value"><%= getGameElapsedTime(b.started_at) %></span>
+                </div>
+              </div>
+            <% } else if (b.statut === 'termine' && b.started_at && b.ended_at) { %>
+              <div class="battle-duration">
+                <div class="battle-duration-item">
+                  <i class="fas fa-hourglass-end"></i>
+                  <span class="battle-duration-label">Durée totale:</span>
+                  <span class="battle-duration-value"><%= getGameDuration(b.started_at, b.ended_at) %></span>
+                </div>
+              </div>
+            <% } %>
+
             <!-- Joueurs -->
             <div class="battle-players">
               <% if (b.type_rencontre === '2v2') { %>
@@ -202,14 +259,6 @@
 
             <!-- Actions -->
             <div class="battle-actions">
-              <% if (b.statut === 'planifie') { %>
-                <form action="/battles/<%= b.id %>/ready" method="POST" class="form-inline">
-                  <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
-                  <button type="submit" class="btn btn--primary btn--sm">
-                    <i class="fas fa-users"></i> Joueurs en place
-                  </button>
-                </form>
-              <% } %>
               <% if (b.statut === 'installation') { %>
                 <form action="/battles/<%= b.id %>/start" method="POST" class="form-inline">
                   <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
@@ -265,6 +314,15 @@
               <% if (b.room_nom) { %>&nbsp;|&nbsp;<i class="fas fa-door-open"></i> <%= b.room_nom %><% } %>
             </div>
           </div>
+          <% if (b.started_at && b.ended_at) { %>
+          <div class="battle-duration">
+            <div class="battle-duration-item">
+              <i class="fas fa-hourglass-end"></i>
+              <span class="battle-duration-label">Durée:</span>
+              <span class="battle-duration-value"><%= getGameDuration(b.started_at, b.ended_at) %></span>
+            </div>
+          </div>
+          <% } %>
           <div class="battle-players" style="margin-top:.4rem;">
             <% b.players.forEach(function(p) { %>
               <span class="player-chip <%= p.est_gagnant ? 'winner' : '' %>">

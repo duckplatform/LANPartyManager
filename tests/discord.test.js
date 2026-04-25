@@ -327,8 +327,8 @@ describe('Discord Service', function () {
       const embed = postCalls[0].options.body.embeds[0];
       const participants = embed.fields.find(f => f.name === 'Participants');
       expect(participants).to.exist;
-      expect(participants.value).to.include('Equipe 1: AlphaDiscord');
-      expect(participants.value).to.include('Equipe 2: BravoDiscord');
+      expect(participants.value).to.include('Equipe 1: @AlphaDiscord');
+      expect(participants.value).to.include('Equipe 2: @BravoDiscord');
     });
 
     it('doit notifier la transition file_attente vers planifie', async function () {

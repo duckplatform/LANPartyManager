@@ -1,11 +1,11 @@
 <%- include('../partials/head') %>
 
-<div class="container" style="padding-top: var(--space-xl); padding-bottom: var(--space-xxl);">
+<div class="container" style="padding-top: var(--space-xl); padding-bottom: 8rem; min-height: 80vh; display: flex; flex-direction: column;">
 
   <!-- En-tête de page -->
   <div style="text-align:center; margin-bottom: var(--space-xl);">
     <h1 class="section-title">
-      <i class="fas fa-calendar-days"></i> Événements à venir
+      <i class="fas fa-calendar-days"></i> Événements
     </h1>
     <p class="text-muted" style="max-width:600px; margin: 0 auto;">
       Retrouvez tous nos prochains événements. Connectez-vous pour vous inscrire et recevoir votre billet électronique.
@@ -14,7 +14,7 @@
 
   <% if (events.length === 0) { %>
     <!-- Aucun événement -->
-    <div class="card" style="text-align:center; padding: var(--space-xxl);">
+    <div class="card" style="text-align:center; padding: var(--space-xxl); flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
       <div style="font-size:3rem; color:var(--color-text-muted); margin-bottom:var(--space-md);">
         <i class="fas fa-calendar-xmark"></i>
       </div>
@@ -26,7 +26,7 @@
     </div>
 
   <% } else { %>
-    <div class="events-grid">
+    <div class="events-grid" style="margin-bottom: 3rem;">
       <% events.forEach(function(event) {
         const dateObj   = new Date(event.date_heure);
         const dateFr    = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -43,6 +43,10 @@
           <% if (isLive) { %>
             <span class="event-status-badge event-status--live">
               <i class="fas fa-circle-play"></i> En cours
+            </span>
+          <% } else if (event.statut === 'termine') { %>
+            <span class="event-status-badge" style="background:#3c3f45;color:#fff;">
+              <i class="fas fa-flag-checkered"></i> Terminé
             </span>
           <% } else { %>
             <span class="event-status-badge event-status--upcoming">
@@ -93,6 +97,72 @@
               <i class="fas fa-lock"></i> Inscriptions closes
             </p>
           <% } %>
+
+          <% if (event.rankingTop && event.rankingTop.length > 0) { %>
+            <div class="card" style="margin-top:var(--space-md); overflow:hidden;">
+              <div class="card-body" style="padding: 0;">
+                <div style="padding: var(--space-md);">
+                  <h3 style="font-size:1rem; margin:0 0 var(--space-md) 0; display:flex; align-items:center; gap:.5rem;">
+                    <i class="fas fa-ranking-star"></i> Classement
+                  </h3>
+                </div>
+                
+                <!-- Ranking Table -->
+                <table style="width:100%; border-collapse:collapse; font-size:0.95rem;">
+                  <% event.rankingTop.slice(0, 5).forEach(function(entry, idx) {
+                    let medalIcon = '';
+                    let medalColor = '';
+                    if (idx === 0) {
+                      medalIcon = '🥇';
+                      medalColor = '#FFD700';
+                    } else if (idx === 1) {
+                      medalIcon = '🥈';
+                      medalColor = '#C0C0C0';
+                    } else if (idx === 2) {
+                      medalIcon = '🥉';
+                      medalColor = '#CD7F32';
+                    }
+                  %>
+                    <tr style="border-top: 1px solid rgba(0,0,0,0.05); transition: background-color 0.2s ease; <%
+                      if (idx === 0) { %>
+                        background: linear-gradient(90deg, rgba(255,215,0,0.08) 0%, transparent 100%);
+                      <% } else if (idx === 1) { %>
+                        background: linear-gradient(90deg, rgba(192,192,192,0.08) 0%, transparent 100%);
+                      <% } else if (idx === 2) { %>
+                        background: linear-gradient(90deg, rgba(205,127,50,0.08) 0%, transparent 100%);
+                      <% } %>
+                    " onmouseover="this.style.backgroundColor='rgba(0,0,0,0.02)'" onmouseout="this.style.backgroundColor=''">
+                      <td style="padding: var(--space-sm) var(--space-md); text-align:center; font-weight:bold; width:50px; color:<%= medalColor %>; font-size:1.2rem;">
+                        <% if (medalIcon) { %>
+                          <%= medalIcon %>
+                        <% } else { %>
+                          <%= entry.rang %>
+                        <% } %>
+                      </td>
+                      <td style="padding: var(--space-sm) var(--space-md); font-weight:600; color:var(--color-text);">
+                        <%= entry.pseudo %>
+                      </td>
+                      <td style="padding: var(--space-sm) var(--space-sm); text-align:right;">
+                        <span style="display:inline-block; background:#E3F2FD; color:#1976D2; padding:0.25rem 0.6rem; border-radius:1rem; font-size:0.85rem; font-weight:600; white-space:nowrap;">
+                          <i class="fas fa-star" style="margin-right:0.3rem;"></i><%= entry.points %> pts
+                        </span>
+                      </td>
+                      <td style="padding: var(--space-sm) var(--space-sm); text-align:right;">
+                        <span style="display:inline-block; background:#E8F5E9; color:#388E3C; padding:0.25rem 0.6rem; border-radius:1rem; font-size:0.85rem; font-weight:600; white-space:nowrap;">
+                          <i class="fas fa-trophy" style="margin-right:0.3rem;"></i><%= entry.wins %>
+                        </span>
+                      </td>
+                      <td style="padding: var(--space-sm) var(--space-md); text-align:right; color:var(--color-text-muted); font-size:0.9rem;">
+                        <span style="display:inline-block; background:#F3E5F5; color:#7B1FA2; padding:0.25rem 0.6rem; border-radius:1rem; font-size:0.85rem; font-weight:600;">
+                          <i class="fas fa-gamepad" style="margin-right:0.3rem;"></i><%= entry.battles_played %>
+                        </span>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </table>
+              </div>
+            </div>
+          <% } %>
         </div>
 
         <!-- Actions -->
@@ -138,6 +208,7 @@
 
 </div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script>
 /* ── Comptes à rebours des cartes événements ── */
 (function () {
@@ -165,6 +236,31 @@
     }
     tick();
   });
+
+  if (typeof window.io === 'function') {
+    var socket = window.io({
+      path: '/socket.io',
+      transports: ['websocket', 'polling'],
+    });
+
+    var reloadTimer = null;
+    function scheduleReload() {
+      if (reloadTimer) {
+        window.clearTimeout(reloadTimer);
+      }
+      reloadTimer = window.setTimeout(function () {
+        window.location.reload();
+      }, 450);
+    }
+
+    socket.on('connect', function () {
+      socket.emit('ranking:join-all');
+    });
+
+    socket.on('ranking:update', function () {
+      scheduleReload();
+    });
+  }
 }());
 </script>
 

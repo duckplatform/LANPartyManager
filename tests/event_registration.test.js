@@ -91,41 +91,7 @@ describe('EventRegistration Model', function () {
       expect(args[1]).to.equal(5);
     });
 
-    it('doit insérer un token UUID dans la base de données', async function () {
-      poolStub.execute.resolves([{ insertId: 100 }]);
-      await EventRegistration.create(10, 5);
-      const args = poolStub.execute.firstCall.args[1];
-      // Le token UUID doit être présent (3e argument)
-      expect(args[2]).to.be.a('string');
-      // Vérifie le format UUID v4
-      const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      expect(UUID_RE.test(args[2])).to.be.true;
-    });
-  });
 
-  // ── findByToken ────────────────────────────────────────────────────────────
-
-  describe('findByToken()', function () {
-    it('doit retourner l\'inscription correspondant au token', async function () {
-      const fakeReg = {
-        id: 1, event_id: 10, user_id: 5,
-        token: '550e8400-e29b-41d4-a716-446655440000',
-        event_nom: 'LAN Spring', date_heure: new Date(), lieu: 'Paris', statut: 'planifie',
-        pseudo: 'Player1', nom: 'Doe', prenom: 'John', email: 'j@d.com',
-      };
-      poolStub.execute.resolves([[fakeReg]]);
-
-      const result = await EventRegistration.findByToken('550e8400-e29b-41d4-a716-446655440000');
-      expect(result).to.deep.equal(fakeReg);
-      const args = poolStub.execute.firstCall.args[1];
-      expect(args[0]).to.equal('550e8400-e29b-41d4-a716-446655440000');
-    });
-
-    it('doit retourner null si le token est introuvable', async function () {
-      poolStub.execute.resolves([[]]);
-      const result = await EventRegistration.findByToken('token-inexistant');
-      expect(result).to.be.null;
-    });
   });
 
   // ── findByEventAndUser ────────────────────────────────────────────────────
@@ -134,7 +100,6 @@ describe('EventRegistration Model', function () {
     it('doit retourner l\'inscription d\'un utilisateur pour un événement', async function () {
       const fakeReg = {
         id: 1, event_id: 10, user_id: 5,
-        token: '550e8400-e29b-41d4-a716-446655440000',
         nom: 'LAN Spring', date_heure: new Date(), lieu: 'Paris', statut: 'planifie',
       };
       poolStub.execute.resolves([[fakeReg]]);
