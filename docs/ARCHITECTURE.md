@@ -170,6 +170,19 @@ Le seed est idempotent : il ajoute uniquement des enregistrements de demonstrati
 | created_at | DATETIME | Date de création |
 | updated_at | DATETIME | Date de dernière modification |
 
+**Table `events`**
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
+| nom | VARCHAR(255) | Nom de l'événement |
+| date_heure | DATETIME | Date et heure de début |
+| lieu | VARCHAR(255) | Lieu de l'événement |
+| discord_channel_id | VARCHAR(32) NULL | ID du canal Discord dédié (optionnel, 17 à 20 chiffres) |
+| statut | ENUM('planifie','en_cours','termine') | État métier de l'événement |
+| created_at | DATETIME | Date de création |
+| updated_at | DATETIME | Date de dernière modification |
+
 **Table `games`** *(Étape 5 — Système de rencontres)*
 
 | Colonne | Type | Description |

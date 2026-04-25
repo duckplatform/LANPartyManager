@@ -373,6 +373,10 @@ const eventValidation = [
     .trim()
     .notEmpty().withMessage('Le lieu est obligatoire.')
     .isLength({ max: 255 }).withMessage('Le lieu ne peut pas dépasser 255 caractères.'),
+  body('discord_channel_id')
+    .optional({ checkFalsy: true })
+    .trim()
+    .matches(/^\d{17,20}$/).withMessage('L\'ID de canal Discord doit contenir entre 17 et 20 chiffres.'),
   body('statut')
     .isIn(['planifie', 'en_cours', 'termine']).withMessage('Statut invalide.'),
 ];
@@ -423,9 +427,9 @@ router.post('/events', eventValidation, async (req, res) => {
   }
 
   try {
-    const { nom, date_heure, lieu } = req.body;
+    const { nom, date_heure, lieu, discord_channel_id } = req.body;
     const statut = req.body.statut;
-    const id = await Event.create({ nom, date_heure, lieu, statut });
+    const id = await Event.create({ nom, date_heure, lieu, statut, discord_channel_id });
     logger.info(`[ADMIN/EVENTS] Événement #${id} créé par l'utilisateur #${req.session.userId}`);
 
     // Notification Discord à la création de l'événement
@@ -501,9 +505,9 @@ router.post('/events/:id', eventValidation, async (req, res) => {
       return res.redirect('/admin/events');
     }
 
-    const { nom, date_heure, lieu } = req.body;
+    const { nom, date_heure, lieu, discord_channel_id } = req.body;
     const statut = req.body.statut;
-    await Event.update(id, { nom, date_heure, lieu, statut });
+    await Event.update(id, { nom, date_heure, lieu, statut, discord_channel_id });
     logger.info(`[ADMIN/EVENTS] Événement #${id} modifié par l'utilisateur #${req.session.userId}`);
 
     // Notifications Discord selon les transitions de statut

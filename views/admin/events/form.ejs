@@ -96,6 +96,28 @@
           />
         </div>
 
+        <!-- Canal Discord -->
+        <div class="form-group">
+          <label class="form-label" for="discord_channel_id">
+            <i class="fab fa-discord"></i> ID canal Discord (optionnel)
+          </label>
+          <input
+            type="text"
+            id="discord_channel_id"
+            name="discord_channel_id"
+            class="form-input"
+            placeholder="Ex. : 123456789012345678"
+            value="<%= (event && event.discord_channel_id) ? event.discord_channel_id : '' %>"
+            maxlength="32"
+            inputmode="numeric"
+            pattern="[0-9]{17,20}"
+            autocomplete="off"
+          />
+          <span class="form-hint">
+            Facultatif. Utilisez l'identifiant numérique du canal Discord dédié à cet événement.
+          </span>
+        </div>
+
       </div>
 
       <!-- ── Barre latérale ── -->

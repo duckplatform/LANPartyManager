@@ -122,7 +122,7 @@ describe('Event Model', function () {
       });
 
       const args = poolStub.execute.firstCall.args[1];
-      expect(args[3]).to.equal('planifie');
+      expect(args[4]).to.equal('planifie');
     });
 
     it('doit rejeter un statut invalide et utiliser "planifie"', async function () {
@@ -136,7 +136,7 @@ describe('Event Model', function () {
       });
 
       const args = poolStub.execute.firstCall.args[1];
-      expect(args[3]).to.equal('planifie');
+      expect(args[4]).to.equal('planifie');
     });
 
     it('doit trim le nom et le lieu', async function () {
@@ -145,6 +145,36 @@ describe('Event Model', function () {
       const args = poolStub.execute.firstCall.args[1];
       expect(args[0]).to.equal('LAN');
       expect(args[2]).to.equal('Paris');
+    });
+
+    it('doit stocker discord_channel_id quand il est fourni', async function () {
+      poolStub.execute.resolves([{ insertId: 11 }]);
+
+      await Event.create({
+        nom: 'LAN Discord',
+        date_heure: '2026-01-01 12:00:00',
+        lieu: 'Paris',
+        statut: 'planifie',
+        discord_channel_id: '123456789012345678',
+      });
+
+      const args = poolStub.execute.firstCall.args[1];
+      expect(args[3]).to.equal('123456789012345678');
+    });
+
+    it('doit normaliser discord_channel_id vide a null', async function () {
+      poolStub.execute.resolves([{ insertId: 12 }]);
+
+      await Event.create({
+        nom: 'LAN Sans Canal',
+        date_heure: '2026-01-01 12:00:00',
+        lieu: 'Paris',
+        statut: 'planifie',
+        discord_channel_id: '   ',
+      });
+
+      const args = poolStub.execute.firstCall.args[1];
+      expect(args[3]).to.equal(null);
     });
 
     it('doit refuser la creation d\'un 2e evenement en_cours', async function () {
@@ -185,12 +215,13 @@ describe('Event Model', function () {
       expect(poolStub.execute.calledOnce).to.be.true;
       const query = poolStub.execute.firstCall.args[0];
       expect(query).to.include('UPDATE events');
+      expect(query).to.include('discord_channel_id');
       expect(query).to.include('statut');
     });
 
     it('doit retourner false si aucune ligne affectée', async function () {
       poolStub.execute.resolves([{ affectedRows: 0 }]);
-      const result = await Event.update(999, { nom: 'X', date_heure: '2025-01-01', lieu: 'Y', statut: 'planifie' });
+      const result = await Event.update(999, { nom: 'X', date_heure: '2025-01-01', lieu: 'Y', statut: 'planifie', discord_channel_id: null });
       expect(result).to.be.false;
     });
 
@@ -227,6 +258,21 @@ describe('Event Model', function () {
 
       expect(result).to.be.true;
       expect(poolStub.execute.callCount).to.equal(2);
+    });
+
+    it('doit trim discord_channel_id en mise a jour', async function () {
+      poolStub.execute.resolves([{ affectedRows: 1 }]);
+
+      await Event.update(1, {
+        nom: 'LAN A',
+        date_heure: '2026-01-02 12:00:00',
+        lieu: 'Lyon',
+        statut: 'planifie',
+        discord_channel_id: ' 123456789012345678 ',
+      });
+
+      const args = poolStub.execute.firstCall.args[1];
+      expect(args[3]).to.equal('123456789012345678');
     });
   });
 

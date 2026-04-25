@@ -82,12 +82,15 @@ CREATE TABLE IF NOT EXISTS `events` (
   `nom`         VARCHAR(255)                           NOT NULL COMMENT 'Nom de l''evenement',
   `date_heure`  DATETIME                               NOT NULL COMMENT 'Date et heure de debut',
   `lieu`        VARCHAR(255)                           NOT NULL COMMENT 'Lieu de l''evenement',
+  `discord_channel_id` VARCHAR(32)                     NULL COMMENT 'ID du canal Discord dedie a l''evenement',
   `statut`      ENUM('planifie','en_cours','termine') NOT NULL DEFAULT 'planifie',
   `active_unique_slot` TINYINT GENERATED ALWAYS AS (CASE WHEN `statut` = 'en_cours' THEN 1 ELSE NULL END) STORED,
   `created_at`  DATETIME                               NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at`  DATETIME                               NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_events_single_active` (`active_unique_slot`),
+  CONSTRAINT `chk_events_discord_channel_id`
+    CHECK (`discord_channel_id` IS NULL OR `discord_channel_id` REGEXP '^[0-9]{17,20}$'),
   KEY `idx_events_statut` (`statut`),
   KEY `idx_events_date_heure` (`date_heure`)
 ) ENGINE=InnoDB

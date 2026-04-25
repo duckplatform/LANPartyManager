@@ -52,7 +52,7 @@ const Event = {
    */
   async findAll() {
     const [rows] = await db.pool.execute(
-      `SELECT id, nom, date_heure, lieu, statut, created_at, updated_at
+      `SELECT id, nom, date_heure, lieu, discord_channel_id, statut, created_at, updated_at
          FROM events
          ORDER BY date_heure DESC`
     );
@@ -100,7 +100,7 @@ const Event = {
    */
   async findAllPublic() {
     const [rows] = await db.pool.execute(
-      `SELECT e.id, e.nom, e.date_heure, e.lieu, e.statut,
+      `SELECT e.id, e.nom, e.date_heure, e.lieu, e.discord_channel_id, e.statut,
               COUNT(er.id) AS registrationCount
          FROM events e
          LEFT JOIN event_registrations er ON er.event_id = e.id
@@ -115,11 +115,14 @@ const Event = {
 
   /**
    * Crée un nouvel événement.
-   * @param {{ nom: string, date_heure: string, lieu: string, statut?: string }} data
+   * @param {{ nom: string, date_heure: string, lieu: string, statut?: string, discord_channel_id?: string|null }} data
    * @returns {Promise<number>} ID du nouvel événement
    */
-  async create({ nom, date_heure, lieu, statut = 'planifie' }) {
+  async create({ nom, date_heure, lieu, statut = 'planifie', discord_channel_id = null }) {
     const statutFinal = STATUTS_VALIDES.includes(statut) ? statut : 'planifie';
+    const discordChannelIdFinal = typeof discord_channel_id === 'string' && discord_channel_id.trim()
+      ? discord_channel_id.trim()
+      : null;
 
     if (statutFinal === 'en_cours') {
       const conflict = await Event.findCurrentLive();
@@ -130,9 +133,9 @@ const Event = {
 
     try {
       const [result] = await db.pool.execute(
-        `INSERT INTO events (nom, date_heure, lieu, statut)
-         VALUES (?, ?, ?, ?)`,
-        [nom.trim(), date_heure, lieu.trim(), statutFinal]
+        `INSERT INTO events (nom, date_heure, lieu, discord_channel_id, statut)
+         VALUES (?, ?, ?, ?, ?)`,
+        [nom.trim(), date_heure, lieu.trim(), discordChannelIdFinal, statutFinal]
       );
       return result.insertId;
     } catch (err) {
@@ -146,11 +149,14 @@ const Event = {
   /**
    * Met à jour un événement.
    * @param {number} id
-   * @param {{ nom: string, date_heure: string, lieu: string, statut?: string }} data
+   * @param {{ nom: string, date_heure: string, lieu: string, statut?: string, discord_channel_id?: string|null }} data
    * @returns {Promise<boolean>}
    */
-  async update(id, { nom, date_heure, lieu, statut = 'planifie' }) {
+  async update(id, { nom, date_heure, lieu, statut = 'planifie', discord_channel_id = null }) {
     const statutFinal = STATUTS_VALIDES.includes(statut) ? statut : 'planifie';
+    const discordChannelIdFinal = typeof discord_channel_id === 'string' && discord_channel_id.trim()
+      ? discord_channel_id.trim()
+      : null;
 
     if (statutFinal === 'en_cours') {
       const conflict = await Event.findCurrentLive(id);
@@ -162,9 +168,9 @@ const Event = {
     try {
       const [result] = await db.pool.execute(
         `UPDATE events
-            SET nom = ?, date_heure = ?, lieu = ?, statut = ?, updated_at = NOW()
+            SET nom = ?, date_heure = ?, lieu = ?, discord_channel_id = ?, statut = ?, updated_at = NOW()
           WHERE id = ?`,
-        [nom.trim(), date_heure, lieu.trim(), statutFinal, id]
+        [nom.trim(), date_heure, lieu.trim(), discordChannelIdFinal, statutFinal, id]
       );
       return result.affectedRows > 0;
     } catch (err) {
@@ -182,7 +188,7 @@ const Event = {
    */
   async findAllWithRegistrationCount() {
     const [rows] = await db.pool.execute(
-      `SELECT e.id, e.nom, e.date_heure, e.lieu, e.statut,
+      `SELECT e.id, e.nom, e.date_heure, e.lieu, e.discord_channel_id, e.statut,
               e.created_at, e.updated_at,
               COUNT(er.id) AS registrationCount
          FROM events e
