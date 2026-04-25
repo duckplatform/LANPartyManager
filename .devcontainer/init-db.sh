@@ -7,7 +7,7 @@
 #   1. Attend que MySQL soit prêt à accepter des connexions
 #   2. Crée la base de données si elle n'existe pas
 #   3. Importe le schéma de base (install.sql)
-#   4. Applique toutes les migrations (database/migrations/*.sql)
+#   4. Importe le jeu de données de démonstration (codespace.sql)
 #
 # Les variables DB_* sont injectées par docker-compose.yml
 # ============================================================
@@ -23,7 +23,7 @@ DB_NAME="${DB_NAME:-lanpartymanager}"
 
 WORKSPACE="/workspace"
 SQL_INSTALL="${WORKSPACE}/database/install.sql"
-MIGRATIONS_DIR="${WORKSPACE}/database/migrations"
+SEED_CODESPACE="${WORKSPACE}/database/seeds/codespace.sql"
 
 # ── Couleurs pour la console ─────────────────────────────────
 GREEN='\033[0;32m'
@@ -101,28 +101,15 @@ mysql_cmd "${DB_NAME}" < "${SQL_INSTALL}"
 
 echo -e "${GREEN}✔ Schéma importé avec succès.${NC}"
 
-# ── 4. Application des migrations ───────────────────────────
+# ── 4. Import du jeu de données ──────────────────────────────
 echo ""
-echo "🔄 Application des migrations depuis ${MIGRATIONS_DIR}..."
+echo "🌱 Import du jeu de donnees Codespace..."
 
-if [ -d "${MIGRATIONS_DIR}" ]; then
-  MIGRATION_COUNT=0
-  for migration_file in $(ls -1 "${MIGRATIONS_DIR}"/*.sql 2>/dev/null | sort); do
-    migration_name=$(basename "${migration_file}")
-    echo "   → ${migration_name}"
-    # Les erreurs MySQL (ex. colonne déjà existante) sont ignorées
-    # pour rendre le script idempotent sur un schéma déjà à jour
-    if MYSQL_PWD="${DB_PASSWORD}" mysql -h "${DB_HOST}" -P "${DB_PORT}" \
-        -u "${DB_USER}" "${DB_NAME}" < "${migration_file}" 2>/dev/null; then
-      echo -e "   ${GREEN}✔ Appliquée.${NC}"
-    else
-      echo -e "   ${YELLOW}⚠ Ignorée (déjà appliquée ou erreur non bloquante).${NC}"
-    fi
-    MIGRATION_COUNT=$((MIGRATION_COUNT + 1))
-  done
-  echo -e "${GREEN}✔ ${MIGRATION_COUNT} migration(s) traitée(s).${NC}"
+if [ -f "${SEED_CODESPACE}" ]; then
+  mysql_cmd "${DB_NAME}" < "${SEED_CODESPACE}"
+  echo -e "${GREEN}✔ Jeu de donnees de demonstration importe.${NC}"
 else
-  echo -e "${YELLOW}⚠ Dossier migrations introuvable, étape ignorée.${NC}"
+  echo -e "${YELLOW}⚠ Aucun seed Codespace trouve, etape ignoree.${NC}"
 fi
 
 # ── 5. Résumé ────────────────────────────────────────────────
@@ -136,6 +123,10 @@ echo ""
 echo "  👤 Compte admin par défaut :"
 echo "       Email    : admin@lanparty.local"
 echo "       Password : Admin1234"
+echo ""
+echo "  👥 Comptes de demonstration :"
+echo "       Moderatrice : lea.martin@lanparty.local / Admin1234"
+echo "       Joueur      : hugo.bernard@lanparty.local / Admin1234"
 echo ""
 echo -e "  ${YELLOW}⚠️  Changez ce mot de passe dès la première connexion !${NC}"
 echo ""

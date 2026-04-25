@@ -1,6 +1,10 @@
 <%- include('../../partials/head') %>
 
 <div class="container admin-container">
+  <div class="admin-layout">
+    <%- include('../_sidebar', { activeSection: 'news' }) %>
+
+    <section class="admin-main">
 
   <!-- En-tête -->
   <div class="admin-header">
@@ -178,6 +182,9 @@
 
     </div>
   </form>
+
+    </section>
+  </div>
 
 </div>
 

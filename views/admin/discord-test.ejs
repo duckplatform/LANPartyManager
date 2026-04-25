@@ -1,0 +1,105 @@
+<%- include('../partials/head', { title: 'Test Discord Mentions' }) %>
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card">
+        <div class="card-header bg-dark text-white">
+          <h4 class="mb-0">🧪 Test des mentions Discord</h4>
+        </div>
+        <div class="card-body">
+          <%- include('../partials/flash') %>
+
+          <p class="text-muted mb-4">
+            Envoie un message de test sur le canal Discord configuré
+            (<code>DISCORD_CHANNEL_EVENTS</code>) pour comparer les deux formats de mention.
+          </p>
+
+          <form method="POST" action="/admin/discord-test">
+            <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+            <div class="mb-3">
+              <label class="form-label fw-bold">Canal cible (optionnel)</label>
+              <input type="text" name="channel_id" class="form-control font-monospace"
+                     placeholder="Laissez vide pour utiliser DISCORD_CHANNEL_EVENTS"
+                     value="<%= channelId || '' %>">
+              <div class="form-text">
+                Canal Discord configuré : <code><%= configuredChannel || '(non configuré)' %></code>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Pseudo (texte brut)</label>
+              <input type="text" name="pseudo" class="form-control"
+                     placeholder="ex: MonPseudo"
+                     value="<%= pseudo || '' %>">
+              <div class="form-text">Sera envoyé comme <code>@MonPseudo</code> — texte brut, aucune notification.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-bold">Discord User ID (Snowflake)</label>
+              <input type="text" name="discord_id" class="form-control font-monospace"
+                     placeholder="ex: 123456789012345678"
+                     value="<%= discordId || '' %>">
+              <div class="form-text">
+                Sera envoyé comme <code>&lt;@123456789012345678&gt;</code> — mention réelle avec notification.
+                <br>
+                Pour trouver votre ID : activez le <em>Mode développeur</em> dans Discord →
+                clic droit sur votre avatar → <em>Copier l'identifiant</em>.
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary">
+                📤 Envoyer le message de test
+              </button>
+              <a href="/admin/dashboard" class="btn btn-outline-secondary">Retour</a>
+            </div>
+          </form>
+
+          <% if (typeof result !== 'undefined' && result) { %>
+          <hr>
+          <div class="alert <%= result.success ? 'alert-success' : 'alert-danger' %> mt-3">
+            <strong><%= result.success ? '✅ Message envoyé !' : '❌ Erreur' %></strong>
+            <% if (result.message) { %>
+              <div class="mt-1"><%= result.message %></div>
+            <% } %>
+          </div>
+          <% } %>
+
+          <hr class="mt-4">
+          <h6>📋 Résumé des formats Discord</h6>
+          <table class="table table-sm table-bordered mt-2">
+            <thead class="table-dark">
+              <tr>
+                <th>Format envoyé</th>
+                <th>Résultat</th>
+                <th>Notification ?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>@MonPseudo</code></td>
+                <td>Texte brut affiché tel quel</td>
+                <td class="text-danger">❌ Non</td>
+              </tr>
+              <tr>
+                <td><code>&lt;@123456789012345678&gt;</code></td>
+                <td>Mention cliquable avec surbrillance</td>
+                <td class="text-success">✅ Oui</td>
+              </tr>
+              <tr>
+                <td><code>@everyone</code></td>
+                <td>Mention de tout le serveur</td>
+                <td class="text-success">✅ Oui (si autorisé)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
+<%- include('../partials/foot') %>

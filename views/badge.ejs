@@ -22,8 +22,8 @@
 
   <!-- Barre d'actions (masquée à l'impression) -->
   <div class="badge-actions no-print">
-    <a href="/profile" class="btn btn--ghost btn--sm">
-      <i class="fas fa-arrow-left"></i> Retour au profil
+    <a href="<%= backUrl || '/profile' %>" class="btn btn--ghost btn--sm">
+      <i class="fas fa-arrow-left"></i> <%= backLabel || 'Retour au profil' %>
     </a>
     <button id="btnPdf" class="btn btn--primary btn--sm">
       <i class="fas fa-print"></i> Imprimer / Sauvegarder en PDF

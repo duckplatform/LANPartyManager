@@ -74,6 +74,10 @@ const updateRules = [
     .matches(/^[a-zA-Z0-9_\-. ]+$/).withMessage('Le pseudo contient des caractères non autorisés.'),
   body('email')
     .trim().normalizeEmail().isEmail().withMessage('Adresse e-mail invalide.'),
+  body('discord_user_id')
+    .optional({ checkFalsy: true })
+    .trim()
+    .matches(/^\d{15,20}$/).withMessage('L\'ID Discord doit être un nombre de 15 à 20 chiffres.'),
 ];
 
 router.post('/', requireAuth, updateRules, async (req, res) => {
@@ -94,7 +98,7 @@ router.post('/', requireAuth, updateRules, async (req, res) => {
   }
 
   try {
-    const { nom, prenom, pseudo, email } = req.body;
+    const { nom, prenom, pseudo, email, discord_user_id } = req.body;
 
     // Vérification d'unicité e-mail
     if (await User.emailExists(email, req.session.userId)) {
@@ -110,7 +114,7 @@ router.post('/', requireAuth, updateRules, async (req, res) => {
       });
     }
 
-    await User.update(req.session.userId, { nom, prenom, pseudo, email });
+    await User.update(req.session.userId, { nom, prenom, pseudo, email, discord_user_id });
     // Met à jour la session avec le nouveau pseudo
     req.session.pseudo = pseudo;
     logger.info(`[PROFILE] Utilisateur #${req.session.userId} a mis à jour son profil.`);
@@ -288,6 +292,8 @@ router.get('/badge', requireAuth, async (req, res) => {
       pageClass: 'page-badge',
       user,
       qrDataUrl,
+      backUrl:   '/profile',
+      backLabel: 'Retour au profil',
     });
   } catch (err) {
     logger.error('[PROFILE] Erreur chargement badge de membre :', err);

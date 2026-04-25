@@ -137,6 +137,18 @@ describe('Discord Service', function () {
       expect(postCalls[0].route).to.include('111111111111111111');
     });
 
+    it('doit prioriser le canal Discord dédié de l\'événement', async function () {
+      await discord.notifyEventStarted({
+        id: 1,
+        nom: 'LAN Test',
+        date_heure: new Date(),
+        lieu: 'Paris',
+        discord_channel_id: '333333333333333333',
+      });
+
+      expect(postCalls[0].route).to.include('333333333333333333');
+    });
+
   });
 
   // ── notifyEventEnded ───────────────────────────────────────────────────
@@ -166,6 +178,18 @@ describe('Discord Service', function () {
       });
 
       expect(postCalls[0].route).to.include('111111111111111111');
+    });
+
+    it('doit prioriser le canal Discord dédié de l\'événement', async function () {
+      await discord.notifyEventEnded({
+        id: 1,
+        nom: 'LAN Test',
+        date_heure: new Date(),
+        lieu: 'Paris',
+        discord_channel_id: '333333333333333333',
+      });
+
+      expect(postCalls[0].route).to.include('333333333333333333');
     });
 
   });
@@ -253,6 +277,99 @@ describe('Discord Service', function () {
 
       const embed = postCalls[0].options.body.embeds[0];
       expect(embed.description).to.include('Pas de résumé disponible');
+    });
+
+  });
+
+  // ── Notifications rencontres ───────────────────────────────────────────
+
+  describe('Notifications battles', function () {
+
+    const battleFixture = {
+      id: 42,
+      event_id: 9,
+      game_nom: 'Street Fighter 6',
+      game_console: 'PS5',
+      room_nom: 'Neo Tokyo',
+      statut: 'planifie',
+      notes: 'BO3',
+      score: '2-1',
+      players: [
+        { user_id: 1, pseudo: 'AlphaDiscord', equipe: 1, est_gagnant: 1 },
+        { user_id: 2, pseudo: 'BravoDiscord', equipe: 2, est_gagnant: 0 },
+      ],
+    };
+
+    it('doit envoyer les notifications battle sur le canal Discord de l\'événement', async function () {
+      const event = { id: 9, nom: 'LAN Test', discord_channel_id: '333333333333333333' };
+
+      await discord.notifyBattleCreated({ event, battle: battleFixture });
+
+      expect(postCalls).to.have.length(1);
+      expect(postCalls[0].route).to.include('333333333333333333');
+      expect(postCalls[0].options.body.embeds[0].title).to.include('Rencontre #42');
+    });
+
+    it('doit fallback sur DISCORD_CHANNEL_EVENTS si le canal de l\'événement est absent', async function () {
+      const event = { id: 9, nom: 'LAN Test', discord_channel_id: '' };
+
+      await discord.notifyBattleStarted({ event, battle: battleFixture });
+
+      expect(postCalls).to.have.length(1);
+      expect(postCalls[0].route).to.include('111111111111111111');
+    });
+
+    it('doit inclure les participants dans les notifications de rencontre', async function () {
+      const event = { id: 9, nom: 'LAN Test', discord_channel_id: '333333333333333333' };
+
+      await discord.notifyBattleInstallation({ event, battle: battleFixture });
+
+      const embed = postCalls[0].options.body.embeds[0];
+      const participants = embed.fields.find(f => f.name === 'Participants');
+      expect(participants).to.exist;
+      expect(participants.value).to.include('Equipe 1: AlphaDiscord');
+      expect(participants.value).to.include('Equipe 2: BravoDiscord');
+    });
+
+    it('doit notifier la transition file_attente vers planifie', async function () {
+      const event = { id: 9, nom: 'LAN Test', discord_channel_id: '333333333333333333' };
+      const plannedBattle = { ...battleFixture, statut: 'planifie' };
+
+      await discord.notifyBattlePlanned({ event, battle: plannedBattle });
+
+      const embed = postCalls[0].options.body.embeds[0];
+      expect(embed.title).to.include('planifiee');
+      expect(embed.description).to.include('file d\'attente');
+    });
+
+    it('doit inclure score et gagnants sur la notification de fin', async function () {
+      const event = { id: 9, nom: 'LAN Test', discord_channel_id: '333333333333333333' };
+
+      await discord.notifyBattleEnded({ event, battle: battleFixture });
+
+      const embed = postCalls[0].options.body.embeds[0];
+      const scoreField = embed.fields.find(f => f.name === 'Score');
+      const winnersField = embed.fields.find(f => f.name === 'Gagnant(s)');
+      expect(scoreField.value).to.equal('2-1');
+      expect(winnersField.value).to.include('AlphaDiscord');
+    });
+
+    it('doit reconnaitre un gagnant quand est_gagnant remonte en Buffer MySQL', async function () {
+      const event = { id: 9, nom: 'LAN Test', discord_channel_id: '333333333333333333' };
+      const mysqlTypedBattle = {
+        ...battleFixture,
+        players: [
+          { user_id: 1, pseudo: 'AlphaDiscord', equipe: 1, est_gagnant: Buffer.from([1]) },
+          { user_id: 2, pseudo: 'BravoDiscord', equipe: 2, est_gagnant: Buffer.from([0]) },
+        ],
+      };
+
+      await discord.notifyBattleEnded({ event, battle: mysqlTypedBattle });
+
+      const embed = postCalls[0].options.body.embeds[0];
+      const winnersField = embed.fields.find(f => f.name === 'Gagnant(s)');
+      expect(winnersField.value).to.include('AlphaDiscord');
+      expect(winnersField.value).to.not.include('BravoDiscord');
     });
 
   });

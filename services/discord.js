@@ -121,7 +121,8 @@ async function sendEmbed(channelId, embed, content) {
  * @returns {Promise<void>}
  */
 async function notifyEventCreated(event) {
-  const { appUrl, channelEvents } = getConfig();
+  const { appUrl } = getConfig();
+  const channelId = resolveBattleChannel(event);
   const eventUrl = appUrl ? `${appUrl}/` : null;
 
   const embed = {
@@ -142,7 +143,7 @@ async function notifyEventCreated(event) {
   }
 
   await sendEmbed(
-    channelEvents,
+    channelId,
     embed,
     '@everyone 🎮 Un nouvel événement a été planifié !'
   );
@@ -154,7 +155,8 @@ async function notifyEventCreated(event) {
  * @returns {Promise<void>}
  */
 async function notifyEventStarted(event) {
-  const { appUrl, channelEvents } = getConfig();
+  const { appUrl } = getConfig();
+  const channelId = resolveBattleChannel(event);
   const eventUrl = appUrl ? `${appUrl}/` : null;
 
   const embed = {
@@ -174,7 +176,7 @@ async function notifyEventStarted(event) {
   }
 
   await sendEmbed(
-    channelEvents,
+    channelId,
     embed,
     `@everyone 🚀 **${event.nom}** vient de commencer !`
   );
@@ -186,7 +188,7 @@ async function notifyEventStarted(event) {
  * @returns {Promise<void>}
  */
 async function notifyEventEnded(event) {
-  const { channelEvents } = getConfig();
+  const channelId = resolveBattleChannel(event);
 
   const embed = {
     title:       `🏁 Fin de l'événement : ${event.nom}`,
@@ -200,7 +202,11 @@ async function notifyEventEnded(event) {
     timestamp: new Date().toISOString(),
   };
 
-  await sendEmbed(channelEvents, embed);
+  await sendEmbed(
+    channelId,
+    embed,
+    `@everyone 🏁 **${event.nom}** est terminé !`
+  );
 }
 
 // ─── Notifications actualités ──────────────────────────────────────────────
@@ -250,6 +256,201 @@ async function notifyNewsPublished(announcement) {
   );
 }
 
+// ─── Notifications rencontres ──────────────────────────────────────────────
+
+function buildBattlePlayersField(players = []) {
+  if (!Array.isArray(players) || players.length === 0) {
+    return 'Participants non disponibles.';
+  }
+
+  const teams = new Map();
+  for (const player of players) {
+    const team = Number(player.equipe) || 1;
+    // Mention réelle si discord_user_id disponible, sinon @pseudo en texte
+    const display = player.discord_user_id
+      ? `<@${player.discord_user_id}>`
+      : '@' + (player.pseudo || `Joueur #${player.user_id || '?'}`).toString().trim();
+    if (!teams.has(team)) {
+      teams.set(team, []);
+    }
+    teams.get(team).push(display);
+  }
+
+  return Array.from(teams.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([team, pseudos]) => `Equipe ${team}: ${pseudos.join(', ')}`)
+    .join('\n');
+}
+
+function isWinningPlayer(value) {
+  if (Buffer.isBuffer(value)) {
+    return value.length > 0 && value[0] !== 0;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    return normalized === '1' || normalized === 'true';
+  }
+
+  return Number(value) === 1;
+}
+
+function buildBattleWinnersField(players = []) {
+  const winners = (players || [])
+    .filter(player => isWinningPlayer(player.est_gagnant))
+    .map(player => player.discord_user_id
+      ? `<@${player.discord_user_id}>`
+      : '@' + (player.pseudo || `Joueur #${player.user_id || '?'}`).toString().trim()
+    );
+
+  if (winners.length === 0) {
+    return 'Non renseigne';
+  }
+
+  return winners.join(', ');
+}
+
+function resolveBattleChannel(event) {
+  const { channelEvents } = getConfig();
+  const eventChannel = event && typeof event.discord_channel_id === 'string'
+    ? event.discord_channel_id.trim()
+    : '';
+  return eventChannel || channelEvents;
+}
+
+function battleBaseEmbed(event, battle, color) {
+  return {
+    color,
+    fields: [
+      {
+        name: 'Evenement',
+        value: event && event.nom ? event.nom : `Evenement #${battle && battle.event_id ? battle.event_id : '?'}`,
+        inline: false,
+      },
+      {
+        name: 'Jeu',
+        value: battle && battle.game_nom ? `${battle.game_nom}${battle.game_console ? ` (${battle.game_console})` : ''}` : 'Non renseigne',
+        inline: true,
+      },
+      {
+        name: 'Salle',
+        value: battle && battle.room_nom ? battle.room_nom : 'Aucune (file d\'attente)',
+        inline: true,
+      },
+      {
+        name: 'Participants',
+        value: buildBattlePlayersField(battle && battle.players),
+        inline: false,
+      },
+    ],
+    footer: { text: `LANPartyManager • Rencontre #${battle && battle.id ? battle.id : '?'}` },
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * Notification lors de la creation d'une rencontre.
+ * Utilise le canal dedie a l'evenement s'il est configure.
+ * @param {{ event: Object, battle: Object }} payload
+ * @returns {Promise<void>}
+ */
+async function notifyBattleCreated({ event, battle }) {
+  if (!battle) return;
+
+  const channelId = resolveBattleChannel(event);
+  const isQueued = battle.statut === 'file_attente';
+
+  const embed = battleBaseEmbed(event, battle, isQueued ? 0xFEE75C : 0x5865F2);
+  embed.title = isQueued
+    ? `⏳ Rencontre #${battle.id} en file d'attente`
+    : `🗓️ Rencontre #${battle.id} planifiee`;
+  embed.description = isQueued
+    ? 'La rencontre a ete creee et attend une salle compatible disponible.'
+    : 'La rencontre a ete creee et une salle a ete attribuee.';
+
+  if (battle.notes) {
+    embed.fields.push({ name: 'Notes', value: battle.notes, inline: false });
+  }
+
+  await sendEmbed(channelId, embed, '🎮 Nouvelle rencontre en preparation');
+}
+
+/**
+ * Notification d'une promotion automatique file_attente -> planifie.
+ * @param {{ event: Object, battle: Object }} payload
+ * @returns {Promise<void>}
+ */
+async function notifyBattlePlanned({ event, battle }) {
+  if (!battle) return;
+
+  const channelId = resolveBattleChannel(event);
+  const embed = battleBaseEmbed(event, battle, 0x5865F2);
+  embed.title = `🗓️ Rencontre #${battle.id} planifiee`;
+  embed.description = 'Une salle est disponible: la rencontre sort de la file d\'attente.';
+
+  await sendEmbed(channelId, embed, '📣 Mise a jour du planning des rencontres');
+}
+
+/**
+ * Notification de passage en installation.
+ * @param {{ event: Object, battle: Object }} payload
+ * @returns {Promise<void>}
+ */
+async function notifyBattleInstallation({ event, battle }) {
+  if (!battle) return;
+  const channelId = resolveBattleChannel(event);
+  const embed = battleBaseEmbed(event, battle, 0xFEE75C);
+  embed.title = `🛠️ Installation en cours • Rencontre #${battle.id}`;
+  embed.description = 'Les joueurs s\'installent en salle. Prochaine etape : lancement de la partie.';
+
+  await sendEmbed(channelId, embed, '🧩 Les joueurs prennent place');
+}
+
+/**
+ * Notification de lancement de rencontre.
+ * @param {{ event: Object, battle: Object }} payload
+ * @returns {Promise<void>}
+ */
+async function notifyBattleStarted({ event, battle }) {
+  if (!battle) return;
+  const channelId = resolveBattleChannel(event);
+  const embed = battleBaseEmbed(event, battle, 0x57F287);
+  embed.title = `▶️ Rencontre #${battle.id} en cours`;
+  embed.description = 'La partie vient de commencer.';
+
+  await sendEmbed(channelId, embed, `🚀 C'est parti pour la rencontre #${battle.id}`);
+}
+
+/**
+ * Notification de fin de rencontre avec score et gagnants.
+ * @param {{ event: Object, battle: Object }} payload
+ * @returns {Promise<void>}
+ */
+async function notifyBattleEnded({ event, battle }) {
+  if (!battle) return;
+  const channelId = resolveBattleChannel(event);
+  const embed = battleBaseEmbed(event, battle, 0xED4245);
+  embed.title = `🏁 Rencontre #${battle.id} terminee`;
+  embed.description = 'Resultat enregistre. La file d\'attente est en cours de re-evaluation.';
+
+  embed.fields.push({
+    name: 'Score',
+    value: battle.score || 'Non renseigne',
+    inline: true,
+  });
+  embed.fields.push({
+    name: 'Gagnant(s)',
+    value: buildBattleWinnersField(battle.players),
+    inline: true,
+  });
+
+  await sendEmbed(channelId, embed, `✅ Fin de la rencontre #${battle.id}`);
+}
+
 // ─── Export ────────────────────────────────────────────────────────────────
 
 module.exports = {
@@ -257,6 +458,11 @@ module.exports = {
   notifyEventStarted,
   notifyEventEnded,
   notifyNewsPublished,
+  notifyBattleCreated,
+  notifyBattlePlanned,
+  notifyBattleInstallation,
+  notifyBattleStarted,
+  notifyBattleEnded,
   // Exposés pour les tests uniquement
   _getRestClient: getRestClient,
   _setRestClient,

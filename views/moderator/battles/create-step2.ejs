@@ -1,0 +1,279 @@
+<%- include('../../partials/head') %>
+
+<style>
+  .player-slot { border: 1px solid var(--color-border); border-radius: 8px; padding: var(--space-md);
+                  margin-bottom: var(--space-sm); background: var(--color-surface); }
+  .player-slot.team-1 { border-top: 3px solid #3b82f6; }
+  .player-slot.team-2 { border-top: 3px solid #f59e0b; }
+  .player-slot-title { font-weight: 600; margin-bottom: var(--space-sm); }
+  .qr-scan-area { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; }
+  .scan-overlay-container { display: none; margin-top: .5rem; position: relative; max-width: 380px; }
+</style>
+
+<div class="container admin-container" style="max-width:700px;">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-users"></i> Identifier les joueurs
+      </h1>
+      <p class="admin-subtitle"><i class="fas fa-calendar-alt"></i> <%= event.nom %></p>
+    </div>
+    <div class="admin-header-actions">
+      <a href="/battles/events/<%= event.id %>/create" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Retour
+      </a>
+    </div>
+  </div>
+
+  <!-- Étape 2 sur 2 -->
+  <div class="wizard-progress" style="display:flex; gap:.5rem; margin-bottom:var(--space-lg); align-items:center;">
+    <div style="flex:1; background:var(--color-surface); border:1px solid var(--color-primary); border-radius:6px; padding:.4rem 1rem; text-align:center; color:var(--color-primary); font-weight:600;">
+      <i class="fas fa-check"></i> 1. Jeu choisi
+    </div>
+    <i class="fas fa-chevron-right" style="color:var(--color-text-muted);"></i>
+    <div style="flex:1; background:var(--color-primary); color:#fff; border-radius:6px; padding:.4rem 1rem; text-align:center; font-weight:600;">
+      <i class="fas fa-users"></i> 2. Identifier les joueurs
+    </div>
+  </div>
+
+  <!-- Récapitulatif du jeu -->
+  <div class="card" style="margin-bottom:var(--space-md); border-left:4px solid var(--color-primary);">
+    <div class="card-body" style="padding:.75rem var(--space-md); display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
+      <div>
+        <strong><i class="fas fa-gamepad"></i> <%= game.nom %></strong>
+        <span style="color:var(--color-text-muted); margin-left:.5rem;"><%= game.console %></span>
+        <span class="badge badge--<%= game.type_rencontre === '2v2' ? 'info' : game.type_rencontre === 'solo' ? 'warning' : 'primary' %>" style="margin-left:.5rem;">
+          <%= game.type_rencontre %>
+        </span>
+      </div>
+      <div style="color:var(--color-text-muted); font-size:.85rem;">
+        <%= nbJoueurs %> joueur(s) à identifier
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2><i class="fas fa-qrcode"></i> Étape 2 — Scan des badges</h2>
+    </div>
+    <div class="card-body">
+      <% if (errors && errors.length > 0) { %>
+        <div class="alert alert--error">
+          <ul style="margin:0; padding-left:1.2rem;">
+            <% errors.forEach(function(e) { %><li><%= typeof e === 'string' ? e : e.msg %></li><% }); %>
+          </ul>
+        </div>
+      <% } %>
+
+      <p class="form-hint" style="margin-bottom:var(--space-md);">
+        Saisissez manuellement le token de badge ou cliquez sur <strong><i class="fas fa-camera"></i> Scanner</strong>
+        pour remplir automatiquement depuis le QR code.
+      </p>
+
+      <form action="/battles/events/<%= event.id %>/store" method="POST" id="playersForm">
+        <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+        <input type="hidden" name="game_id" value="<%= game.id %>" />
+
+        <%
+          // Génère les slots joueurs selon le type de rencontre
+          const slots = [];
+          if (game.type_rencontre === '2v2') {
+            slots.push({ label: 'Joueur 1 — Équipe 1', equipe: 1 });
+            slots.push({ label: 'Joueur 2 — Équipe 1', equipe: 1 });
+            slots.push({ label: 'Joueur 3 — Équipe 2', equipe: 2 });
+            slots.push({ label: 'Joueur 4 — Équipe 2', equipe: 2 });
+          } else if (game.type_rencontre === 'solo') {
+            slots.push({ label: 'Joueur Solo', equipe: 1 });
+          } else {
+            slots.push({ label: 'Joueur 1', equipe: 1 });
+            slots.push({ label: 'Joueur 2', equipe: 2 });
+          }
+        %>
+
+        <% slots.forEach(function(slot, i) { %>
+          <div class="player-slot team-<%= slot.equipe %>">
+            <div class="player-slot-title">
+              <i class="fas fa-circle-user" style="color:<%= slot.equipe === 1 ? '#3b82f6' : '#f59e0b' %>;"></i>
+              <%= slot.label %>
+            </div>
+            <input type="hidden" name="equipe[]" value="<%= slot.equipe %>" />
+            <div class="qr-scan-area">
+              <input type="text"
+                     id="token_<%= i %>"
+                     name="badge_token[]"
+                     class="form-input token-input"
+                     style="max-width:340px; font-family:monospace;"
+                     placeholder="Badge (QR code)"
+                     autocomplete="off"
+                     data-slot="<%= i %>"
+                     required />
+              <button type="button" class="btn btn--ghost btn--sm btn-scan" data-slot="<%= i %>"
+                      title="Scanner avec la caméra">
+                <i class="fas fa-camera"></i> Scanner
+              </button>
+            </div>
+            <!-- Overlay caméra -->
+            <div id="scanOverlay_<%= i %>" class="scan-overlay-container">
+              <video id="scanVideo_<%= i %>" autoplay playsinline muted
+                     style="width:100%; border-radius:8px; background:#000;"></video>
+              <canvas id="scanCanvas_<%= i %>" style="display:none;"></canvas>
+              <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+                          width:150px;height:150px;border:3px solid var(--color-primary);
+                          border-radius:8px;pointer-events:none;"></div>
+              <p style="text-align:center;margin:.3rem 0;font-size:.78rem;color:var(--color-text-muted);">
+                <i class="fas fa-qrcode"></i> Pointez le QR code dans le cadre
+              </p>
+              <button type="button" class="btn btn--ghost btn--xs btn-stop-scan" data-slot="<%= i %>">
+                <i class="fas fa-times"></i> Annuler
+              </button>
+            </div>
+          </div>
+        <% }); %>
+
+        <div class="form-group" style="margin-top:var(--space-md);">
+          <label class="form-label" for="notes">Notes (facultatif)</label>
+          <input type="text" id="notes" name="notes" class="form-input"
+                 placeholder="Ex: demande spéciale, handicap…" maxlength="500" />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary">
+            <i class="fas fa-check"></i> Créer la rencontre
+          </button>
+          <a href="/battles/events/<%= event.id %>/create" class="btn btn--ghost">
+            <i class="fas fa-arrow-left"></i> Retour
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<!-- jsQR -->
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js" crossorigin="anonymous"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  const streams  = {};
+  const rafIds   = {};
+  const detectors = {};
+
+  // Tente d'initialiser le BarcodeDetector natif
+  if ('BarcodeDetector' in window) {
+    try { window._nativeDetector = new BarcodeDetector({ formats: ['qr_code'] }); }
+    catch (_) {}
+  }
+
+  // Extrait l'ID de badge depuis un contenu QR brut
+  function extractToken(raw) {
+    raw = raw.trim();
+    if (!raw) return null;
+    if (!raw.includes('http://') && !raw.includes('https://')) return raw;
+    try {
+      const parts = new URL(raw).pathname.split('/');
+      const idx = parts.findIndex(p => p === 'verify' || p === 'badge' || p === 'ticket');
+      if (idx !== -1 && parts[idx + 1]) return parts[idx + 1];
+    } catch (_) {}
+    return null;
+  }
+
+  function stopCamera(slot) {
+    if (rafIds[slot]) { cancelAnimationFrame(rafIds[slot]); delete rafIds[slot]; }
+    if (streams[slot]) { streams[slot].getTracks().forEach(t => t.stop()); delete streams[slot]; }
+    const overlay = document.getElementById('scanOverlay_' + slot);
+    if (overlay) overlay.style.display = 'none';
+  }
+
+  async function startCamera(slot) {
+    if (streams[slot]) stopCamera(slot);
+
+    if (!window._nativeDetector && typeof window.jsQR !== 'function') {
+      alert('Détection QR indisponible.');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } }
+      });
+      streams[slot] = stream;
+      const video  = document.getElementById('scanVideo_'  + slot);
+      const canvas = document.getElementById('scanCanvas_' + slot);
+      const overlay = document.getElementById('scanOverlay_' + slot);
+      video.srcObject = stream;
+      await video.play();
+      overlay.style.display = 'block';
+      const ctx = canvas.getContext('2d', { willReadFrequently: true });
+      rafIds[slot] = requestAnimationFrame(scan);
+
+      async function scan() {
+        if (!streams[slot]) return;
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          canvas.width  = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
+
+          // 1) BarcodeDetector natif
+          if (window._nativeDetector) {
+            try {
+              const codes = await window._nativeDetector.detect(canvas);
+              if (codes && codes.length > 0) {
+                const token = extractToken(codes[0].rawValue || '');
+                if (token) {
+                  stopCamera(slot);
+                  document.getElementById('token_' + slot).value = token;
+                  document.getElementById('token_' + slot).focus();
+                  return;
+                }
+              }
+            } catch (_) {}
+          }
+
+          // 2) Fallback jsQR
+          if (typeof window.jsQR === 'function') {
+            const img  = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
+            if (code && code.data) {
+              const token = extractToken(code.data);
+              if (token) {
+                stopCamera(slot);
+                document.getElementById('token_' + slot).value = token;
+                document.getElementById('token_' + slot).focus();
+                return;
+              }
+            }
+          }
+        }
+        rafIds[slot] = requestAnimationFrame(scan);
+      }
+    } catch (err) {
+      alert('Impossible d\'accéder à la caméra : ' + err.message);
+    }
+  }
+
+  // Branchement des boutons scanner
+  document.querySelectorAll('.btn-scan').forEach(function(btn) {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      btn.addEventListener('click', function() {
+        startCamera(parseInt(this.dataset.slot, 10));
+      });
+    } else {
+      btn.disabled = true;
+      btn.title    = 'Caméra non disponible (HTTPS requis)';
+    }
+  });
+
+  document.querySelectorAll('.btn-stop-scan').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      stopCamera(parseInt(this.dataset.slot, 10));
+    });
+  });
+}());
+</script>
+
+<%- include('../../partials/foot') %>

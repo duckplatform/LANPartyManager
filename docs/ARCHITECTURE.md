@@ -21,7 +21,12 @@ LANPartyManager/
 │
 ├── models/
 │   ├── User.js               # CRUD utilisateur + bcrypt
-│   └── Announcement.js       # CRUD annonces (blog/news)
+│   ├── Announcement.js       # CRUD annonces (blog/news)
+│   ├── Event.js              # CRUD événements
+│   ├── EventRegistration.js  # CRUD inscriptions + QR code badge
+│   ├── Game.js               # CRUD jeux (rencontres) — Étape 5
+│   ├── Room.js               # CRUD salles de jeu — Étape 5
+│   └── Battle.js             # CRUD rencontres + file d'attente auto — Étape 5
 │
 ├── services/
 │   └── discord.js            # Notifications Discord (REST, embeds, sans WebSocket)
@@ -30,7 +35,10 @@ LANPartyManager/
 │   ├── index.js              # GET / (page d'accueil + dernières annonces)
 │   ├── auth.js               # GET/POST /auth/login, register, logout
 │   ├── profile.js            # GET/POST /profile, /profile/password
-│   ├── admin.js              # GET /admin, gestion users + annonces
+│   ├── admin.js              # GET /admin, gestion users + annonces + jeux + salles
+│   ├── events.js             # GET/POST /events (public + inscription)
+│   ├── moderator.js          # GET/POST /moderator (contrôle billets)
+│   ├── battles.js            # GET/POST /battles (gestion rencontres) — Étape 5
 │   └── news.js               # GET /news, GET /news/:id (public)
 │
 ├── views/
@@ -50,9 +58,27 @@ LANPartyManager/
 │   │   └── show.ejs          # Détail d'une annonce (/news/:id)
 │   ├── admin/
 │   │   ├── dashboard.ejs     # Panneau d'administration
+│   │   ├── games/            # Gestion des jeux (rencontres) — Étape 5
+│   │   │   ├── index.ejs     # Liste des jeux
+│   │   │   ├── create.ejs    # Formulaire création
+│   │   │   └── edit.ejs      # Formulaire modification
+│   │   ├── rooms/            # Gestion des salles — Étape 5
+│   │   │   ├── index.ejs     # Liste des salles (par événement)
+│   │   │   ├── create.ejs    # Formulaire création
+│   │   │   └── edit.ejs      # Formulaire modification
 │   │   └── news/
 │   │       ├── index.ejs     # Gestion des annonces (admin)
 │   │       └── form.ejs      # Formulaire création/modification
+│   ├── moderator/
+│   │   ├── index.ejs         # Liste événements (contrôle billets)
+│   │   ├── scan.ejs          # Scan QR code
+│   │   ├── verify.ejs        # Vérification badge
+│   │   └── battles/          # Gestion rencontres — Étape 5
+│   │       ├── index.ejs     # Liste événements (rencontres)
+│   │       ├── dashboard.ejs # Tableau de bord rencontres + file d'attente
+│   │       ├── create-step1.ejs  # Wizard : choix du jeu
+│   │       ├── create-step2.ejs  # Wizard : identification joueurs
+│   │       └── announce.ejs  # Vue récapitulative écran d'annonce
 │   └── errors/
 │       ├── 404.ejs           # Page 404
 │       └── 500.ejs           # Page 500
@@ -62,12 +88,14 @@ LANPartyManager/
 │   └── js/main.js            # JavaScript frontend (menu, flash, tabs, pwd toggle)
 │
 ├── database/
-│   ├── install.sql           # Script SQL d'installation (tables + compte admin)
-│   └── migrations/
-│       └── 001_add_announcements.sql  # Migration : ajout table announcements
+│   ├── install.sql           # Schéma SQL complet (tables + contraintes + compte admin)
+│   ├── seeds/
+│   │   └── codespace.sql     # Jeu de donnees de demonstration pour Codespace
 │
 ├── tests/
-│   ├── announcement.test.js  # Tests unitaires modèle Announcement
+│   ├── game.test.js          # Tests unitaires modèle Game — Étape 5
+│   ├── room.test.js          # Tests unitaires modèle Room — Étape 5
+│   ├── battle.test.js        # Tests unitaires modèle Battle — Étape 5
 │   ├── discord.test.js       # Tests unitaires service Discord
 │   ├── event.test.js         # Tests unitaires modèle Event
 │   ├── event_registration.test.js  # Tests unitaires modèle EventRegistration
@@ -105,6 +133,18 @@ LANPartyManager/
 
 ### Modèle de données
 
+### Initialisation Codespace
+
+Le bootstrap Codespace repose sur [.devcontainer/init-db.sh](.devcontainer/init-db.sh), execute via le postCreateCommand du conteneur. Il effectue, dans l'ordre :
+
+1. creation de la base si necessaire ;
+2. import du schema complet depuis [database/install.sql](database/install.sql) ;
+3. import du jeu de donnees de demonstration depuis [database/seeds/codespace.sql](database/seeds/codespace.sql).
+
+Le projet ne maintient pas de migrations SQL incrementales : [database/install.sql](database/install.sql) est l'unique source de verite du schema.
+
+Le seed est idempotent : il ajoute uniquement des enregistrements de demonstration absents, sans supprimer les donnees deja saisies dans le Codespace.
+
 **Table `users`**
 
 | Colonne | Type | Description |
@@ -130,16 +170,113 @@ LANPartyManager/
 | created_at | DATETIME | Date de création |
 | updated_at | DATETIME | Date de dernière modification |
 
+**Table `events`**
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
+| nom | VARCHAR(255) | Nom de l'événement |
+| date_heure | DATETIME | Date et heure de début |
+| lieu | VARCHAR(255) | Lieu de l'événement |
+| discord_channel_id | VARCHAR(32) NULL | ID du canal Discord dédié (optionnel, 17 à 20 chiffres) |
+| statut | ENUM('planifie','en_cours','termine') | État métier de l'événement |
+| created_at | DATETIME | Date de création |
+| updated_at | DATETIME | Date de dernière modification |
+
+**Table `games`** *(Étape 5 — Système de rencontres)*
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
+| nom | VARCHAR(100) | Nom du jeu |
+| console | VARCHAR(100) | Console / plateforme (PC, PS5, Xbox…) |
+| type_rencontre | ENUM('1v1','2v2') | Format de la rencontre |
+| created_at | DATETIME | Date de création |
+| updated_at | DATETIME | Date de dernière modification |
+
+**Table `rooms`** *(Étape 5 — Système de rencontres)*
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
+| nom | VARCHAR(100) | Nom auto-généré (jeux vidéo iconiques) |
+| type | ENUM('console','simulation') | Type de la salle |
+| type_rencontre | ENUM('1v1','2v2') | Format de rencontre supporté |
+| actif | TINYINT(1) DEFAULT 1 | 1 = active, 0 = inactive (panne) |
+| event_id | INT UNSIGNED | Référence vers events.id (CASCADE) |
+| created_at | DATETIME | Date de création |
+| updated_at | DATETIME | Date de dernière modification |
+
+**Table `battles`** *(Étape 5 — Système de rencontres)*
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
+| event_id | INT UNSIGNED | Référence vers events.id (CASCADE) |
+| game_id | INT UNSIGNED | Référence vers games.id (RESTRICT) |
+| room_id | INT UNSIGNED NULL | Référence vers rooms.id (SET NULL) |
+| statut | ENUM | file_attente / planifie / en_attente / en_cours / termine |
+| score | VARCHAR(100) NULL | Score final saisi manuellement |
+| notes | TEXT NULL | Notes libres du modérateur |
+| created_at | DATETIME | Date de création |
+| updated_at | DATETIME | Date de dernière modification |
+
+**Table `battle_players`** *(Étape 5 — Système de rencontres)*
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
+| battle_id | INT UNSIGNED | Référence vers battles.id (CASCADE) |
+| user_id | INT UNSIGNED | Référence vers users.id (CASCADE) |
+| equipe | TINYINT(1) DEFAULT 1 | Numéro d'équipe (1 ou 2) |
+| est_gagnant | TINYINT(1) DEFAULT 0 | 1 = gagnant, 0 = perdant |
+
+### Système de rencontres (Étape 5)
+
+#### Logique de file d'attente automatique
+
+1. À la **création** d'une rencontre : le système vérifie si une salle est disponible (active, bon type, sans battle en_attente/en_cours). Si oui → statut `planifie` + salle attribuée. Sinon → statut `file_attente`.
+2. À la **fin** d'une rencontre (`termine`) : `reevaluateQueue()` parcourt les rencontres en `file_attente` par ordre chronologique et tente d'assigner une salle à chacune.
+3. **Règle immuable** : une salle attribuée ne peut jamais changer.
+
+#### Cycle de vie d'une rencontre
+
+```
+file_attente  →  planifie  →  en_attente  →  en_cours  →  termine
+     │                │            │              │
+     └── (salle dispo)┘    (Joueurs   (Lancer     (Score +
+                             en place)  la partie)  gagnants)
+```
+
+#### Rôles
+
+- **Admin** : gère les jeux (`/admin/games`) et les salles (`/admin/rooms`)
+- **Admin/Modérateur** : crée et gère les rencontres (`/battles/events/:id`)
+- **Admin/Modérateur** : consulte la vue annonces (`/battles/events/:id/announce`)
+
 ### Intégration Discord
 
 Le service `services/discord.js` envoie des notifications formatées (Discord Embeds) sur des canaux Discord configurés lors des événements métier suivants :
 
+Pour les rencontres, le canal utilisé est prioritairement `events.discord_channel_id` (canal dédié à l'événement), avec repli sur `DISCORD_CHANNEL_EVENTS` si le champ n'est pas renseigné.
+
 | Déclencheur | Canal | Message |
 |-------------|-------|---------|
-| Création d'un événement | `DISCORD_CHANNEL_EVENTS` | Embed bleu avec nom, date, lieu |
-| Passage d'un événement en statut `en_cours` | `DISCORD_CHANNEL_EVENTS` | Embed vert + mention `@everyone` |
-| Passage d'un événement en statut `termine` | `DISCORD_CHANNEL_EVENTS` | Embed rouge |
+| Création d'un événement | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed bleu avec nom, date, lieu |
+| Passage d'un événement en statut `en_cours` | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed vert + mention `@everyone` |
+| Passage d'un événement en statut `termine` | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed rouge |
 | Publication d'une actualité (création ou mise à jour vers `publie`) | `DISCORD_CHANNEL_NEWS` | Embed jaune avec résumé et lien |
+| Création d'une rencontre | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed avec jeu, salle, participants, notes |
+| Rencontre → `installation` | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed "installation en cours" + rappel participants/salle |
+| Rencontre → `en_cours` | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed de démarrage + informations utiles |
+| Rencontre → `termine` | `events.discord_channel_id` (fallback `DISCORD_CHANNEL_EVENTS`) | Embed de fin avec score + gagnants |
+
+Toutes les transitions du cycle de vie d'une rencontre sont couvertes :
+- création en `file_attente` ou `planifie`
+- promotion automatique `file_attente -> planifie` (reevaluation de file)
+- `planifie -> installation`
+- `installation -> en_cours`
+- `installation/en_cours -> termine`
 
 **Caractéristiques techniques :**
 - Utilise l'API REST Discord via `discord.js` v14 (pas de connexion WebSocket permanente)
@@ -239,7 +376,9 @@ MYSQL_PWD=lanparty_dev mysql -h mysql -u lanparty lanpartymanager
 4. Importez le fichier `database/install.sql`
 5. Vérifiez la création des tables `users` et `announcements`, et du compte admin
 
-> **Mise à jour d'une installation existante** : si vous avez déjà une installation de la version précédente, importez uniquement `database/migrations/001_add_announcements.sql` pour ajouter la table `announcements` sans perdre vos données.
+> **Mise à jour d'une installation existante** : réimportez le schéma complet via `database/install.sql` puis redémarrez l'application.
+
+> **Important** : aucune migration SQL incrémentale n'est requise dans ce projet. Le schéma est centralisé dans `database/install.sql`.
 
 ### 2. Application
 

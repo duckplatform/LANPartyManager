@@ -15,6 +15,11 @@
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body class="<%= pageClass || '' %>">
-<%- include('header') %>
-<main class="main-content">
-  <%- include('flash') %>
+<%
+  const isAnnouncePage = typeof pageClass === 'string' && pageClass.includes('page-announce');
+%>
+<% if (!isAnnouncePage) { %>
+  <%- include('header') %>
+  <main class="main-content">
+    <%- include('flash') %>
+<% } %>

@@ -28,13 +28,10 @@
   "forwardPorts": [3000, 3306],
   "portsAttributes": {
     "3000": {
-      // "public" = accessible sans authentification GitHub depuis n'importe quel navigateur
       "label": "LANPartyManager",
-      "onAutoForward": "openPreview",
       "visibility": "public"
     },
     "3306": {
-      // "private" = accessible seulement au sein du Codespace (VS Code MySQL Client)
       "label": "MySQL",
       "visibility": "private"
     }
@@ -44,20 +41,35 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        // Linting JavaScript / ESLint
         "dbaeumer.vscode-eslint",
-        // Client MySQL intégré (connexion localhost:3306)
         "cweijan.vscode-mysql-client2",
-        // Coloration syntaxique EJS
         "digitalbrainstem.javascript-ejs-support",
-        // Visualisation des fichiers de log
-        "Tyriar.log-data-highlighter"
+        "Tyriar.log-data-highlighter",
+        "ms-azuretools.vscode-containers",
+        "GitHub.copilot-chat"
       ],
       "settings": {
         "editor.tabSize": 2,
         "editor.formatOnSave": false,
         "files.eol": "\n"
       }
+    }
+  },
+
+  // ─── Secrets GitHub Codespaces ─────────────────────────────────────────────
+  // Ces secrets doivent être créés dans :
+  //   GitHub → dépôt → Settings → Secrets and variables → Codespaces
+  // Ils sont injectés automatiquement comme variables d'environnement dans le
+  // conteneur. Aucune valeur n'est stockée ici (le nom suffit à déclarer la liaison).
+  "secrets": {
+    "DISCORD_BOT_TOKEN": {
+      "description": "Token du bot Discord (notifications événements/news)"
+    },
+    "DISCORD_CHANNEL_EVENTS": {
+      "description": "ID du canal Discord pour les notifications d'événements"
+    },
+    "DISCORD_CHANNEL_NEWS": {
+      "description": "ID du canal Discord pour les notifications d'actualités"
     }
   }
 }

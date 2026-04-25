@@ -1,0 +1,84 @@
+<%- include('../../partials/head') %>
+
+<div class="container admin-container">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-gamepad"></i> Gestion des rencontres
+      </h1>
+      <p class="admin-subtitle">Sélectionnez un événement pour gérer ses rencontres</p>
+    </div>
+    <div class="admin-header-actions">
+      <a href="/moderator" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Contrôle billets
+      </a>
+    </div>
+  </div>
+
+  <!-- Liste des événements -->
+  <div class="card admin-users-card">
+    <div class="card-header">
+      <h2><i class="fas fa-calendar-days"></i> Événements (<%= events.length %>)</h2>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Événement</th>
+              <th>Date</th>
+              <th>Lieu</th>
+              <th>Statut</th>
+              <th>Inscrits</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (events.length === 0) { %>
+              <tr>
+                <td colspan="6" class="table-empty">
+                  <i class="fas fa-inbox"></i> Aucun événement disponible.
+                </td>
+              </tr>
+            <% } else { %>
+              <% events.forEach(function(event) { %>
+                <tr>
+                  <td><strong><%= event.nom %></strong></td>
+                  <td class="td-date">
+                    <%= new Date(event.date_heure).toLocaleDateString('fr-FR', {
+                      day: 'numeric', month: 'long', year: 'numeric'
+                    }) %>
+                  </td>
+                  <td><%= event.lieu %></td>
+                  <td>
+                    <% const statutColors = { planifie: 'info', en_cours: 'success', termine: 'muted' }; %>
+                    <span class="badge badge--<%= statutColors[event.statut] || 'muted' %>">
+                      <%= event.statut.replace('_', ' ') %>
+                    </span>
+                  </td>
+                  <td><%= event.registrationCount || 0 %></td>
+                  <td class="td-actions">
+                    <% if (event.statut === 'en_cours') { %>
+                      <a href="/battles/events/<%= event.id %>" class="btn btn--primary btn--sm">
+                        <i class="fas fa-swords"></i> Rencontres
+                      </a>
+                    <% } else { %>
+                      <span class="btn btn--ghost btn--sm" aria-disabled="true" title="Disponible uniquement pour un événement en cours">
+                        <i class="fas fa-lock"></i> Inactif
+                      </span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<%- include('../../partials/foot') %>

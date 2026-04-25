@@ -1,0 +1,411 @@
+<%- include('../../partials/head') %>
+
+<style>
+  /* Colonnes de statuts */
+  .battles-stats { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: var(--space-lg); }
+  .battles-stat  { flex: 1; min-width: 120px; background: var(--color-surface); border: 1px solid var(--color-border);
+                    border-radius: 8px; padding: var(--space-sm); text-align: center; }
+  .battles-stat .stat-num  { font-size: 1.8rem; font-weight: 700; }
+  .battles-stat .stat-lbl  { font-size: .78rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; }
+  .battles-stat.color-queue  { border-top: 3px solid #f59e0b; }
+  .battles-stat.color-plan   { border-top: 3px solid #3b82f6; }
+  .battles-stat.color-wait   { border-top: 3px solid #8b5cf6; }
+  .battles-stat.color-live   { border-top: 3px solid #10b981; }
+  .battles-stat.color-done   { border-top: 3px solid #6b7280; }
+
+  /* Carte rencontre */
+  .battle-card { border: 1px solid var(--color-border); border-radius: 8px; margin-bottom: var(--space-sm);
+                  padding: var(--space-md); background: var(--color-surface); }
+  .battle-card.statut-file_attente { border-left: 4px solid #f59e0b; }
+  .battle-card.statut-planifie     { border-left: 4px solid #3b82f6; }
+  .battle-card.statut-installation   { border-left: 4px solid #8b5cf6; }
+  .battle-card.statut-en_cours     { border-left: 4px solid #10b981; }
+  .battle-card.statut-termine      { border-left: 4px solid #6b7280; opacity: .7; }
+  .battle-card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: .5rem; }
+  .battle-players { display: flex; gap: 1.5rem; margin-top: .5rem; flex-wrap: wrap; }
+  .battle-team { flex: 1; min-width: 120px; }
+  .battle-team-label { font-size: .75rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
+  .player-chip { display: inline-flex; align-items: center; gap: .4rem; background: var(--color-surface-2, #f1f5f9);
+                  border: 1px solid var(--color-border); border-radius: 20px; padding: .2rem .65rem;
+                  font-size: .85rem; margin: .15rem; color: #0f172a; }
+  .player-chip i { color: #475569; }
+  .player-chip.winner { background: #d1fae5; border-color: #6ee7b7; color: #065f46; }
+  .player-chip.winner i { color: #047857; }
+  .room-pill { background: var(--color-surface-2, #f8fafc); border: 1px solid var(--color-border);
+               border-radius: 8px; padding: .5rem .85rem; min-width: 130px; text-align: center; color: #0f172a; }
+  .room-pill-meta { font-size: .75rem; color: #475569; }
+  .battle-actions { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
+  /* Modal résultat */
+  .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; align-items:center; justify-content:center; }
+  .modal-backdrop.open { display:flex; }
+  .modal-box { background:var(--color-surface); border-radius:12px; padding:var(--space-lg);
+                min-width:320px; max-width:520px; width:90%; box-shadow:0 8px 32px rgba(0,0,0,.3); }
+</style>
+
+<div class="container admin-container">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-swords"></i> Rencontres — <%= event.nom %>
+      </h1>
+      <p class="admin-subtitle">
+        <i class="fas fa-calendar-alt"></i>
+        <%= new Date(event.date_heure).toLocaleDateString('fr-FR', {
+          weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        }) %>
+        &nbsp;—&nbsp;<i class="fas fa-location-dot"></i> <%= event.lieu %>
+      </p>
+    </div>
+    <div class="admin-header-actions">
+      <a href="/battles/events/<%= event.id %>/announce" class="btn btn--ghost btn--sm" target="_blank">
+        <i class="fas fa-bullhorn"></i> Ecran d'annonce
+      </a>
+      <a href="/battles/events/<%= event.id %>/create" class="btn btn--primary btn--sm">
+        <i class="fas fa-plus"></i> Nouvelle rencontre
+      </a>
+      <a href="/battles" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Retour
+      </a>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="battles-stats">
+    <div class="battles-stat color-queue">
+      <div class="stat-num"><%= stats.file_attente %></div>
+      <div class="stat-lbl"><i class="fas fa-hourglass-half"></i> File d'attente</div>
+    </div>
+    <div class="battles-stat color-plan">
+      <div class="stat-num"><%= stats.planifie %></div>
+      <div class="stat-lbl"><i class="fas fa-clock"></i> Planifiées</div>
+    </div>
+    <div class="battles-stat color-wait">
+      <div class="stat-num"><%= stats.installation %></div>
+      <div class="stat-lbl"><i class="fas fa-users"></i> Installation</div>
+    </div>
+    <div class="battles-stat color-live">
+      <div class="stat-num"><%= stats.en_cours %></div>
+      <div class="stat-lbl"><i class="fas fa-play-circle"></i> En cours</div>
+    </div>
+    <div class="battles-stat color-done">
+      <div class="stat-num"><%= stats.termine %></div>
+      <div class="stat-lbl"><i class="fas fa-flag-checkered"></i> Terminées</div>
+    </div>
+  </div>
+
+  <!-- Salles (résumé) -->
+  <% if (rooms.length > 0) { %>
+  <div class="card" style="margin-bottom: var(--space-lg);">
+    <div class="card-header"><h2><i class="fas fa-door-open"></i> Salles (<%= rooms.length %>)</h2></div>
+    <div class="card-body">
+      <div style="display:flex; gap:.75rem; flex-wrap:wrap;">
+        <% rooms.forEach(function(room) { %>
+          <div class="room-pill" style="opacity:<%= room.actif ? 1 : .5 %>;">
+            <div style="font-weight:600;"><i class="fas fa-door-open"></i> <%= room.nom %></div>
+            <div class="room-pill-meta">
+              <%= room.type_rencontre %> •
+              <% if (!room.actif) { %>
+                <span style="color:#ef4444;">Inactive</span>
+              <% } else if (room.battles_actives > 0) { %>
+                <span style="color:#f59e0b;">Occupée</span>
+              <% } else { %>
+                <span style="color:#10b981;">Libre</span>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+      <p style="margin-top:.5rem; font-size:.8rem; color:var(--color-text-muted);">
+        <a href="/admin/rooms?event_id=<%= event.id %>"><i class="fas fa-cog"></i> Gérer les salles</a>
+      </p>
+    </div>
+  </div>
+  <% } %>
+
+  <!-- Liste des rencontres actives -->
+  <div class="card" style="margin-bottom: var(--space-lg);">
+    <div class="card-header">
+      <h2><i class="fas fa-list"></i> Rencontres actives</h2>
+    </div>
+    <div class="card-body">
+      <%
+        const active = battles.filter(b => b.statut !== 'termine');
+      %>
+      <% if (active.length === 0) { %>
+        <p class="table-empty" style="text-align:center; padding: var(--space-lg);">
+          <i class="fas fa-inbox"></i> Aucune rencontre active.
+          <a href="/battles/events/<%= event.id %>/create">Créer la première rencontre</a>.
+        </p>
+      <% } else { %>
+        <% active.forEach(function(b) { %>
+          <div class="battle-card statut-<%= b.statut %>">
+            <div class="battle-card-header">
+              <div>
+                <span class="badge badge--<%= {file_attente:'warning', planifie:'info', installation:'purple', en_cours:'success', termine:'muted'}[b.statut] || 'muted' %>">
+                  <% const statutLabels = { file_attente: 'File d\'attente', planifie: 'Planifiée', installation: 'Installation', en_cours: 'En cours', termine: 'Terminée' }; %>
+                  <%= statutLabels[b.statut] || b.statut %>
+                </span>
+                <strong style="margin-left:.5rem;"><%= b.game_nom %></strong>
+                <span style="color:var(--color-text-muted); font-size:.85rem;">
+                  — <%= b.game_console %> — <%= b.type_rencontre %>
+                </span>
+              </div>
+              <div style="text-align:right; font-size:.82rem; color:var(--color-text-muted);">
+                #<%= b.id %>
+                <% if (b.room_nom) { %>
+                  &nbsp;|&nbsp;<i class="fas fa-door-open"></i> <strong><%= b.room_nom %></strong>
+                <% } else if (b.statut === 'file_attente') { %>
+                  &nbsp;|&nbsp;<i class="fas fa-hourglass-half" style="color:#f59e0b;"></i> En attente d'une salle
+                <% } else if (b.room_id) { %>
+                  &nbsp;|&nbsp;<i class="fas fa-door-open"></i> <strong>Salle #<%= b.room_id %></strong>
+                <% } else { %>
+                  &nbsp;|&nbsp;<i class="fas fa-triangle-exclamation" style="color:#ef4444;"></i> Salle non attribuee (incoherence)
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Joueurs -->
+            <div class="battle-players">
+              <% if (b.type_rencontre === '2v2') { %>
+                <div class="battle-team">
+                  <div class="battle-team-label">Équipe 1</div>
+                  <% b.players.filter(p => p.equipe === 1).forEach(function(p) { %>
+                    <span class="player-chip <%= p.est_gagnant ? 'winner' : '' %>">
+                      <i class="fas fa-circle-user"></i> <%= p.pseudo %>
+                      <% if (p.est_gagnant) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
+                    </span>
+                  <% }); %>
+                </div>
+                <div style="align-self:center; font-weight:700; color:var(--color-text-muted);">VS</div>
+                <div class="battle-team">
+                  <div class="battle-team-label">Équipe 2</div>
+                  <% b.players.filter(p => p.equipe === 2).forEach(function(p) { %>
+                    <span class="player-chip <%= p.est_gagnant ? 'winner' : '' %>">
+                      <i class="fas fa-circle-user"></i> <%= p.pseudo %>
+                      <% if (p.est_gagnant) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
+                    </span>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <div class="battle-team">
+                  <% b.players.forEach(function(p) { %>
+                    <span class="player-chip <%= p.est_gagnant ? 'winner' : '' %>">
+                      <i class="fas fa-circle-user"></i> <%= p.pseudo %>
+                      <% if (p.est_gagnant) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
+                    </span>
+                  <% }); %>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Actions -->
+            <div class="battle-actions">
+              <% if (b.statut === 'planifie') { %>
+                <form action="/battles/<%= b.id %>/ready" method="POST" class="form-inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                  <button type="submit" class="btn btn--primary btn--sm">
+                    <i class="fas fa-users"></i> Joueurs en place
+                  </button>
+                </form>
+              <% } %>
+              <% if (b.statut === 'installation') { %>
+                <form action="/battles/<%= b.id %>/start" method="POST" class="form-inline">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                  <button type="submit" class="btn btn--success btn--sm">
+                    <i class="fas fa-play"></i> Lancer la rencontre
+                  </button>
+                </form>
+              <% } %>
+              <% if (['installation', 'en_cours'].includes(b.statut)) { %>
+                <button type="button" class="btn btn--warning btn--sm btn-open-result"
+                        data-battle-id="<%= b.id %>"
+                        data-players="<%- JSON.stringify(b.players).replace(/"/g, '&quot;') %>"
+                        data-type="<%= b.type_rencontre %>">
+                  <i class="fas fa-flag-checkered"></i> Terminer & résultat
+                </button>
+              <% } %>
+              <% if (['file_attente', 'planifie'].includes(b.statut)) { %>
+                <form action="/battles/<%= b.id %>?_method=DELETE" method="POST" class="form-inline"
+                      onsubmit="return confirm('Annuler cette rencontre ?')">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                  <button type="submit" class="btn btn--danger btn--sm">
+                    <i class="fas fa-times"></i> Annuler
+                  </button>
+                </form>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Rencontres terminées -->
+  <% const done = battles.filter(b => b.statut === 'termine'); %>
+  <% if (done.length > 0) { %>
+  <details class="card" style="margin-bottom: var(--space-lg);">
+    <summary style="cursor:pointer; padding: var(--space-md); font-weight:600; list-style:none; display:flex; align-items:center; gap:.5rem;">
+      <i class="fas fa-flag-checkered"></i> Rencontres terminées (<%= done.length %>)
+      <i class="fas fa-chevron-down" style="margin-left:auto;"></i>
+    </summary>
+    <div class="card-body" style="padding-top:0;">
+      <% done.forEach(function(b) { %>
+        <div class="battle-card statut-termine">
+          <div class="battle-card-header">
+            <div>
+              <span class="badge badge--muted">Terminée</span>
+              <strong style="margin-left:.5rem;"><%= b.game_nom %></strong>
+              <span style="color:var(--color-text-muted); font-size:.85rem;"> — <%= b.game_console %></span>
+              <% if (b.score) { %><span style="margin-left:.5rem; font-weight:600; color:var(--color-primary);">Score : <%= b.score %></span><% } %>
+            </div>
+            <div style="font-size:.82rem; color:var(--color-text-muted);">
+              #<%= b.id %>
+              <% if (b.room_nom) { %>&nbsp;|&nbsp;<i class="fas fa-door-open"></i> <%= b.room_nom %><% } %>
+            </div>
+          </div>
+          <div class="battle-players" style="margin-top:.4rem;">
+            <% b.players.forEach(function(p) { %>
+              <span class="player-chip <%= p.est_gagnant ? 'winner' : '' %>">
+                <i class="fas fa-circle-user"></i> <%= p.pseudo %>
+                <% if (p.est_gagnant) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
+              </span>
+            <% }); %>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+  </details>
+  <% } %>
+
+</div>
+
+<!-- Modal : Enregistrer le résultat -->
+<div id="resultModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-box">
+    <h2 id="modalTitle" style="margin-top:0;"><i class="fas fa-flag-checkered"></i> Résultat de la rencontre</h2>
+    <form id="resultForm" method="POST">
+      <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+      <input type="hidden" name="_method" value="POST" />
+
+      <div class="form-group">
+        <label class="form-label" for="scoreInput">Score (facultatif)</label>
+        <input type="text" id="scoreInput" name="score" class="form-input"
+               placeholder="Ex: 3-1, 100-85, victoire" maxlength="100" />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Gagnant(s)</label>
+        <div id="winnersList" style="display:flex; flex-direction:column; gap:.4rem;"></div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn--primary">
+          <i class="fas fa-save"></i> Enregistrer
+        </button>
+        <button type="button" class="btn btn--ghost btn-close-modal">Annuler</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  // Intervalle d'auto-refresh en ms (30 secondes)
+  const AUTO_REFRESH_MS = 30000;
+
+  const modal      = document.getElementById('resultModal');
+  const resultForm = document.getElementById('resultForm');
+  const winnersList = document.getElementById('winnersList');
+  const scoreInput = document.getElementById('scoreInput');
+
+  /**
+   * Ouvre le modal de résultat en lisant les données depuis les attributs data-*
+   * du bouton cliqué, évitant ainsi toute injection JSON inline.
+   */
+  function openResultModal(battleId, players, typeRencontre) {
+    resultForm.action = '/battles/' + battleId + '/result';
+    scoreInput.value  = '';
+    winnersList.innerHTML = '';
+
+    // Génère les checkboxes des joueurs selon le format
+    if (typeRencontre === '2v2') {
+      [1, 2].forEach(function(equipe) {
+        const teamPlayers = players.filter(function(p) { return p.equipe === equipe; });
+        if (teamPlayers.length === 0) return;
+        const label = document.createElement('div');
+        label.style.fontWeight = '600';
+        label.style.marginTop = '.5rem';
+        label.textContent = 'Équipe ' + equipe;
+        winnersList.appendChild(label);
+        teamPlayers.forEach(function(p) {
+          const wrap  = document.createElement('label');
+          const input = document.createElement('input');
+          const icon  = document.createElement('i');
+          const text  = document.createTextNode(' ' + p.pseudo);
+          input.type  = 'checkbox';
+          input.name  = 'winner_ids[]';
+          input.value = p.user_id;
+          icon.className = 'fas fa-circle-user';
+          wrap.className = 'form-checkbox';
+          wrap.appendChild(input);
+          wrap.appendChild(icon);
+          wrap.appendChild(text);
+          winnersList.appendChild(wrap);
+        });
+      });
+    } else {
+      players.forEach(function(p) {
+        const wrap  = document.createElement('label');
+        const input = document.createElement('input');
+        const icon  = document.createElement('i');
+        const text  = document.createTextNode(' ' + p.pseudo);
+        input.type  = 'checkbox';
+        input.name  = 'winner_ids[]';
+        input.value = p.user_id;
+        icon.className = 'fas fa-circle-user';
+        wrap.className = 'form-checkbox';
+        wrap.appendChild(input);
+        wrap.appendChild(icon);
+        wrap.appendChild(text);
+        winnersList.appendChild(wrap);
+      });
+    }
+
+    modal.classList.add('open');
+    scoreInput.focus();
+  }
+
+  function closeResultModal() {
+    modal.classList.remove('open');
+  }
+
+  // Branchement des boutons "Terminer & résultat" via délégation (data attributes)
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('.btn-open-result');
+    if (!btn) return;
+    const battleId = parseInt(btn.dataset.battleId, 10);
+    const players  = JSON.parse(btn.dataset.players);
+    const type     = btn.dataset.type;
+    openResultModal(battleId, players, type);
+  });
+
+  // Fermer en cliquant sur le fond
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) closeResultModal();
+  });
+
+  // Fermer avec Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeResultModal();
+  });
+
+  // Bouton "Annuler" du modal
+  document.querySelector('.btn-close-modal').addEventListener('click', closeResultModal);
+}());
+</script>
+
+<%- include('../../partials/foot') %>

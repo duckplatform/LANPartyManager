@@ -1,0 +1,101 @@
+<%- include('../../partials/head') %>
+
+<div class="container admin-container">
+  <div class="admin-layout">
+    <%- include('../_sidebar', { activeSection: 'rooms' }) %>
+
+    <section class="admin-main">
+
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-plus"></i> Ajouter une salle
+      </h1>
+    </div>
+    <div class="admin-header-actions">
+      <a href="/admin/rooms<%= old.event_id ? '?event_id=' + old.event_id : '' %>" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Retour aux salles
+      </a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <% if (errors.length > 0) { %>
+        <div class="alert alert--error">
+          <ul style="margin:0; padding-left:1.2rem;">
+            <% errors.forEach(function(e) { %><li><%= e.msg %></li><% }); %>
+          </ul>
+        </div>
+      <% } %>
+
+      <form action="/admin/rooms" method="POST" class="form-grid">
+        <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+
+        <div class="form-group">
+          <label class="form-label" for="event_id">Événement <span class="required">*</span></label>
+          <select id="event_id" name="event_id" class="form-select" required>
+            <option value="">— Sélectionner —</option>
+            <% events.forEach(function(e) { %>
+              <option value="<%= e.id %>" <%= String(old.event_id) === String(e.id) ? 'selected' : '' %>>
+                <%= e.nom %> (<%= e.statut %>)
+              </option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="nom">Nom de la salle <span class="required">*</span></label>
+          <input type="text" id="nom" name="nom" class="form-input"
+                 value="<%= old.nom || '' %>"
+                 placeholder="Ex: Zelda, Mario, Sonic…"
+                 maxlength="100" required />
+          <p class="form-hint">Le nom est auto-suggéré mais peut être modifié.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="type">Type de salle <span class="required">*</span></label>
+          <select id="type" name="type" class="form-select" required>
+            <% TYPES_SALLE.forEach(function(t) { %>
+              <option value="<%= t %>" <%= old.type === t ? 'selected' : '' %>>
+                <%= t === 'simulation' ? 'Simulation (volant, siège cockpit…)' : 'Console (manette, TV)' %>
+              </option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="type_rencontre">Format supporté <span class="required">*</span></label>
+          <select id="type_rencontre" name="type_rencontre" class="form-select" required>
+            <% TYPES_RENCONTRE.forEach(function(t) { %>
+              <option value="<%= t %>" <%= old.type_rencontre === t ? 'selected' : '' %>>
+                <%= t === '2v2' ? '2v2 — Équipes (4 joueurs)' : t === '1v1' ? '1v1 — Face à face (2 joueurs)' : 'Solo — Un seul joueur' %>
+              </option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">État initial</label>
+          <label class="form-checkbox">
+            <input type="checkbox" name="actif" value="1" <%= (!old.actif || old.actif == '1' || old.actif === 1) ? 'checked' : '' %> />
+            Salle active (disponible pour les rencontres)
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn--primary">
+            <i class="fas fa-save"></i> Enregistrer
+          </button>
+          <a href="/admin/rooms<%= old.event_id ? '?event_id=' + old.event_id : '' %>" class="btn btn--ghost">Annuler</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+    </section>
+  </div>
+
+</div>
+
+<%- include('../../partials/foot') %>

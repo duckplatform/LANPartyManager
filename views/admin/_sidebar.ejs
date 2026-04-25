@@ -1,0 +1,42 @@
+<aside class="card admin-sidebar" aria-label="Navigation administration">
+  <h2 class="admin-sidebar-title"><i class="fas fa-compass"></i> Navigation</h2>
+  <nav>
+    <ul class="admin-sidebar-nav">
+      <li>
+        <a href="/admin" class="admin-sidebar-link<%= activeSection === 'members' ? ' active' : '' %>" <%= activeSection === 'members' ? 'aria-current="page"' : '' %>>
+          <i class="fas fa-users"></i> Membres
+        </a>
+      </li>
+      <li>
+        <a href="/admin/news" class="admin-sidebar-link<%= activeSection === 'news' ? ' active' : '' %>" <%= activeSection === 'news' ? 'aria-current="page"' : '' %>>
+          <i class="fas fa-newspaper"></i> Annonces
+        </a>
+      </li>
+      <li>
+        <a href="/admin/events" class="admin-sidebar-link<%= activeSection === 'events' ? ' active' : '' %>" <%= activeSection === 'events' ? 'aria-current="page"' : '' %>>
+          <i class="fas fa-calendar-days"></i> Événements
+        </a>
+      </li>
+      <li>
+        <a href="/admin/games" class="admin-sidebar-link<%= activeSection === 'games' ? ' active' : '' %>" <%= activeSection === 'games' ? 'aria-current="page"' : '' %>>
+          <i class="fas fa-gamepad"></i> Jeux
+        </a>
+      </li>
+      <li>
+        <a href="/admin/rooms" class="admin-sidebar-link<%= activeSection === 'rooms' ? ' active' : '' %>" <%= activeSection === 'rooms' ? 'aria-current="page"' : '' %>>
+          <i class="fas fa-door-open"></i> Salles
+        </a>
+      </li>
+      <li>
+        <a href="/moderator" class="admin-sidebar-link<%= activeSection === 'tickets' ? ' active' : '' %>" <%= activeSection === 'tickets' ? 'aria-current="page"' : '' %>>
+          <i class="fas fa-ticket"></i> Contrôle billets
+        </a>
+      </li>
+      <li>
+        <a href="/battles" class="admin-sidebar-link<%= activeSection === 'battles' ? ' active' : '' %>" <%= activeSection === 'battles' ? 'aria-current="page"' : '' %>>
+          <i class="fas fa-gamepad"></i> Rencontres
+        </a>
+      </li>
+    </ul>
+  </nav>
+</aside>

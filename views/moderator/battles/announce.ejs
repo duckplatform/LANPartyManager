@@ -1,0 +1,546 @@
+<%- include('../../partials/head') %>
+
+<%
+  const safeEvent = (typeof event !== 'undefined' && event) ? event : { id: '', nom: 'Evenement' };
+  const safeNow = (typeof now !== 'undefined' && now) ? now : new Date();
+
+  const safeBattles = (typeof battles !== 'undefined' && Array.isArray(battles)) ? battles : [];
+  const safeStatsInput = (typeof stats !== 'undefined' && stats) ? stats : null;
+  const safeStats = safeStatsInput || {
+    en_cours: safeBattles.filter(b => b && b.statut === 'en_cours').length,
+    installation: safeBattles.filter(b => b && b.statut === 'installation').length,
+    planifie: safeBattles.filter(b => b && b.statut === 'planifie').length,
+    file_attente: safeBattles.filter(b => b && b.statut === 'file_attente').length,
+    termine: safeBattles.filter(b => b && b.statut === 'termine').length,
+  };
+
+  const safeRoomBoardsRaw = (typeof roomBoards !== 'undefined' && Array.isArray(roomBoards)) ? roomBoards : [];
+  const safeRoomBoards = safeRoomBoardsRaw.filter((room) => Number(room.actif) === 1 || typeof room.actif === 'undefined');
+  const safeGlobalQueue = (typeof globalQueue !== 'undefined' && Array.isArray(globalQueue))
+    ? globalQueue
+    : safeBattles.filter(b => b && b.statut === 'file_attente');
+  const safeRecentResults = (typeof recentResults !== 'undefined' && Array.isArray(recentResults))
+    ? recentResults
+    : safeBattles.filter(b => b && b.statut === 'termine').slice(0, 12);
+
+  const displayedQueue = safeGlobalQueue;
+  const displayedRecentResults = safeRecentResults.slice(0, 10);
+
+  const playerTokens = (battle) => {
+    const players = battle && Array.isArray(battle.players) ? battle.players : [];
+    return players.map((p) => (p && p.pseudo) ? p.pseudo : '?');
+  };
+
+  const computedRoomBoards = safeRoomBoards.length > 0
+    ? safeRoomBoards
+    : (() => {
+      const activeBattles = safeBattles.filter(
+        b => b && ['planifie', 'installation', 'en_cours'].includes(b.statut)
+      );
+
+      const roomMap = new Map();
+      activeBattles.forEach((battle, idx) => {
+        const roomKey = battle.room_nom || `inconnue-${idx}`;
+        if (!roomMap.has(roomKey)) {
+          roomMap.set(roomKey, {
+            nom: battle.room_nom || 'Salle non attribuee',
+            type: battle.room_type || 'N/A',
+            type_rencontre: battle.type_rencontre || 'N/A',
+            state: { key: 'libre', label: 'Libre', color: 'var(--color-success)' },
+            currentBattle: null,
+            nextBattle: null,
+            _battles: [],
+          });
+        }
+        roomMap.get(roomKey)._battles.push(battle);
+      });
+
+      return Array.from(roomMap.values()).map((room) => {
+        const liveBattle = room._battles.find(b => b.statut === 'en_cours') || null;
+        const installBattle = room._battles.find(b => b.statut === 'installation') || null;
+        const waitingBattle = room._battles.find(b => b.statut === 'planifie') || null;
+        const currentBattle = liveBattle || installBattle;
+
+        let roomState = { key: 'libre', label: 'Libre', color: 'var(--color-success)' };
+        if (liveBattle) {
+          roomState = { key: 'en_jeu', label: 'En jeu', color: 'var(--color-success)' };
+        } else if (installBattle) {
+          roomState = { key: 'pret', label: 'Pret', color: 'var(--color-neon)' };
+        } else if (waitingBattle) {
+          roomState = { key: 'planifie', label: 'Planifiee', color: 'var(--color-warning)' };
+        }
+
+        return {
+          nom: room.nom,
+          type: room.type,
+          type_rencontre: room.type_rencontre,
+          state: roomState,
+          currentBattle,
+          nextBattle: waitingBattle || null,
+        };
+      });
+    })();
+%>
+
+<style>
+  body.page-announce {
+    font-size: 1.2rem;
+    overflow: hidden;
+    height: 100vh;
+  }
+  .page-announce .container {
+    max-width: 100vw;
+    width: 100vw;
+    padding: 1.1rem 1.4rem;
+  }
+  .page-announce .admin-container {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .wall-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-lg);
+    margin-bottom: .9rem;
+  }
+  .wall-title { font-size: 2.6rem; margin-bottom: .2rem; line-height: 1.05; }
+  .wall-meta { color: var(--color-text-muted); font-size: 1.02rem; }
+  .wall-kpis { display: flex; gap: .6rem; flex-wrap: wrap; }
+  .wall-kpi {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: .62rem .95rem;
+    min-width: 110px;
+    text-align: center;
+  }
+  .wall-kpi strong { display: block; font-size: 1.55rem; line-height: 1; }
+  .wall-kpi span { font-size: .92rem; }
+  .wall-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr) minmax(320px, 1fr);
+    gap: .85rem;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .wall-panel {
+    background: var(--color-bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    padding: .9rem;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .wall-panel h2 {
+    font-size: 1.34rem;
+    margin-bottom: .72rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .rooms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(390px, 1fr));
+    gap: .78rem;
+  }
+  .rooms-window {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: .2rem;
+    scrollbar-width: thin;
+  }
+  .room-card {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: .92rem;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .room-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; }
+  .room-name { font-size: 1.48rem; font-weight: 900; letter-spacing: .02em; }
+  .room-state { font-size: .96rem; font-weight: 800; text-transform: uppercase; }
+  .room-state--en_jeu { color: var(--color-success); }
+  .room-state--pret { color: var(--color-neon); }
+  .room-state--planifie { color: var(--color-warning); }
+  .room-state--libre { color: var(--color-success); }
+  .room-state--unknown { color: var(--color-text-muted); }
+  .room-block { margin-top: .6rem; }
+  .room-label { font-size: .86rem; text-transform: uppercase; color: var(--color-text-muted); margin-bottom: .24rem; letter-spacing: .03em; }
+  .match-line { font-weight: 800; font-size: 1.1rem; }
+  .match-sub { color: var(--color-text-muted); font-size: .96rem; }
+  .player-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-top: .36rem;
+  }
+  .player-tag {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.08);
+    font-size: 1rem;
+    font-weight: 900;
+    color: #ffffff;
+    padding: .25rem .58rem;
+    letter-spacing: .01em;
+  }
+  .player-vs {
+    font-weight: 800;
+    color: var(--color-warning);
+    margin: 0 .04rem;
+    align-self: center;
+  }
+  .queue-list, .results-list { display: flex; flex-direction: column; gap: .5rem; }
+  .queue-window,
+  .results-window {
+    position: relative;
+    border-radius: 10px;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+  }
+  .queue-window::-webkit-scrollbar,
+  .results-window::-webkit-scrollbar {
+    display: none;
+  }
+  .queue-window {
+    flex: 1;
+    min-height: 0;
+    border: 1px dashed rgba(255, 255, 255, .08);
+    padding: .35rem;
+  }
+  .results-window {
+    flex: 1;
+    min-height: 0;
+    border: 1px dashed rgba(255, 255, 255, .08);
+    padding: .35rem;
+  }
+  .queue-scroll,
+  .results-scroll {
+    height: auto;
+    overflow: visible;
+  }
+  .queue-window::before,
+  .queue-window::after,
+  .results-window::before,
+  .results-window::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 14px;
+    pointer-events: none;
+    z-index: 2;
+  }
+  .queue-window::before,
+  .results-window::before {
+    top: 0;
+    background: linear-gradient(to bottom, rgba(14, 17, 30, .95), rgba(14, 17, 30, 0));
+  }
+  .queue-window::after,
+  .results-window::after {
+    bottom: 0;
+    background: linear-gradient(to top, rgba(14, 17, 30, .95), rgba(14, 17, 30, 0));
+  }
+  .queue-item, .result-item {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: .65rem .75rem;
+    background: rgba(255, 255, 255, 0.02);
+  }
+  .empty-note { color: var(--color-text-muted); font-style: italic; font-size: .94rem; }
+  .list-caption {
+    color: var(--color-text-muted);
+    font-size: .88rem;
+    margin-top: .1rem;
+    margin-bottom: .55rem;
+  }
+  .wall-actions { display: flex; gap: .5rem; }
+  @media (max-width: 1480px) {
+    .wall-grid {
+      grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr) minmax(280px, 1fr);
+    }
+    .rooms-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  @media (max-width: 1180px) {
+    .page-announce .admin-container {
+      height: auto;
+      overflow: visible;
+    }
+    .wall-grid { grid-template-columns: 1fr; }
+    .rooms-window,
+    .queue-window,
+    .results-window {
+      max-height: none;
+      overflow: visible;
+    }
+  }
+  @media (max-width: 900px) {
+    body.page-announce {
+      font-size: 1.03rem;
+      overflow: auto;
+    }
+    .page-announce .container {
+      width: 100%;
+      max-width: 100%;
+      padding: .75rem;
+    }
+    .page-announce .admin-container {
+      min-height: auto;
+    }
+    .wall-title {
+      font-size: clamp(1.4rem, 4vw, 2rem);
+    }
+    .rooms-grid { grid-template-columns: 1fr; }
+    .rooms-window,
+    .queue-window,
+    .results-window {
+      max-height: none;
+      overflow: visible;
+      border-style: solid;
+    }
+    .queue-scroll,
+    .results-scroll {
+      overflow: visible;
+      height: auto;
+    }
+    .queue-window::before,
+    .queue-window::after,
+    .results-window::before,
+    .results-window::after {
+      display: none;
+    }
+  }
+  @media print {
+    .site-header, .wall-actions, .no-print { display: none !important; }
+    .wall-panel, .room-card { page-break-inside: avoid; }
+  }
+</style>
+
+<div class="container admin-container">
+  <div class="wall-header">
+    <div>
+      <h1 class="wall-title"><i class="fas fa-tv"></i> Ecran Geant — <%= safeEvent.nom %></h1>
+      <div class="wall-meta">
+        Projection dynamique des salles, rencontres et file d'attente.
+        Derniere mise a jour: <%= safeNow.toLocaleTimeString('fr-FR') %>
+      </div>
+    </div>
+    <div class="wall-actions no-print">
+      <button onclick="window.location.reload()" class="btn btn--ghost btn--sm"><i class="fas fa-rotate-right"></i> Actualiser</button>
+      <a href="/battles/events/<%= safeEvent.id %>" class="btn btn--ghost btn--sm"><i class="fas fa-arrow-left"></i> Retour</a>
+    </div>
+  </div>
+
+  <div class="wall-kpis">
+    <div class="wall-kpi"><strong><%= safeStats.en_cours || 0 %></strong><span>En jeu</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.installation || 0 %></strong><span>Installation</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.planifie || 0 %></strong><span>Planifiees</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.file_attente || 0 %></strong><span>File globale</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.termine || 0 %></strong><span>Resultats</span></div>
+  </div>
+
+  <div class="wall-grid" style="margin-top: .85rem;">
+    <section class="wall-panel">
+      <h2><i class="fas fa-door-open"></i> Etat des salles</h2>
+      <div class="rooms-window">
+        <div class="rooms-grid">
+          <% computedRoomBoards.forEach(function(room) {
+               const roomState = room && room.state ? room.state : { key: 'unknown', label: 'Inconnu' };
+               const roomStateKey = roomState && roomState.key ? roomState.key : 'unknown';
+               const roomType = room && room.type_rencontre ? room.type_rencontre : 'N/A';
+               const roomHardware = room && room.type ? room.type : 'N/A';
+          %>
+            <article class="room-card">
+              <div class="room-head">
+                <div class="room-name"><%= room && room.nom ? room.nom : 'Salle' %></div>
+                <div class="room-state room-state--<%= roomStateKey %>"><%= roomState.label %></div>
+              </div>
+              <div class="match-sub"><%= roomType %> • <%= roomHardware %></div>
+
+              <div class="room-block">
+                <div class="room-label">Partie en cours</div>
+                <% if (room.currentBattle) { %>
+                  <div class="match-line"><%= room.currentBattle.game_nom %> — <%= room.currentBattle.game_console %></div>
+                  <div class="match-sub">
+                    Statut: <%= room.currentBattle.statut === 'installation' ? 'Installation' : room.currentBattle.statut === 'en_cours' ? 'En cours' : room.currentBattle.statut %>
+                  </div>
+                  <div class="player-strip">
+                    <% const currentPlayers = playerTokens(room.currentBattle); %>
+                    <% currentPlayers.forEach(function(player, index) { %>
+                      <span class="player-tag"><%= player %></span>
+                      <% if (index < currentPlayers.length - 1) { %>
+                        <span class="player-vs"><%= room.currentBattle.type_rencontre === '2v2' ? '|' : 'VS' %></span>
+                      <% } %>
+                    <% }); %>
+                  </div>
+                <% } else { %>
+                  <div class="empty-note">Aucune partie en jeu</div>
+                <% } %>
+              </div>
+
+              <div class="room-block">
+                <div class="room-label">Partie suivante</div>
+                <% if (room.nextBattle) { %>
+                  <div class="match-line"><%= room.nextBattle.game_nom %> — <%= room.nextBattle.game_console %></div>
+                  <div class="match-sub">
+                    Statut: <%= room.nextBattle.statut === 'planifie' ? 'Planifiee' : room.nextBattle.statut %>
+                  </div>
+                  <div class="player-strip">
+                    <% const nextPlayers = playerTokens(room.nextBattle); %>
+                    <% nextPlayers.forEach(function(player, index) { %>
+                      <span class="player-tag"><%= player %></span>
+                      <% if (index < nextPlayers.length - 1) { %>
+                        <span class="player-vs"><%= room.nextBattle.type_rencontre === '2v2' ? '|' : 'VS' %></span>
+                      <% } %>
+                    <% }); %>
+                  </div>
+                <% } else { %>
+                  <div class="empty-note">Aucune partie suivante</div>
+                <% } %>
+              </div>
+            </article>
+          <% }); %>
+          <% if (computedRoomBoards.length === 0) { %>
+            <div class="empty-note">Aucune salle/rencontre active a afficher pour cet evenement.</div>
+          <% } %>
+        </div>
+      </div>
+    </section>
+
+    <section class="wall-panel">
+      <h2><i class="fas fa-list-ol"></i> File d'attente globale</h2>
+      <div class="list-caption">Defilement automatique pour afficher toute la file.</div>
+      <% if (displayedQueue.length === 0) { %>
+        <div class="empty-note">Aucune rencontre en file d'attente.</div>
+      <% } else { %>
+        <div class="queue-window" data-auto-scroll="queue">
+          <div class="queue-scroll" data-auto-scroll="queue">
+            <div class="queue-list">
+              <% displayedQueue.forEach(function(b, idx) { %>
+                <div class="queue-item">
+                  <div class="match-line">#<%= idx + 1 %> • <%= b.game_nom %></div>
+                  <div class="match-sub"><%= b.game_console %> • <%= b.type_rencontre %></div>
+                  <div class="player-strip">
+                    <% const queuePlayers = playerTokens(b); %>
+                    <% queuePlayers.forEach(function(player, index) { %>
+                      <span class="player-tag"><%= player %></span>
+                      <% if (index < queuePlayers.length - 1) { %>
+                        <span class="player-vs"><%= b.type_rencontre === '2v2' ? '|' : 'VS' %></span>
+                      <% } %>
+                    <% }); %>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </section>
+
+    <section class="wall-panel">
+      <h2 style="margin-top:1rem;"><i class="fas fa-flag-checkered"></i> Derniers resultats</h2>
+      <div class="list-caption">Affichage des 10 derniers resultats maximum.</div>
+      <% if (displayedRecentResults.length === 0) { %>
+        <div class="empty-note">Aucun resultat enregistre.</div>
+      <% } else { %>
+        <div class="results-window" data-auto-scroll="results">
+          <div class="results-scroll" data-auto-scroll="results">
+            <div class="results-list">
+              <% displayedRecentResults.forEach(function(b) { %>
+                <div class="result-item">
+                  <div class="match-line"><%= b.game_nom %> — <%= b.game_console %></div>
+                  <div class="match-sub">Salle: <%= b.room_nom || 'N/A' %> • Score: <%= b.score || 'N/A' %></div>
+                  <div class="player-strip">
+                    <% const resultPlayers = Array.isArray(b.players)
+                      ? b.players.map(function(p){ return (p && p.pseudo ? p.pseudo : '?') + (p && p.est_gagnant ? ' (G)' : ''); })
+                      : []; %>
+                    <% resultPlayers.forEach(function(player, index) { %>
+                      <span class="player-tag"><%= player %></span>
+                      <% if (index < resultPlayers.length - 1) { %>
+                        <span class="player-vs"><%= b.type_rencontre === '2v2' ? '|' : 'VS' %></span>
+                      <% } %>
+                    <% }); %>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+      <% } %>
+    </section>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  function setupAutoScroll(container, options) {
+    if (!container || window.matchMedia('(max-width: 900px)').matches) return;
+
+    var speed = (options && options.speed) || 0.45;
+    var pauseMs = (options && options.pauseMs) || 1300;
+    var content = container.firstElementChild;
+    if (!content) return;
+
+    if (content.scrollHeight <= container.clientHeight + 2) return;
+
+    var clone = content.cloneNode(true);
+    clone.setAttribute('aria-hidden', 'true');
+    container.appendChild(clone);
+
+    var position = 0;
+    var pausedUntil = 0;
+
+    function tick(ts) {
+      if (!pausedUntil) pausedUntil = ts + pauseMs;
+
+      if (ts >= pausedUntil) {
+        position += speed;
+        container.scrollTop = position;
+
+        if (position >= content.scrollHeight) {
+          position = 0;
+          container.scrollTop = 0;
+          pausedUntil = ts + pauseMs;
+        }
+      }
+
+      window.requestAnimationFrame(tick);
+    }
+
+    window.requestAnimationFrame(tick);
+  }
+
+  setupAutoScroll(document.querySelector('.queue-window[data-auto-scroll="queue"]'), {
+    speed: 0.6,
+    pauseMs: 1400,
+  });
+
+  setupAutoScroll(document.querySelector('.results-window[data-auto-scroll="results"]'), {
+    speed: 0.45,
+    pauseMs: 1200,
+  });
+
+  var REFRESH_DELAY_MS = 12000;
+  setTimeout(function () {
+    window.location.reload();
+  }, REFRESH_DELAY_MS);
+}());
+</script>
+
+<%- include('../../partials/foot') %>

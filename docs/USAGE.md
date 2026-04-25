@@ -25,7 +25,7 @@ La page d'accueil présente l'association avec ses activités (tournois, événe
 2. Remplissez le formulaire :
    - **Nom** : votre nom de famille
    - **Prénom** : votre prénom
-   - **Pseudo** : votre surnom en jeu (2 à 50 caractères, lettres/chiffres/tirets)
+   - **Pseudo** : votre surnom en jeu ou Discord (2 à 50 caractères)
    - **Email** : votre adresse e-mail (utilisée pour la connexion)
    - **Mot de passe** : minimum 8 caractères, avec au moins 1 majuscule et 1 chiffre
    - **Confirmer le mot de passe** : identique au mot de passe
@@ -51,7 +51,7 @@ Accédez à votre profil via **Mon profil** dans la navigation (une fois connect
 ### Modifier mes informations
 
 Dans l'onglet **Informations** :
-1. Modifiez votre nom, prénom, pseudo ou email
+1. Modifiez votre nom, prénom, pseudo (jeu/Discord) ou email
 2. Cliquez sur **Sauvegarder**
 
 ### Changer mon mot de passe

@@ -1,0 +1,124 @@
+<%- include('../../partials/head') %>
+
+<div class="container admin-container" style="max-width:700px;">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-plus"></i> Nouvelle rencontre
+      </h1>
+      <p class="admin-subtitle"><i class="fas fa-calendar-alt"></i> <%= event.nom %></p>
+    </div>
+    <div class="admin-header-actions">
+      <a href="/battles/events/<%= event.id %>" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Retour
+      </a>
+    </div>
+  </div>
+
+  <!-- Étape 1 sur 2 -->
+  <div class="wizard-progress" style="display:flex; gap:.5rem; margin-bottom:var(--space-lg); align-items:center;">
+    <div style="flex:1; background:var(--color-primary); color:#fff; border-radius:6px; padding:.4rem 1rem; text-align:center; font-weight:600;">
+      <i class="fas fa-gamepad"></i> 1. Choisir le jeu
+    </div>
+    <i class="fas fa-chevron-right" style="color:var(--color-text-muted);"></i>
+    <div style="flex:1; background:var(--color-surface); border:1px solid var(--color-border); border-radius:6px; padding:.4rem 1rem; text-align:center; color:var(--color-text-muted);">
+      <i class="fas fa-users"></i> 2. Identifier les joueurs
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h2><i class="fas fa-gamepad"></i> Étape 1 — Choix du jeu</h2>
+    </div>
+    <div class="card-body">
+      <% if (errors && errors.length > 0) { %>
+        <div class="alert alert--error">
+          <ul style="margin:0; padding-left:1.2rem;">
+            <% errors.forEach(function(e) { %><li><%= typeof e === 'string' ? e : e.msg %></li><% }); %>
+          </ul>
+        </div>
+      <% } %>
+
+      <% if (games.length === 0) { %>
+        <div class="alert alert--warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          Aucun jeu n'est encore configuré.
+          <a href="/admin/games/create">Ajouter des jeux</a> d'abord.
+        </div>
+      <% } else { %>
+        <form action="/battles/events/<%= event.id %>/create" method="POST">
+          <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+
+          <div class="form-group">
+            <label class="form-label" for="game_id">Jeu <span class="required">*</span></label>
+            <select id="game_id" name="game_id" class="form-select" required>
+              <option value="">— Sélectionner un jeu —</option>
+              <% games.forEach(function(game) { %>
+                <option value="<%= game.id %>" <%= String(old.game_id) === String(game.id) ? 'selected' : '' %>>
+                  <%= game.nom %> — <%= game.console %> (<%= game.type_rencontre %>)
+                </option>
+              <% }); %>
+            </select>
+            <p class="form-hint">
+              Le format (1v1, 2v2 ou solo) détermine le nombre de joueurs à identifier à l'étape suivante.
+            </p>
+          </div>
+
+          <!-- Aperçu du jeu sélectionné -->
+          <div id="gamePreview" style="display:none; margin-bottom:var(--space-md); padding:var(--space-sm);
+                background:var(--color-surface-2,#f8fafc); border:1px solid var(--color-border); border-radius:8px;">
+            <strong id="previewNom"></strong>
+            <span id="previewConsole" style="color:var(--color-text-muted); margin-left:.5rem;"></span>
+            <span class="badge" id="previewType" style="margin-left:.5rem;"></span>
+            <p id="previewInfo" style="margin:.25rem 0 0; font-size:.85rem; color:var(--color-text-muted);"></p>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn--primary">
+              <i class="fas fa-arrow-right"></i> Suivant — Identifier les joueurs
+            </button>
+          </div>
+        </form>
+      <% } %>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const games = <%- JSON.stringify(games.map(function(g) { return { id: g.id, nom: g.nom, console: g.console, type_rencontre: g.type_rencontre }; })) %>;
+  const select   = document.getElementById('game_id');
+  const preview  = document.getElementById('gamePreview');
+  const previewNom     = document.getElementById('previewNom');
+  const previewConsole = document.getElementById('previewConsole');
+  const previewType    = document.getElementById('previewType');
+  const previewInfo    = document.getElementById('previewInfo');
+
+  function updatePreview() {
+    const gameId = parseInt(select.value, 10);
+    const game   = games.find(g => g.id === gameId);
+    if (!game) { preview.style.display = 'none'; return; }
+
+    previewNom.textContent     = game.nom;
+    previewConsole.textContent = '— ' + game.console;
+    previewType.textContent    = game.type_rencontre;
+    previewType.className      = 'badge badge--' + (game.type_rencontre === '2v2' ? 'info' : game.type_rencontre === 'solo' ? 'warning' : 'primary');
+    previewInfo.textContent    = game.type_rencontre === '2v2'
+      ? '4 joueurs à identifier (2 équipes de 2)'
+      : game.type_rencontre === 'solo'
+        ? '1 joueur à identifier (compétition individuelle)'
+        : '2 joueurs à identifier (face à face)';
+    preview.style.display = 'block';
+  }
+
+  select.addEventListener('change', updatePreview);
+  updatePreview();
+}());
+</script>
+
+<%- include('../../partials/foot') %>

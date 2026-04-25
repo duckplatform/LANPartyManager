@@ -72,10 +72,11 @@
 
           <div class="form-group">
             <label for="pseudo" class="form-label">
-              <i class="fas fa-gamepad"></i> Pseudo (surnom en jeu)
+              <i class="fas fa-gamepad"></i> Pseudo (jeu ou Discord)
             </label>
             <input type="text" id="pseudo" name="pseudo" class="form-input"
                    value="<%= user.pseudo || '' %>" required minlength="2" maxlength="50" />
+            <small class="form-hint">Ce pseudo est utilise pour identifier les joueurs dans les annonces de rencontres Discord.</small>
           </div>
 
           <div class="form-group">
@@ -84,6 +85,19 @@
             </label>
             <input type="email" id="email" name="email" class="form-input"
                    value="<%= user.email || '' %>" required autocomplete="email" />
+          </div>
+
+          <div class="form-group">
+            <label for="discord_user_id" class="form-label">
+              <i class="fab fa-discord"></i> ID Discord (optionnel)
+            </label>
+            <input type="text" id="discord_user_id" name="discord_user_id" class="form-input font-monospace"
+                   value="<%= user.discord_user_id || '' %>" maxlength="20"
+                   placeholder="ex: 123456789012345678" autocomplete="off" />
+            <small class="form-hint">
+              Permet de vous mentionner (<code>@vous</code>) dans les notifications Discord lors des rencontres.
+              Pour trouver votre ID : activez le <em>Mode développeur</em> dans Discord → clic droit sur votre avatar → <em>Copier l'identifiant</em>.
+            </small>
           </div>
 
           <div class="form-actions">

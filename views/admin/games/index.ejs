@@ -1,0 +1,88 @@
+<%- include('../../partials/head') %>
+
+<div class="container admin-container">
+  <div class="admin-layout">
+    <%- include('../_sidebar', { activeSection: 'games' }) %>
+
+    <section class="admin-main">
+
+  <!-- En-tête -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">
+        <i class="fas fa-gamepad"></i> Jeux disponibles
+      </h1>
+      <p class="admin-subtitle">Gérez les jeux disponibles pour les rencontres</p>
+    </div>
+    <div class="admin-header-actions">
+      <a href="/admin/games/create" class="btn btn--primary btn--sm">
+        <i class="fas fa-plus"></i> Ajouter un jeu
+      </a>
+      <a href="/admin" class="btn btn--ghost btn--sm">
+        <i class="fas fa-arrow-left"></i> Administration
+      </a>
+    </div>
+  </div>
+
+  <!-- Liste des jeux -->
+  <div class="card admin-users-card">
+    <div class="card-header admin-card-header">
+      <h2><i class="fas fa-list"></i> Jeux (<%= games.length %>)</h2>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Console / Plateforme</th>
+              <th>Format</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (games.length === 0) { %>
+              <tr>
+                <td colspan="4" class="table-empty">
+                  <i class="fas fa-inbox"></i> Aucun jeu configuré.
+                  <a href="/admin/games/create">Ajouter le premier jeu</a>.
+                </td>
+              </tr>
+            <% } else { %>
+              <% games.forEach(function(game) { %>
+                <tr>
+                  <td><strong><%= game.nom %></strong></td>
+                  <td><i class="fas fa-desktop"></i> <%= game.console %></td>
+                  <td>
+                    <span class="badge badge--<%= game.type_rencontre === '2v2' ? 'info' : 'primary' %>">
+                      <i class="fas fa-users"></i> <%= game.type_rencontre %>
+                    </span>
+                  </td>
+                  <td class="td-actions">
+                    <a href="/admin/games/<%= game.id %>/edit" class="btn btn--ghost btn--xs" title="Modifier">
+                      <i class="fas fa-pen"></i> Modifier
+                    </a>
+                    <form action="/admin/games/<%= game.id %>?_method=DELETE" method="POST"
+                          class="form-inline"
+                          onsubmit="return confirm('Supprimer le jeu <%= game.nom %> ? Cette action est irréversible.')">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                      <button type="submit" class="btn btn--danger btn--xs" title="Supprimer">
+                        <i class="fas fa-trash"></i> Supprimer
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+    </section>
+  </div>
+
+</div>
+
+<%- include('../../partials/foot') %>
