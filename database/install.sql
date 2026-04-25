@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS `games` (
   `updated_at`      DATETIME               NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_games_type` (`type_rencontre`)
+) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
   COMMENT='Jeux disponibles pour les rencontres';
