@@ -99,18 +99,67 @@
           <% } %>
 
           <% if (event.rankingTop && event.rankingTop.length > 0) { %>
-            <div class="card" style="margin-top:var(--space-md);">
-              <div class="card-body" style="padding: var(--space-sm) var(--space-md);">
-                <h3 style="font-size:1rem;margin-bottom:var(--space-sm);">
-                  <i class="fas fa-ranking-star"></i> Classement
-                </h3>
-                <ol style="margin:0;padding-left:1.1rem;">
-                  <% event.rankingTop.slice(0, 5).forEach(function(entry) { %>
-                    <li>
-                      <strong><%= entry.pseudo %></strong> — <%= entry.points %> pts
-                    </li>
+            <div class="card" style="margin-top:var(--space-md); overflow:hidden;">
+              <div class="card-body" style="padding: 0;">
+                <div style="padding: var(--space-md);">
+                  <h3 style="font-size:1rem; margin:0 0 var(--space-md) 0; display:flex; align-items:center; gap:.5rem;">
+                    <i class="fas fa-ranking-star"></i> Classement
+                  </h3>
+                </div>
+                
+                <!-- Ranking Table -->
+                <table style="width:100%; border-collapse:collapse; font-size:0.95rem;">
+                  <% event.rankingTop.slice(0, 5).forEach(function(entry, idx) {
+                    let medalIcon = '';
+                    let medalColor = '';
+                    if (idx === 0) {
+                      medalIcon = '🥇';
+                      medalColor = '#FFD700';
+                    } else if (idx === 1) {
+                      medalIcon = '🥈';
+                      medalColor = '#C0C0C0';
+                    } else if (idx === 2) {
+                      medalIcon = '🥉';
+                      medalColor = '#CD7F32';
+                    }
+                  %>
+                    <tr style="border-top: 1px solid rgba(0,0,0,0.05); transition: background-color 0.2s ease; <%
+                      if (idx === 0) { %>
+                        background: linear-gradient(90deg, rgba(255,215,0,0.08) 0%, transparent 100%);
+                      <% } else if (idx === 1) { %>
+                        background: linear-gradient(90deg, rgba(192,192,192,0.08) 0%, transparent 100%);
+                      <% } else if (idx === 2) { %>
+                        background: linear-gradient(90deg, rgba(205,127,50,0.08) 0%, transparent 100%);
+                      <% } %>
+                    " onmouseover="this.style.backgroundColor='rgba(0,0,0,0.02)'" onmouseout="this.style.backgroundColor=''">
+                      <td style="padding: var(--space-sm) var(--space-md); text-align:center; font-weight:bold; width:50px; color:<%= medalColor %>; font-size:1.2rem;">
+                        <% if (medalIcon) { %>
+                          <%= medalIcon %>
+                        <% } else { %>
+                          <%= entry.rang %>
+                        <% } %>
+                      </td>
+                      <td style="padding: var(--space-sm) var(--space-md); font-weight:600; color:var(--color-text);">
+                        <%= entry.pseudo %>
+                      </td>
+                      <td style="padding: var(--space-sm) var(--space-sm); text-align:right;">
+                        <span style="display:inline-block; background:#E3F2FD; color:#1976D2; padding:0.25rem 0.6rem; border-radius:1rem; font-size:0.85rem; font-weight:600; white-space:nowrap;">
+                          <i class="fas fa-star" style="margin-right:0.3rem;"></i><%= entry.points %> pts
+                        </span>
+                      </td>
+                      <td style="padding: var(--space-sm) var(--space-sm); text-align:right;">
+                        <span style="display:inline-block; background:#E8F5E9; color:#388E3C; padding:0.25rem 0.6rem; border-radius:1rem; font-size:0.85rem; font-weight:600; white-space:nowrap;">
+                          <i class="fas fa-trophy" style="margin-right:0.3rem;"></i><%= entry.wins %>
+                        </span>
+                      </td>
+                      <td style="padding: var(--space-sm) var(--space-md); text-align:right; color:var(--color-text-muted); font-size:0.9rem;">
+                        <span style="display:inline-block; background:#F3E5F5; color:#7B1FA2; padding:0.25rem 0.6rem; border-radius:1rem; font-size:0.85rem; font-weight:600;">
+                          <i class="fas fa-gamepad" style="margin-right:0.3rem;"></i><%= entry.battles_played %>
+                        </span>
+                      </td>
+                    </tr>
                   <% }) %>
-                </ol>
+                </table>
               </div>
             </div>
           <% } %>
