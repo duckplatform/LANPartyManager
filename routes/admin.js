@@ -13,6 +13,7 @@ const User              = require('../models/User');
 const Announcement      = require('../models/Announcement');
 const Event             = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
+const EventRanking      = require('../models/EventRanking');
 const Game              = require('../models/Game');
 const Room              = require('../models/Room');
 const Battle            = require('../models/Battle');
@@ -536,7 +537,14 @@ router.post('/events/:id', eventValidation, async (req, res) => {
       if (statut === 'en_cours') {
         discord.notifyEventStarted(updatedEvent).catch(() => {});
       } else if (statut === 'termine') {
-        discord.notifyEventEnded(updatedEvent).catch(() => {});
+        try {
+          await EventRanking.recalculateForEvent(id);
+          const rankings = await EventRanking.findByEvent(id, 10);
+          discord.notifyEventEnded(updatedEvent, rankings).catch(() => {});
+        } catch (rankingErr) {
+          logger.error(`[ADMIN/EVENTS] Erreur recalcul classement event #${id} :`, rankingErr);
+          discord.notifyEventEnded(updatedEvent, []).catch(() => {});
+        }
       }
     }
 

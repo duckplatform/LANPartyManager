@@ -5,7 +5,7 @@
   <!-- En-tête de page -->
   <div style="text-align:center; margin-bottom: var(--space-xl);">
     <h1 class="section-title">
-      <i class="fas fa-calendar-days"></i> Événements à venir
+      <i class="fas fa-calendar-days"></i> Événements
     </h1>
     <p class="text-muted" style="max-width:600px; margin: 0 auto;">
       Retrouvez tous nos prochains événements. Connectez-vous pour vous inscrire et recevoir votre billet électronique.
@@ -43,6 +43,10 @@
           <% if (isLive) { %>
             <span class="event-status-badge event-status--live">
               <i class="fas fa-circle-play"></i> En cours
+            </span>
+          <% } else if (event.statut === 'termine') { %>
+            <span class="event-status-badge" style="background:#3c3f45;color:#fff;">
+              <i class="fas fa-flag-checkered"></i> Terminé
             </span>
           <% } else { %>
             <span class="event-status-badge event-status--upcoming">
@@ -92,6 +96,23 @@
             <p class="event-registrations-closed" style="margin-top:var(--space-sm);font-size:.85rem;">
               <i class="fas fa-lock"></i> Inscriptions closes
             </p>
+          <% } %>
+
+          <% if (event.rankingTop && event.rankingTop.length > 0) { %>
+            <div class="card" style="margin-top:var(--space-md);">
+              <div class="card-body" style="padding: var(--space-sm) var(--space-md);">
+                <h3 style="font-size:1rem;margin-bottom:var(--space-sm);">
+                  <i class="fas fa-ranking-star"></i> Classement
+                </h3>
+                <ol style="margin:0;padding-left:1.1rem;">
+                  <% event.rankingTop.slice(0, 5).forEach(function(entry) { %>
+                    <li>
+                      <strong><%= entry.pseudo %></strong> — <%= entry.points %> pts
+                    </li>
+                  <% }) %>
+                </ol>
+              </div>
+            </div>
           <% } %>
         </div>
 

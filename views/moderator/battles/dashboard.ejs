@@ -1,5 +1,29 @@
 <%- include('../../partials/head') %>
 
+<%
+  const formatDuration = (milliseconds) => {
+    if (!milliseconds || milliseconds <= 0) return '--:--';
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  };
+
+  const getGameDuration = (started_at, ended_at) => {
+    if (!started_at || !ended_at) return null;
+    const start = new Date(started_at).getTime();
+    const end = new Date(ended_at).getTime();
+    return formatDuration(end - start);
+  };
+
+  const getGameElapsedTime = (started_at) => {
+    if (!started_at) return null;
+    const start = new Date(started_at).getTime();
+    const now = new Date().getTime();
+    return formatDuration(now - start);
+  };
+%>
+
 <style>
   /* Colonnes de statuts */
   .battles-stats { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: var(--space-lg); }
@@ -22,6 +46,10 @@
   .battle-card.statut-en_cours     { border-left: 4px solid #10b981; }
   .battle-card.statut-termine      { border-left: 4px solid #6b7280; opacity: .7; }
   .battle-card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: .5rem; }
+  .battle-duration { font-size: .82rem; color: var(--color-text-muted); margin-top: .4rem; }
+  .battle-duration-item { display: inline-flex; align-items: center; gap: .35rem; margin-right: 1rem; }
+  .battle-duration-label { text-transform: uppercase; font-size: .7rem; font-weight: 700; opacity: 0.75; }
+  .battle-duration-value { font-weight: 600; color: #ffffff; font-family: 'Courier New', monospace; }
   .battle-players { display: flex; gap: 1.5rem; margin-top: .5rem; flex-wrap: wrap; }
   .battle-team { flex: 1; min-width: 120px; }
   .battle-team-label { font-size: .75rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: .25rem; }
@@ -166,6 +194,25 @@
               </div>
             </div>
 
+            <!-- Durée de jeu -->
+            <% if (b.statut === 'en_cours' && b.started_at) { %>
+              <div class="battle-duration">
+                <div class="battle-duration-item">
+                  <i class="fas fa-hourglass-start"></i>
+                  <span class="battle-duration-label">Durée:</span>
+                  <span class="battle-duration-value"><%= getGameElapsedTime(b.started_at) %></span>
+                </div>
+              </div>
+            <% } else if (b.statut === 'termine' && b.started_at && b.ended_at) { %>
+              <div class="battle-duration">
+                <div class="battle-duration-item">
+                  <i class="fas fa-hourglass-end"></i>
+                  <span class="battle-duration-label">Durée totale:</span>
+                  <span class="battle-duration-value"><%= getGameDuration(b.started_at, b.ended_at) %></span>
+                </div>
+              </div>
+            <% } %>
+
             <!-- Joueurs -->
             <div class="battle-players">
               <% if (b.type_rencontre === '2v2') { %>
@@ -265,6 +312,15 @@
               <% if (b.room_nom) { %>&nbsp;|&nbsp;<i class="fas fa-door-open"></i> <%= b.room_nom %><% } %>
             </div>
           </div>
+          <% if (b.started_at && b.ended_at) { %>
+          <div class="battle-duration">
+            <div class="battle-duration-item">
+              <i class="fas fa-hourglass-end"></i>
+              <span class="battle-duration-label">Durée:</span>
+              <span class="battle-duration-value"><%= getGameDuration(b.started_at, b.ended_at) %></span>
+            </div>
+          </div>
+          <% } %>
           <div class="battle-players" style="margin-top:.4rem;">
             <% b.players.forEach(function(p) { %>
               <span class="player-chip <%= p.est_gagnant ? 'winner' : '' %>">

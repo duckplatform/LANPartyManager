@@ -9,6 +9,7 @@
 const express           = require('express');
 const router            = express.Router();
 const Event             = require('../models/Event');
+const EventRanking      = require('../models/EventRanking');
 const EventRegistration = require('../models/EventRegistration');
 const logger            = require('../config/logger');
 const { requireAuth }   = require('../middleware/auth');
@@ -36,6 +37,10 @@ router.get('/', async (req, res) => {
     events.forEach(e => {
       e.isRegistered = userRegistrations.has(e.id);
     });
+
+    await Promise.all(events.map(async (event) => {
+      event.rankingTop = await EventRanking.findByEvent(event.id, 10);
+    }));
 
     res.render('events/index', {
       title:     'Événements',

@@ -24,6 +24,7 @@ const battlesRouter = require('../routes/battles');
 const Battle = require('../models/Battle');
 const Event = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
+const EventRanking = require('../models/EventRanking');
 const Game = require('../models/Game');
 const Room = require('../models/Room');
 const User = require('../models/User');
@@ -646,12 +647,14 @@ describe('Routes - Tests d\'intégration', function () {
     let battleFindByIdStub;
     let eventFindByIdStub;
     let setResultWithQueueStub;
+    let recalculateRankingStub;
     let notifyBattleEndedStub;
 
     beforeEach(function () {
       battleFindByIdStub = sinon.stub(Battle, 'findById');
       eventFindByIdStub = sinon.stub(Event, 'findById');
       setResultWithQueueStub = sinon.stub(Battle, 'setResultWithQueue');
+      recalculateRankingStub = sinon.stub(EventRanking, 'recalculateForEvent').resolves();
       notifyBattleEndedStub = sinon.stub(discord, 'notifyBattleEnded').resolves();
     });
 
@@ -695,6 +698,7 @@ describe('Routes - Tests d\'intégration', function () {
       await handler(req, res);
 
       expect(setResultWithQueueStub.calledOnceWithExactly(12, '3-0', [10, 11], 1)).to.be.true;
+      expect(recalculateRankingStub.calledOnceWithExactly(1)).to.be.true;
       expect(notifyBattleEndedStub.calledOnceWithExactly({ event, battle: endedBattle })).to.be.true;
       expect(res.redirect.calledOnceWithExactly('/battles/events/1')).to.be.true;
     });

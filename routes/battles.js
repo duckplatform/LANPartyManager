@@ -25,6 +25,7 @@ const Game   = require('../models/Game');
 const Room   = require('../models/Room');
 const Event  = require('../models/Event');
 const User   = require('../models/User');
+const EventRanking = require('../models/EventRanking');
 const EventRegistration = require('../models/EventRegistration');
 const logger = require('../config/logger');
 const discord = require('../services/discord');
@@ -582,6 +583,9 @@ router.post(
         req.flash('error', 'Impossible d\'enregistrer ce résultat (rencontre introuvable).');
         return res.redirect(`/battles/events/${battle.event_id}`);
       }
+
+      // Recalcule le classement de l'evenement a chaque fin de rencontre.
+      await EventRanking.recalculateForEvent(battle.event_id);
 
       await notifyPromotedBattles(event, resultData.promotedBattleIds);
 
