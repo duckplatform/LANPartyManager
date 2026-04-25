@@ -567,6 +567,114 @@ WHERE e.nom = 'LAN Spring Showdown'
   );
 
 INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Duel 1v1 en attente numero 4 pour stress test FIFO.',
+       '2026-04-24 18:38:00', '2026-04-25 10:43:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Street Fighter 6' AND g.console = 'PC'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Duel 1v1 en attente numero 4 pour stress test FIFO.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Duel 1v1 en attente numero 5 avec joueur deja planifie.',
+       '2026-04-24 18:39:00', '2026-04-25 10:44:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'EA Sports FC 26' AND g.console = 'PS5'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Duel 1v1 en attente numero 5 avec joueur deja planifie.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Duel 1v1 en attente numero 6 pour couverture joueurs.',
+       '2026-04-24 18:40:00', '2026-04-25 10:45:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Street Fighter 6' AND g.console = 'PC'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Duel 1v1 en attente numero 6 pour couverture joueurs.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Rencontre 2v2 en attente numero 3 avec joueurs deja engages.',
+       '2026-04-24 18:41:00', '2026-04-25 10:46:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Mario Kart 8 Deluxe' AND g.console = 'Nintendo Switch'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Rencontre 2v2 en attente numero 3 avec joueurs deja engages.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Rencontre 2v2 en attente numero 4 pour stress test file.',
+       '2026-04-24 18:42:00', '2026-04-25 10:47:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Mario Kart 8 Deluxe' AND g.console = 'Nintendo Switch'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Rencontre 2v2 en attente numero 4 pour stress test file.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Rencontre 2v2 en attente numero 5 pour couverture joueurs.',
+       '2026-04-24 18:43:00', '2026-04-25 10:48:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Mario Kart 8 Deluxe' AND g.console = 'Nintendo Switch'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Rencontre 2v2 en attente numero 5 pour couverture joueurs.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Session solo en attente numero 3 avec joueur deja en cours.',
+       '2026-04-24 18:44:00', '2026-04-25 10:49:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Trackmania Turbo' AND g.console = 'PC'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Session solo en attente numero 3 avec joueur deja en cours.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Session solo en attente numero 4 avec joueur deja planifie.',
+       '2026-04-24 18:45:00', '2026-04-25 10:50:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Trackmania Turbo' AND g.console = 'PC'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Session solo en attente numero 4 avec joueur deja planifie.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
+SELECT e.id, g.id, NULL, 'file_attente', NULL,
+       'Session solo en attente numero 5 pour couverture joueurs.',
+       '2026-04-24 18:46:00', '2026-04-25 10:51:00'
+FROM `events` e
+JOIN `games` g ON g.nom = 'Trackmania Turbo' AND g.console = 'PC'
+WHERE e.nom = 'LAN Spring Showdown'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battles` b
+    WHERE b.event_id = e.id AND b.game_id = g.id AND b.notes = 'Session solo en attente numero 5 pour couverture joueurs.'
+  );
+
+INSERT INTO `battles` (`event_id`, `game_id`, `room_id`, `statut`, `score`, `notes`, `created_at`, `updated_at`)
 SELECT e.id, g.id, r.id, 'termine', '2-1',
        'Duel 1v1 termine conserve pour verifier l''historique et les scores.',
        '2026-04-24 17:15:00', '2026-04-24 17:45:00'
@@ -736,6 +844,195 @@ SELECT b.id, u.id, 2, 0
 FROM `battles` b
 JOIN `users` u ON u.email = 'theo.lemoine@lanparty.local'
 WHERE b.notes = 'Duel 1v1 planifie sur Link (slot suivant) pour tester le verrou d''occupation.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'leo.andre@lanparty.local'
+WHERE b.notes = 'Duel 1v1 en attente numero 4 pour stress test FIFO.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'theo.lemoine@lanparty.local'
+WHERE b.notes = 'Duel 1v1 en attente numero 4 pour stress test FIFO.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'hugo.bernard@lanparty.local'
+WHERE b.notes = 'Duel 1v1 en attente numero 5 avec joueur deja planifie.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'nolan.faure@lanparty.local'
+WHERE b.notes = 'Duel 1v1 en attente numero 5 avec joueur deja planifie.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'ines.dubois@lanparty.local'
+WHERE b.notes = 'Duel 1v1 en attente numero 6 pour couverture joueurs.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'emma.roux@lanparty.local'
+WHERE b.notes = 'Duel 1v1 en attente numero 6 pour couverture joueurs.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'lea.martin@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 3 avec joueurs deja engages.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'lucas.petit@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 3 avec joueurs deja engages.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'mila.chevalier@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 3 avec joueurs deja engages.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'theo.lemoine@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 3 avec joueurs deja engages.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'hugo.bernard@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 4 pour stress test file.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'ines.dubois@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 4 pour stress test file.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'nolan.faure@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 4 pour stress test file.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'jade.renard@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 4 pour stress test file.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'emma.roux@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 5 pour couverture joueurs.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'leo.andre@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 5 pour couverture joueurs.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'sarah.garcia@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 5 pour couverture joueurs.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 2, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'tom.moreau@lanparty.local'
+WHERE b.notes = 'Rencontre 2v2 en attente numero 5 pour couverture joueurs.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'jade.renard@lanparty.local'
+WHERE b.notes = 'Session solo en attente numero 3 avec joueur deja en cours.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'mila.chevalier@lanparty.local'
+WHERE b.notes = 'Session solo en attente numero 4 avec joueur deja planifie.'
+  AND NOT EXISTS (
+    SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
+  );
+
+INSERT INTO `battle_players` (`battle_id`, `user_id`, `equipe`, `est_gagnant`)
+SELECT b.id, u.id, 1, 0
+FROM `battles` b
+JOIN `users` u ON u.email = 'theo.lemoine@lanparty.local'
+WHERE b.notes = 'Session solo en attente numero 5 pour couverture joueurs.'
   AND NOT EXISTS (
     SELECT 1 FROM `battle_players` bp WHERE bp.battle_id = b.id AND bp.user_id = u.id
   );
@@ -1042,3 +1339,19 @@ WHERE b.notes = 'Rencontre 2v2 terminee pour enrichir l''historique du tableau.'
 -- JOIN events e ON e.id = b.event_id
 -- WHERE e.nom = 'LAN Spring Showdown' AND b.statut = 'file_attente'
 -- ORDER BY b.created_at ASC;
+--
+-- 4) Verifier les rencontres en attente bloquees par joueurs deja engages
+-- SELECT bw.id AS waiting_id, g.nom AS game, u.pseudo AS joueur_bloquant,
+--        bo.id AS battle_engagee, bo.statut AS statut_engage,
+--        bw.notes AS waiting_notes
+-- FROM battles bw
+-- JOIN events e ON e.id = bw.event_id
+-- JOIN battle_players bpw ON bpw.battle_id = bw.id
+-- JOIN battle_players bpo ON bpo.user_id = bpw.user_id AND bpo.battle_id <> bw.id
+-- JOIN battles bo ON bo.id = bpo.battle_id AND bo.event_id = bw.event_id
+-- JOIN users u ON u.id = bpw.user_id
+-- JOIN games g ON g.id = bw.game_id
+-- WHERE e.nom = 'LAN Spring Showdown'
+--   AND bw.statut = 'file_attente'
+--   AND bo.statut IN ('planifie','installation','en_cours')
+-- ORDER BY bw.created_at, u.pseudo;

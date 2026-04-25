@@ -42,7 +42,13 @@ Toujours appliquer et verifier ces regles de gestion cote serveur + base:
 - Une salle ne peut avoir qu'une seule rencontre active (`installation` ou `en_cours`) en meme temps.
 - Une salle peut avoir au maximum une rencontre `planifie` en attente du prochain slot.
 - La file d'attente doit rester FIFO (ordre chronologique de creation).
+- Un joueur ne peut pas etre engage dans deux rencontres `planifie`/`installation`/`en_cours` en meme temps sur un meme evenement.
+- Lors du traitement de la file d'attente, toute rencontre contenant un joueur deja engage doit rester en `file_attente` (non traitable).
 
 3. Validation et robustesse:
 - Les contraintes critiques doivent etre protegees a 2 niveaux: logique applicative + contraintes SQL.
 - Les messages d'erreur doivent etre compréhensibles et exploitables en operation (admin/moderation).
+
+4. Gouvernance SQL:
+- Le schema SQL est centralise dans `database/install.sql` (source de verite unique).
+- Il n'y a pas de migrations SQL incrementales a maintenir dans ce repository.
