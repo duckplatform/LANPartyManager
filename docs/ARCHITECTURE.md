@@ -33,7 +33,7 @@ LANPartyManager/
 │
 ├── routes/
 │   ├── index.js              # GET / (page d'accueil + dernières annonces)
-│   ├── auth.js               # GET/POST /auth/login, register, logout
+│   ├── auth.js               # GET/POST /auth/login, register, logout + OAuth Discord
 │   ├── profile.js            # GET/POST /profile, /profile/password
 │   ├── admin.js              # GET /admin, gestion users + annonces + jeux + salles
 │   ├── events.js             # GET/POST /events (public + inscription)
@@ -51,8 +51,9 @@ LANPartyManager/
 │   ├── index.ejs             # Page d'accueil (avec dernières annonces)
 │   ├── profile.ejs           # Page profil utilisateur
 │   ├── auth/
-│   │   ├── login.ejs         # Formulaire de connexion
-│   │   └── register.ejs      # Formulaire d'inscription
+│   │   ├── login.ejs         # Formulaire de connexion (+ bouton Discord OAuth)
+│   │   ├── register.ejs      # Formulaire d'inscription (+ bouton Discord OAuth)
+│   │   └── discord-complete.ejs  # Formulaire de finalisation d'inscription Discord
 │   ├── news/
 │   │   ├── index.ejs         # Liste des annonces publiées (/news)
 │   │   └── show.ejs          # Détail d'une annonce (/news/:id)
@@ -121,7 +122,7 @@ LANPartyManager/
 | Base de données | MySQL 5.7+ / MariaDB 10+ |
 | Driver DB | mysql2/promise (pool de connexions) |
 | Templates | EJS (Embedded JavaScript) |
-| Authentification | Sessions (express-session) + bcryptjs |
+| Authentification | Sessions (express-session) + bcryptjs + OAuth Discord |
 | Protection CSRF | csrf-sync (Synchroniser Token Pattern) |
 | Sécurité headers | helmet |
 | Rate limiting | express-rate-limit |
@@ -154,8 +155,10 @@ Le seed est idempotent : il ajoute uniquement des enregistrements de demonstrati
 | prenom | VARCHAR(100) | Prénom |
 | pseudo | VARCHAR(50) | Surnom en jeu (unique dans l'interface) |
 | email | VARCHAR(255) UNIQUE | Adresse e-mail (login) |
-| password | VARCHAR(255) | Mot de passe haché (bcrypt 12 rounds) |
+| password | VARCHAR(255) NULL | Mot de passe haché (bcrypt 12 rounds) — NULL pour les comptes créés via Discord OAuth |
 | is_admin | TINYINT(1) DEFAULT 0 | 1 = admin, 0 = membre |
+| discord_user_id | VARCHAR(20) UNIQUE NULL | ID Discord Snowflake — utilisé pour l'authentification OAuth et les mentions dans les notifications |
+| badge_token | CHAR(36) UNIQUE | Token UUID permanent pour QR code badge |
 | created_at | DATETIME | Date de création |
 | updated_at | DATETIME | Date de dernière modification |
 
@@ -256,6 +259,23 @@ file_attente  →  planifie  →  en_attente  →  en_cours  →  termine
 
 ### Intégration Discord
 
+#### OAuth2 — Connexion et inscription
+
+Les routes `/auth/discord`, `/auth/discord/callback` et `/auth/discord/complete` permettent aux utilisateurs de créer un compte ou de se connecter via Discord.
+
+**Flux :**
+1. L'utilisateur clique sur "Se connecter avec Discord"
+2. Il est redirigé vers Discord pour autoriser l'application (scopes : `identify` + `email`)
+3. Discord le redirige vers `/auth/discord/callback` avec un code OAuth2
+4. **Cas 1** : Discord ID déjà lié à un compte → connexion directe
+5. **Cas 2** : E-mail Discord déjà enregistré → liaison automatique du compte + connexion
+6. **Cas 3** : Nouvel utilisateur → formulaire de complétion du profil (nom, prénom, pseudo, e-mail)
+7. Le compte est créé avec `discord_user_id` renseigné et `password = NULL`
+
+> **Sécurité** : un paramètre `state` aléatoire est généré et stocké en session pour protéger le callback OAuth contre les attaques CSRF.
+
+#### Notifications (bot Discord)
+
 Le service `services/discord.js` envoie des notifications formatées (Discord Embeds) sur des canaux Discord configurés lors des événements métier suivants :
 
 Pour les rencontres, le canal utilisé est prioritairement `events.discord_channel_id` (canal dédié à l'événement), avec repli sur `DISCORD_CHANNEL_EVENTS` si le champ n'est pas renseigné.
@@ -290,10 +310,11 @@ Toutes les transitions du cycle de vie d'une rencontre sont couvertes :
 2. **Rate Limiting** — 200 req/15min global, 10 req/15min sur les routes auth
 3. **Sessions** — express-session avec cookie `httpOnly`, `sameSite: lax`, `secure` en prod
 4. **CSRF** — csrf-sync (Synchroniser Token Pattern) sur toutes les routes POST
-5. **Bcrypt** — Mots de passe hachés avec 12 rounds
+5. **Bcrypt** — Mots de passe hachés avec 12 rounds (NULL pour les comptes Discord)
 6. **Validation** — express-validator sur tous les formulaires
 7. **Requêtes préparées** — mysql2 avec paramètres bind (anti-injection SQL)
 8. **Session regenerate** — Régénération de session après login/register (anti-fixation)
+9. **OAuth2 state** — Paramètre `state` aléatoire stocké en session pour protéger le callback Discord contre le CSRF
 
 ---
 
@@ -407,6 +428,8 @@ Configurez ces variables dans l'interface cPanel → **Node.js Selector** :
 | `DISCORD_BOT_TOKEN` | Token du bot Discord (optionnel) | `MTxxxxxxxx.xxxxxx.xxxxxxxxxx` |
 | `DISCORD_CHANNEL_EVENTS` | ID du canal Discord pour les événements (optionnel) | `123456789012345678` |
 | `DISCORD_CHANNEL_NEWS` | ID du canal Discord pour les actualités (optionnel) | `987654321098765432` |
+| `DISCORD_CLIENT_ID` | ID de l'application Discord OAuth2 (optionnel) | `123456789012345678` |
+| `DISCORD_CLIENT_SECRET` | Secret de l'application Discord OAuth2 (optionnel) | `aBcDeFgHiJkLmNoPqRsTuVwXyZ` |
 
 > ⚠️ **`SESSION_SECRET`** doit être une chaîne longue et aléatoire (64+ caractères).
 
@@ -414,11 +437,26 @@ Configurez ces variables dans l'interface cPanel → **Node.js Selector** :
 
 ### Comment obtenir les paramètres Discord
 
+#### Bot Discord (notifications)
+
 1. Créez un bot sur le [Discord Developer Portal](https://discord.com/developers/applications)
 2. Copiez le **Token** du bot → `DISCORD_BOT_TOKEN`
 3. Activez le mode développeur dans Discord (Paramètres → Avancés → Mode développeur)
 4. Clic droit sur un canal → **Copier l'identifiant** → `DISCORD_CHANNEL_EVENTS` ou `DISCORD_CHANNEL_NEWS`
 5. Invitez le bot sur votre serveur avec la permission **Envoyer des messages** (scope `bot` + permission `Send Messages`)
+
+#### OAuth Discord (connexion / inscription)
+
+1. Sur le [Discord Developer Portal](https://discord.com/developers/applications), ouvrez votre application (ou créez-en une)
+2. Allez dans **OAuth2 → General**
+3. Copiez **Client ID** → `DISCORD_CLIENT_ID`
+4. Copiez (ou réinitialisez) **Client Secret** → `DISCORD_CLIENT_SECRET`
+5. Ajoutez `<APP_URL>/auth/discord/callback` dans **Redirects** (ex: `https://monsite.example.com/auth/discord/callback`)
+6. Assurez-vous que `APP_URL` est bien définie dans vos variables d'environnement
+
+> 💡 **Scopes utilisés** : `identify` (ID, pseudo) + `email` (adresse e-mail si disponible). Aucune autre permission n'est demandée à l'utilisateur.
+
+> 💡 Si `DISCORD_CLIENT_ID` ou `APP_URL` est absent, le bouton "Se connecter avec Discord" reste visible mais redirige vers `/auth/login` avec un message d'information.
 
 ### 4. Démarrage
 

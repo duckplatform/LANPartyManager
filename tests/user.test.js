@@ -217,4 +217,85 @@ describe('User Model', function () {
     });
   });
 
+  // ── findByDiscordId ─────────────────────────────────────────────────────
+
+  describe('findByDiscordId()', function () {
+    it('doit retourner l\'utilisateur correspondant à l\'ID Discord', async function () {
+      const fakeUser = { id: 3, pseudo: 'DiscordUser', discord_user_id: '123456789012345678' };
+      poolStub.execute.resolves([[fakeUser]]);
+
+      const result = await User.findByDiscordId('123456789012345678');
+      expect(result).to.deep.equal(fakeUser);
+      const callArgs = poolStub.execute.firstCall.args[1];
+      expect(callArgs[0]).to.equal('123456789012345678');
+    });
+
+    it('doit retourner null si l\'ID Discord est introuvable', async function () {
+      poolStub.execute.resolves([[]]);
+      const result = await User.findByDiscordId('000000000000000000');
+      expect(result).to.be.null;
+    });
+  });
+
+  // ── createFromDiscord ───────────────────────────────────────────────────
+
+  describe('createFromDiscord()', function () {
+    it('doit créer un utilisateur Discord et retourner son ID', async function () {
+      poolStub.execute.resolves([{ insertId: 99 }]);
+
+      const id = await User.createFromDiscord({
+        nom:       'Dupont',
+        prenom:    'Jean',
+        pseudo:    'JD',
+        email:     'jean@discord.com',
+        discordId: '123456789012345678',
+      });
+
+      expect(id).to.equal(99);
+      expect(poolStub.execute.calledOnce).to.be.true;
+
+      const callArgs = poolStub.execute.firstCall.args[1];
+      // Ordre : [nom, prenom, pseudo, email, badgeToken, discordId]
+      expect(callArgs[0]).to.equal('Dupont');
+      expect(callArgs[3]).to.equal('jean@discord.com');
+      // badge_token est un UUID (index 4)
+      expect(callArgs[4]).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      // discord_user_id (index 5)
+      expect(callArgs[5]).to.equal('123456789012345678');
+    });
+  });
+
+  // ── linkDiscord ─────────────────────────────────────────────────────────
+
+  describe('linkDiscord()', function () {
+    it('doit retourner true si la liaison réussit', async function () {
+      poolStub.execute.resolves([{ affectedRows: 1 }]);
+      const result = await User.linkDiscord(5, '123456789012345678');
+      expect(result).to.be.true;
+      const callArgs = poolStub.execute.firstCall.args[1];
+      expect(callArgs[0]).to.equal('123456789012345678');
+      expect(callArgs[1]).to.equal(5);
+    });
+
+    it('doit retourner false si utilisateur introuvable', async function () {
+      poolStub.execute.resolves([{ affectedRows: 0 }]);
+      const result = await User.linkDiscord(999, '123456789012345678');
+      expect(result).to.be.false;
+    });
+  });
+
+  // ── verifyPassword avec null ─────────────────────────────────────────────
+
+  describe('verifyPassword() avec mot de passe null (compte Discord)', function () {
+    it('doit retourner false si le hash est null', async function () {
+      const result = await User.verifyPassword('anypassword', null);
+      expect(result).to.be.false;
+    });
+
+    it('doit retourner false si le hash est une chaîne vide', async function () {
+      const result = await User.verifyPassword('anypassword', '');
+      expect(result).to.be.false;
+    });
+  });
+
 });
