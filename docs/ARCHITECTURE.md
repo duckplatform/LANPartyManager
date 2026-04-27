@@ -435,28 +435,99 @@ Configurez ces variables dans l'interface cPanel → **Node.js Selector** :
 
 > 💡 **Discord (optionnel)** : si `DISCORD_BOT_TOKEN` est absent, les notifications Discord sont simplement désactivées sans impact sur le reste de l'application.
 
-### Comment obtenir les paramètres Discord
+### Comment configurer Discord pour l'application
 
-#### Bot Discord (notifications)
+---
 
-1. Créez un bot sur le [Discord Developer Portal](https://discord.com/developers/applications)
-2. Copiez le **Token** du bot → `DISCORD_BOT_TOKEN`
-3. Activez le mode développeur dans Discord (Paramètres → Avancés → Mode développeur)
-4. Clic droit sur un canal → **Copier l'identifiant** → `DISCORD_CHANNEL_EVENTS` ou `DISCORD_CHANNEL_NEWS`
-5. Invitez le bot sur votre serveur avec la permission **Envoyer des messages** (scope `bot` + permission `Send Messages`)
+#### Étape 1 — Créer une application Discord
 
-#### OAuth Discord (connexion / inscription)
+1. Rendez-vous sur le [Discord Developer Portal](https://discord.com/developers/applications)
+2. Connectez-vous avec votre compte Discord (de préférence le compte d'administration de votre association)
+3. Cliquez sur **New Application** (bouton en haut à droite)
+4. Donnez un nom à votre application (ex : `LANPartyManager`)
+5. Acceptez les conditions d'utilisation et cliquez sur **Create**
 
-1. Sur le [Discord Developer Portal](https://discord.com/developers/applications), ouvrez votre application (ou créez-en une)
-2. Allez dans **OAuth2 → General**
-3. Copiez **Client ID** → `DISCORD_CLIENT_ID`
-4. Copiez (ou réinitialisez) **Client Secret** → `DISCORD_CLIENT_SECRET`
-5. Ajoutez `<APP_URL>/auth/discord/callback` dans **Redirects** (ex: `https://monsite.example.com/auth/discord/callback`)
-6. Assurez-vous que `APP_URL` est bien définie dans vos variables d'environnement
+---
 
-> 💡 **Scopes utilisés** : `identify` (ID, pseudo) + `email` (adresse e-mail si disponible). Aucune autre permission n'est demandée à l'utilisateur.
+#### Étape 2 — Configurer OAuth2 (connexion / inscription des membres)
 
-> 💡 Si `DISCORD_CLIENT_ID` ou `APP_URL` est absent, le bouton "Se connecter avec Discord" reste visible mais redirige vers `/auth/login` avec un message d'information.
+> **Obligatoire** pour activer le bouton "Se connecter avec Discord" sur le site.
+
+1. Dans le menu de gauche, cliquez sur **OAuth2**
+2. Dans la section **Client Information** :
+   - Copiez le **Client ID** → variable `DISCORD_CLIENT_ID`
+   - Cliquez sur **Reset Secret**, confirmez, puis copiez la valeur affichée → variable `DISCORD_CLIENT_SECRET`
+   > ⚠️ Le Client Secret n'est affiché qu'une seule fois après sa génération. Conservez-le immédiatement.
+3. Dans la section **Redirects**, cliquez sur **Add Redirect** et ajoutez :
+   ```
+   https://votre-domaine.example.com/auth/discord/callback
+   ```
+   Remplacez `votre-domaine.example.com` par la valeur de votre variable d'environnement `APP_URL`.
+   > ⚠️ L'URL doit correspondre **exactement** à `APP_URL + /auth/discord/callback`. Toute différence (http vs https, slash final, sous-domaine) empêchera la connexion.
+4. Cliquez sur **Save Changes**
+
+**Scopes demandés aux utilisateurs lors de la connexion :**
+
+| Scope | Données récupérées | Utilisation |
+|-------|-------------------|-------------|
+| `identify` | ID Discord, pseudo, avatar | Identifiant unique + pré-remplissage du pseudo |
+| `email` | Adresse e-mail vérifiée | Liaison automatique si e-mail déjà enregistré |
+
+> 💡 Aucun autre scope n'est demandé. L'application **ne peut pas** envoyer de messages en tant qu'utilisateur, accéder aux serveurs, ni effectuer aucune action dans Discord au nom du membre.
+
+---
+
+#### Étape 3 — Configurer le bot Discord (notifications — optionnel)
+
+> **Optionnel.** Permet d'envoyer des notifications automatiques dans un canal Discord lors des événements LAN, publications d'actualités et rencontres.
+
+1. Dans le menu de gauche, cliquez sur **Bot**
+2. Cliquez sur **Add Bot**, confirmez
+3. Dans la section **Token**, cliquez sur **Reset Token**, confirmez, puis copiez le token → variable `DISCORD_BOT_TOKEN`
+   > ⚠️ Le token n'est affiché qu'une seule fois. Conservez-le immédiatement et ne le partagez jamais.
+4. Désactivez les **Privileged Gateway Intents** (aucun n'est nécessaire pour ce bot)
+5. **Inviter le bot sur votre serveur Discord** :
+   - Dans le menu de gauche, allez dans **OAuth2 → URL Generator**
+   - Dans **Scopes**, cochez uniquement `bot`
+   - Dans **Bot Permissions**, cochez uniquement `Send Messages`
+   - Copiez l'URL générée et ouvrez-la dans votre navigateur
+   - Sélectionnez votre serveur Discord et autorisez le bot
+6. **Récupérer les IDs des canaux Discord** :
+   - Dans Discord, allez dans **Paramètres utilisateur → Avancés** et activez le **Mode développeur**
+   - Faites un clic droit sur le canal souhaité → **Copier l'identifiant**
+   - Canal pour les événements LAN → variable `DISCORD_CHANNEL_EVENTS`
+   - Canal pour les actualités → variable `DISCORD_CHANNEL_NEWS`
+
+---
+
+#### Étape 4 — Configurer les variables d'environnement dans cPanel
+
+Une fois les valeurs Discord obtenues, renseignez-les dans cPanel → **Node.js Selector** → **Environment Variables** :
+
+```
+APP_URL               = https://votre-domaine.example.com
+DISCORD_CLIENT_ID     = <Client ID copié à l'étape 2>
+DISCORD_CLIENT_SECRET = <Client Secret copié à l'étape 2>
+DISCORD_BOT_TOKEN     = <Token bot copié à l'étape 3>       (optionnel)
+DISCORD_CHANNEL_EVENTS = <ID canal événements>              (optionnel)
+DISCORD_CHANNEL_NEWS  = <ID canal actualités>               (optionnel)
+```
+
+> 💡 `DISCORD_CLIENT_ID` et `DISCORD_CLIENT_SECRET` sont indépendants de `DISCORD_BOT_TOKEN`. Il est possible d'activer uniquement la connexion OAuth2, uniquement les notifications bot, ou les deux.
+
+> 💡 Si `DISCORD_CLIENT_ID` ou `APP_URL` est absent, le bouton "Se connecter avec Discord" est désactivé (redirection vers `/auth/login` avec un message d'information). L'application continue de fonctionner normalement.
+
+---
+
+#### Récapitulatif des variables Discord
+
+| Variable | Source | Obligatoire pour |
+|----------|--------|-----------------|
+| `DISCORD_CLIENT_ID` | Developer Portal → OAuth2 → Client ID | Connexion OAuth2 |
+| `DISCORD_CLIENT_SECRET` | Developer Portal → OAuth2 → Client Secret | Connexion OAuth2 |
+| `DISCORD_BOT_TOKEN` | Developer Portal → Bot → Token | Notifications Discord |
+| `DISCORD_CHANNEL_EVENTS` | ID de canal (mode développeur Discord) | Notifications événements |
+| `DISCORD_CHANNEL_NEWS` | ID de canal (mode développeur Discord) | Notifications actualités |
 
 ### 4. Démarrage
 
