@@ -55,6 +55,48 @@ const User = {
   },
 
   /**
+   * Crée un utilisateur via Discord OAuth (sans mot de passe)
+   * @param {Object} data - { nom, prenom, pseudo, email, discordId }
+   * @returns {Promise<number>} ID du nouvel utilisateur
+   */
+  async createFromDiscord({ nom, prenom, pseudo, email, discordId }) {
+    const badgeToken = randomUUID();
+    const [result] = await db.pool.execute(
+      `INSERT INTO users (nom, prenom, pseudo, email, password, is_admin, is_moderator, badge_token, discord_user_id)
+       VALUES (?, ?, ?, ?, NULL, 0, 0, ?, ?)`,
+      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), badgeToken, discordId]
+    );
+    return result.insertId;
+  },
+
+  /**
+   * Trouve un utilisateur par son ID Discord (Snowflake)
+   * @param {string} discordId
+   * @returns {Promise<Object|null>}
+   */
+  async findByDiscordId(discordId) {
+    const [rows] = await db.pool.execute(
+      'SELECT id, nom, prenom, pseudo, email, is_admin, is_moderator, badge_token, discord_user_id, created_at FROM users WHERE discord_user_id = ?',
+      [discordId]
+    );
+    return rows[0] || null;
+  },
+
+  /**
+   * Lie un compte Discord à un utilisateur existant
+   * @param {number} userId
+   * @param {string} discordId
+   * @returns {Promise<boolean>}
+   */
+  async linkDiscord(userId, discordId) {
+    const [result] = await db.pool.execute(
+      'UPDATE users SET discord_user_id = ?, updated_at = NOW() WHERE id = ?',
+      [discordId, userId]
+    );
+    return result.affectedRows > 0;
+  },
+
+  /**
    * Met à jour les informations d'un utilisateur
    * @param {number} id
    * @param {Object} data - champs à mettre à jour
@@ -90,11 +132,13 @@ const User = {
 
   /**
    * Vérifie un mot de passe en clair contre le hash stocké
+   * Retourne false si le hash est null (compte OAuth sans mot de passe)
    * @param {string} plainPassword
-   * @param {string} hashedPassword
+   * @param {string|null} hashedPassword
    * @returns {Promise<boolean>}
    */
   async verifyPassword(plainPassword, hashedPassword) {
+    if (!hashedPassword) return false;
     return bcrypt.compare(plainPassword, hashedPassword);
   },
 

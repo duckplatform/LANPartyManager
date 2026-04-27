@@ -708,4 +708,90 @@ describe('Routes - Tests d\'intégration', function () {
     });
   });
 
+  // ── Routes Discord OAuth2 ──────────────────────────────────────────────
+
+  describe('GET /auth/discord (sans DISCORD_CLIENT_ID)', function () {
+    it('doit rediriger vers /auth/login si Discord non configuré', async function () {
+      const savedClientId = process.env.DISCORD_CLIENT_ID;
+      const savedAppUrl   = process.env.APP_URL;
+      delete process.env.DISCORD_CLIENT_ID;
+      delete process.env.APP_URL;
+
+      const res = await request(app).get('/auth/discord');
+
+      process.env.DISCORD_CLIENT_ID = savedClientId;
+      process.env.APP_URL           = savedAppUrl;
+
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.include('/auth/login');
+    });
+  });
+
+  describe('GET /auth/discord (avec DISCORD_CLIENT_ID configuré)', function () {
+    it('doit rediriger vers Discord OAuth si configuré', async function () {
+      const savedClientId = process.env.DISCORD_CLIENT_ID;
+      const savedAppUrl   = process.env.APP_URL;
+      process.env.DISCORD_CLIENT_ID = 'test-client-id';
+      process.env.APP_URL           = 'https://lanparty.example.com';
+
+      const res = await request(app).get('/auth/discord');
+
+      process.env.DISCORD_CLIENT_ID = savedClientId;
+      process.env.APP_URL           = savedAppUrl;
+
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.include('discord.com/oauth2/authorize');
+      expect(res.headers['location']).to.include('test-client-id');
+    });
+  });
+
+  describe('GET /auth/discord/callback (erreur Discord)', function () {
+    it('doit rediriger vers /auth/login si Discord renvoie une erreur', async function () {
+      const res = await request(app)
+        .get('/auth/discord/callback?error=access_denied');
+
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.include('/auth/login');
+    });
+  });
+
+  describe('GET /auth/discord/callback (state invalide)', function () {
+    it('doit rediriger vers /auth/login si le state est invalide', async function () {
+      const res = await request(app)
+        .get('/auth/discord/callback?code=test-code&state=invalid-state');
+
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.include('/auth/login');
+    });
+  });
+
+  describe('GET /auth/discord/complete (sans session discordPending)', function () {
+    it('doit rediriger vers /auth/register si pas de session discordPending', async function () {
+      const res = await request(app).get('/auth/discord/complete');
+
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.include('/auth/register');
+    });
+  });
+
+  describe('POST /auth/discord/complete (sans session discordPending)', function () {
+    it('doit rediriger vers /auth/register si pas de session discordPending', async function () {
+      const completePage = await request(app).get('/auth/register');
+      const csrfMatch    = completePage.text.match(/name="_csrf" value="([^"]+)"/);
+      const csrfToken    = csrfMatch ? csrfMatch[1] : '';
+      const cookie       = completePage.headers['set-cookie'];
+
+      const res = await request(app)
+        .post('/auth/discord/complete')
+        .set('Cookie', cookie)
+        .send(
+          `_csrf=${encodeURIComponent(csrfToken)}` +
+          '&nom=Test&prenom=User&pseudo=TU&email=test@test.com'
+        );
+
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.include('/auth/register');
+    });
+  });
+
 });
