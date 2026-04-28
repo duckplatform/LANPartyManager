@@ -76,7 +76,13 @@
           maxlength="50"
           autocomplete="nickname"
         />
-        <small class="form-hint">2 à 50 caractères, lettres, chiffres, tirets et espaces.</small>
+        <small class="form-hint">
+          <% if (old.pseudo) { %>
+            <i class="fab fa-discord"></i> Pré-rempli depuis votre pseudo Discord — vous pouvez le modifier.
+          <% } else { %>
+            2 à 50 caractères, lettres, chiffres, tirets et espaces.
+          <% } %>
+        </small>
       </div>
 
       <div class="form-group">

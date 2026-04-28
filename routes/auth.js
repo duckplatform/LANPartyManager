@@ -406,10 +406,12 @@ router.get('/discord/callback', async (req, res) => {
     }
 
     // Cas 3 : nouvel utilisateur → stocke les infos Discord en session et redirige vers le formulaire
+    // global_name = nom d'affichage Discord (ex: "Jean Dupont"), username = handle unique (ex: "jeandupont42")
     req.session.discordPending = {
-      id:       discordUser.id,
-      username: discordUser.username || '',
-      email:    (discordUser.email && discordUser.verified) ? discordUser.email : null,
+      id:         discordUser.id,
+      username:   discordUser.username   || '',
+      globalName: discordUser.global_name || '',
+      email:      (discordUser.email && discordUser.verified) ? discordUser.email : null,
     };
     logger.info(`[AUTH DISCORD] Nouvel utilisateur Discord en attente d'inscription: ${discordUser.id}`);
     return res.redirect('/auth/discord/complete');
@@ -445,14 +447,17 @@ router.get('/discord/complete', (req, res) => {
   if (req.session.userId)      return res.redirect('/');
   if (!req.session.discordPending) return res.redirect('/auth/register');
 
-  const { username, email } = req.session.discordPending;
+  const { username, globalName, email } = req.session.discordPending;
+
+  // Pseudo suggéré : priorité au nom d'affichage Discord (global_name), sinon handle unique
+  const pseudoSuggestion = globalName || username || '';
 
   res.render('auth/discord-complete', {
     title:     'Finaliser mon inscription',
     pageClass: 'page-auth',
     errors:    [],
     old: {
-      pseudo: username || '',
+      pseudo: pseudoSuggestion,
       email:  email   || '',
       nom:    '',
       prenom: '',
