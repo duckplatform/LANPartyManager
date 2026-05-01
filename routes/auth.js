@@ -29,7 +29,8 @@ const DISCORD_SCOPES      = 'identify email';
  * @returns {string}
  */
 function getDiscordRedirectUri() {
-  const appUrl = (process.env.APP_URL || '').replace(/\/$/, '');
+  // Fallback sur https://scaling-space-goldfish-54vqj6w7vj2747-3000.app.github.dev pour le dev local
+  const appUrl = (process.env.APP_URL || 'https://scaling-space-goldfish-54vqj6w7vj2747-3000.app.github.dev').replace(/\/$/, '');
   return appUrl ? `${appUrl}/auth/discord/callback` : '';
 }
 
@@ -282,6 +283,7 @@ router.get('/discord', (req, res) => {
 
   const clientId     = process.env.DISCORD_CLIENT_ID     || '';
   const redirectUri  = getDiscordRedirectUri();
+  const promptMode   = req.query.prompt === 'consent' ? 'consent' : 'none';
 
   if (!clientId || !redirectUri) {
     logger.warn('[AUTH DISCORD] DISCORD_CLIENT_ID ou APP_URL non configuré — OAuth Discord désactivé.');
@@ -289,15 +291,20 @@ router.get('/discord', (req, res) => {
     return res.redirect('/auth/login');
   }
 
+  // DEBUG: log le redirect URI utilisé pour diagnostiquer les problèmes de consentement
+  logger.info(`[AUTH DISCORD] Initiation OAuth - redirectUri=${redirectUri}, clientId=${clientId}`);
+
   // Génère un état aléatoire (256 bits) pour protéger contre le CSRF sur le callback OAuth
   const state = randomBytes(32).toString('hex');
   req.session.discordOauthState = state;
+  req.session.discordOauthPromptMode = promptMode;
 
   const params = new URLSearchParams({
     client_id:     clientId,
     redirect_uri:  redirectUri,
     response_type: 'code',
     scope:         DISCORD_SCOPES,
+    prompt:        promptMode,
     state,
   });
 
@@ -310,10 +317,23 @@ router.get('/discord', (req, res) => {
 router.get('/discord/callback', async (req, res) => {
   try {
     const { code, state, error: discordError } = req.query;
+    const promptMode = req.session.discordOauthPromptMode || 'none';
 
     // Erreur explicite renvoyée par Discord (ex: accès refusé)
     if (discordError) {
+      if (
+        promptMode === 'none' &&
+        ['consent_required', 'interaction_required', 'login_required'].includes(discordError)
+      ) {
+        logger.info(`[AUTH DISCORD] Autorisation interactive requise (${discordError}) — bascule vers prompt=consent.`);
+        delete req.session.discordOauthState;
+        delete req.session.discordOauthPromptMode;
+        return res.redirect('/auth/discord?prompt=consent');
+      }
+
       logger.warn(`[AUTH DISCORD] Erreur OAuth Discord renvoyée par le serveur: ${discordError}`);
+      delete req.session.discordOauthState;
+      delete req.session.discordOauthPromptMode;
       req.flash('error', 'Autorisation Discord refusée ou annulée.');
       return res.redirect('/auth/login');
     }
@@ -321,10 +341,12 @@ router.get('/discord/callback', async (req, res) => {
     // Validation du state (protection CSRF)
     if (!state || state !== req.session.discordOauthState) {
       logger.warn('[AUTH DISCORD] State OAuth invalide (possible tentative CSRF).');
+      delete req.session.discordOauthPromptMode;
       req.flash('error', 'Requête invalide. Veuillez réessayer.');
       return res.redirect('/auth/login');
     }
     delete req.session.discordOauthState;
+    delete req.session.discordOauthPromptMode;
 
     if (!code) {
       req.flash('error', 'Code d\'autorisation Discord manquant.');
@@ -339,6 +361,9 @@ router.get('/discord/callback', async (req, res) => {
       req.flash('error', 'La connexion via Discord n\'est pas disponible actuellement.');
       return res.redirect('/auth/login');
     }
+
+    // DEBUG: log le callback reçu
+    logger.info(`[AUTH DISCORD] Callback reçu - code=${code ? 'présent' : 'absent'}, state=${state ? 'présent' : 'absent'}, redirectUri utiliser=${redirectUri}`);
 
     // Échange le code contre un token d'accès
     const tokenData = await discordPost(DISCORD_TOKEN_URL, {

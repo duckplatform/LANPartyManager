@@ -70,6 +70,12 @@
     },
     "DISCORD_CHANNEL_NEWS": {
       "description": "ID du canal Discord pour les notifications d'actualités"
+    },
+    "DISCORD_CLIENT_ID": {
+      "description": "ID client de l'application Discord (OAuth2)"
+    },
+    "DISCORD_CLIENT_SECRET": {
+      "description": "Secret de l'application Discord (OAuth2)"
     }
   }
 }
