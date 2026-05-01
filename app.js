@@ -28,6 +28,8 @@ const { injectLocals }   = require('./middleware/auth');
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+const APP_URL = process.env.APP_URL || `http://localhost:${PORT}`;
+//const APP_URL = process.env.APP_URL || `https://scaling-space-goldfish-54vqj6w7vj2747-3000.app.github.dev`;
 const ENV  = process.env.NODE_ENV || 'development';
 const DB_RETRY_DELAY_MS = parseInt(process.env.DB_RETRY_DELAY_MS || '10000', 10);
 
@@ -285,11 +287,10 @@ async function startServer() {
   }
 }
 
-// Démarre le serveur sauf pendant les tests automatisés.
+// Démarre le serveur uniquement lorsque ce fichier est exécuté directement.
 // En production cPanel (Phusion Passenger), le fichier est chargé via require()
-// et non exécuté directement, donc require.main !== module. On utilise
-// NODE_ENV=test dans les tests pour éviter de démarrer le serveur.
-if (process.env.NODE_ENV !== 'test') {
+// et doit simplement exporter l'application Express sans appeler listen().
+if (process.env.NODE_ENV !== 'test' && require.main === module) {
   startServer();
 }
 

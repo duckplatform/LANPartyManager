@@ -19,7 +19,7 @@ La page d'accueil présente l'association avec ses activités (tournois, événe
 
 ## Création de compte
 
-### Inscription
+### Inscription classique
 
 1. Cliquez sur **Nous rejoindre** ou **Inscription** dans la navigation
 2. Remplissez le formulaire :
@@ -32,15 +32,34 @@ La page d'accueil présente l'association avec ses activités (tournois, événe
 3. Cliquez sur **Créer mon compte**
 4. Vous êtes automatiquement connecté après l'inscription
 
+### Inscription via Discord
+
+1. Cliquez sur **S'inscrire avec Discord** sur la page d'inscription
+2. Discord vous demande d'autoriser l'application — cliquez sur **Authoriser**
+   > L'application demande uniquement votre identifiant et votre e-mail Discord. Elle n'a accès ni à vos messages, ni à vos serveurs.
+3. Si votre adresse e-mail Discord est déjà associée à un compte existant, la liaison est automatique et vous êtes connecté directement.
+4. Si c'est votre premier accès, un formulaire vous demande de compléter votre profil (nom, prénom, pseudo). L'e-mail Discord est pré-rempli.
+5. Cliquez sur **Créer mon compte** — vous êtes automatiquement connecté.
+
 ---
 
 ## Connexion
+
+### Connexion classique
 
 1. Cliquez sur **Connexion** dans la navigation
 2. Entrez votre **email** et **mot de passe**
 3. Cliquez sur **Se connecter**
 
 > ℹ️ Après 10 tentatives échouées en 15 minutes, les connexions sont temporairement bloquées.
+
+### Connexion via Discord
+
+1. Cliquez sur **Se connecter avec Discord** sur la page de connexion
+2. Discord vous demande d'autoriser l'application (uniquement à la première connexion) — cliquez sur **Authoriser**
+3. Vous êtes automatiquement redirigé vers le site et connecté.
+
+> ℹ️ Si votre compte a été créé avec un e-mail/mot de passe, vous pouvez lier votre Discord en utilisant la même adresse e-mail lors de la connexion Discord — la liaison est automatique.
 
 ---
 

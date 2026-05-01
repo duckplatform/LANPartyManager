@@ -689,6 +689,42 @@ h1, h2, h3, h4, h5, h6 {
 .link-accent { color: var(--color-primary); font-weight: 600; }
 .link-accent:hover { color: var(--color-accent); }
 
+/* Séparateur "ou" entre formulaire et OAuth */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin: var(--space-lg) 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* Bouton Discord (couleur Blurple officielle) */
+.btn--discord {
+  background: #5865F2;
+  color: #fff;
+  border: none;
+}
+.btn--discord:hover {
+  background: #4752C4;
+  transform: translateY(-1px);
+  color: #fff;
+  box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+}
+
+/* Icône Discord dans auth-icon */
+.auth-icon--discord {
+  background: linear-gradient(135deg, #5865F2, #7289DA);
+  box-shadow: 0 0 20px rgba(88, 101, 242, 0.35);
+}
+
 /* ── Profile ───────────────────────────────────────────────────── */
 .profile-container {
   padding-top: var(--space-2xl);
