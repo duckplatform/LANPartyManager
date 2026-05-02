@@ -7,58 +7,144 @@
  * lors des événements métier clés :
  *   - Création / début / fin d'un événement LAN
  *   - Publication d'une actualité
+ *   - Création / promotion / lancement / fin d'une rencontre
  *
  * Utilise l'API REST Discord via discord.js (pas de WebSocket requis).
- * La configuration se fait exclusivement par variables d'environnement :
- *   DISCORD_BOT_TOKEN        — Token du bot Discord
- *   DISCORD_CHANNEL_EVENTS   — ID du canal pour les événements
- *   DISCORD_CHANNEL_NEWS     — ID du canal pour les actualités
- *   APP_URL                  — URL publique de l'application (ex: https://lanparty.example.com)
+ *
+ * Configuration prioritaire (de la plus haute à la plus basse) :
+ *   1. Table `app_settings` (paramètrée depuis l'interface d'administration)
+ *   2. Variables d'environnement (rétrocompatibilité et fallback)
+ *
+ * Clés `app_settings` utilisées :
+ *   discord_enabled      — activer/désactiver Discord globalement ('1'/'0')
+ *   discord_bot_token    — token du bot (notifications)
+ *   discord_channel_news — ID du canal pour les actualités
+ *
+ * Variables d'environnement (fallback) :
+ *   DISCORD_BOT_TOKEN        — token du bot Discord
+ *   DISCORD_CHANNEL_EVENTS   — canal global pour les événements (fallback si event sans canal)
+ *   DISCORD_CHANNEL_NEWS     — canal pour les actualités
+ *   APP_URL                  — URL publique de l'application
  */
 
 const { REST, Routes } = require('discord.js');
 const logger = require('../config/logger');
 
-// ─── Configuration ─────────────────────────────────────────────────────────
-// Les variables sont lues dynamiquement pour permettre l'injection dans les tests.
+// ─── Cache de configuration ────────────────────────────────────────────────
+// Évite une lecture BDD à chaque envoi de notification.
 
-/**
- * Retourne la configuration Discord depuis les variables d'environnement.
- * @returns {{ token: string, channelEvents: string, channelNews: string, appUrl: string }}
- */
-function getConfig() {
-  return {
-    token:         process.env.DISCORD_BOT_TOKEN      || '',
-    channelEvents: process.env.DISCORD_CHANNEL_EVENTS || '',
-    channelNews:   process.env.DISCORD_CHANNEL_NEWS   || '',
-    appUrl:        (process.env.APP_URL || '').replace(/\/$/, ''),
-  };
-}
+/** @type {Object|null} */
+let _configCache     = null;
+/** @type {number} */
+let _configCacheTime = 0;
+/** Durée de validité du cache de configuration (60 secondes) */
+const CONFIG_CACHE_TTL_MS = 60_000;
 
 // ─── Client REST (lazy init) ───────────────────────────────────────────────
 
+/** @type {REST|null} Instance REST Discord (réutilisée entre les appels) */
 let _rest = null;
+
+// ─── Configuration ─────────────────────────────────────────────────────────
+
+/**
+ * Retourne la configuration Discord.
+ * Lit d'abord la table `app_settings`, avec fallback sur les variables
+ * d'environnement si la BDD est indisponible.
+ * Résultat mis en cache pour CONFIG_CACHE_TTL_MS ms.
+ *
+ * @returns {Promise<{
+ *   discordEnabled: boolean,
+ *   token: string,
+ *   channelEvents: string,
+ *   channelNews: string,
+ *   appUrl: string
+ * }>}
+ */
+async function getConfig() {
+  const now = Date.now();
+  if (_configCache && now - _configCacheTime < CONFIG_CACHE_TTL_MS) {
+    return _configCache;
+  }
+
+  try {
+    // Lecture des paramètres en BDD (import tardif pour éviter les dépendances circulaires)
+    const AppSettings = require('../models/AppSettings');
+    const settings = await AppSettings.getAll();
+
+    // discord_enabled : '0' → désactivé, toute autre valeur (ou absent) → activé
+    // Note : le script install.sql insère '0' par défaut (Discord désactivé à l'installation).
+    // Pour les installations existantes sans la table app_settings (ex: avant migration),
+    // l'absence de la clé est interprétée comme "activé" pour maintenir le comportement
+    // legacy (les installations existantes avaient Discord configuré via env vars).
+    const rawEnabled = settings.discord_enabled;
+    const discordEnabled = rawEnabled === undefined || rawEnabled === null
+      ? true  // non défini → comportement legacy (activé)
+      : rawEnabled !== '0';
+
+    _configCache = {
+      discordEnabled,
+      token:         settings.discord_bot_token    || process.env.DISCORD_BOT_TOKEN      || '',
+      channelEvents: process.env.DISCORD_CHANNEL_EVENTS || '', // fallback env var (par événement sinon)
+      channelNews:   settings.discord_channel_news || process.env.DISCORD_CHANNEL_NEWS   || '',
+      appUrl:        (process.env.APP_URL || '').replace(/\/$/, ''),
+    };
+  } catch (err) {
+    logger.warn('[DISCORD] Impossible de lire la config depuis app_settings, fallback env vars :', err.message);
+    _configCache = {
+      discordEnabled: true,
+      token:         process.env.DISCORD_BOT_TOKEN      || '',
+      channelEvents: process.env.DISCORD_CHANNEL_EVENTS || '',
+      channelNews:   process.env.DISCORD_CHANNEL_NEWS   || '',
+      appUrl:        (process.env.APP_URL || '').replace(/\/$/, ''),
+    };
+  }
+
+  _configCacheTime = now;
+  return _configCache;
+}
+
+/**
+ * Invalide le cache de configuration Discord.
+ * À appeler depuis les routes admin après modification des paramètres.
+ * Réinitialise aussi le client REST (le token a peut-être changé).
+ */
+function clearConfigCache() {
+  _configCache     = null;
+  _configCacheTime = 0;
+  _rest            = null; // force la réinitialisation du client REST avec le nouveau token
+}
+
+// ─── Client REST ───────────────────────────────────────────────────────────
 
 /**
  * Retourne l'instance REST Discord initialisée, ou null si le token est absent.
  * Permet l'injection d'un mock client dans les tests via `_setRestClient`.
- * @returns {REST|null}
+ * @returns {Promise<REST|null>}
  */
-function getRestClient() {
-  const { token } = getConfig();
+async function getRestClient() {
+  // Client injecté par les tests ou déjà initialisé : on le retourne directement.
+  if (_rest !== null && _rest !== undefined) return _rest;
+
+  const { token } = await getConfig();
   if (!token) return null;
-  if (!_rest) {
-    _rest = new REST({ version: '10' }).setToken(token);
-  }
+
+  _rest = new REST({ version: '10' }).setToken(token);
   return _rest;
 }
 
 /**
  * Injecte un client REST factice (pour les tests uniquement).
+ * Efface le cache de configuration SANS toucher au client REST,
+ * afin que le client injecté reste actif et que les tests obtiennent
+ * des valeurs fraîches depuis les variables d'environnement.
  * @param {Object|null} client
  */
 function _setRestClient(client) {
   _rest = client;
+  // Invalide uniquement le cache config (pas _rest qui vient d'être défini)
+  _configCache     = null;
+  _configCacheTime = 0;
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -80,6 +166,27 @@ function formatDate(date) {
 }
 
 /**
+ * Détermine si les notifications Discord sont désactivées pour un événement.
+ * Gère les différents types MySQL (Buffer, boolean, number, string).
+ *
+ * Note : MySQL retourne les colonnes TINYINT(1) sous forme de Buffer via
+ * certaines versions du driver node. Buffer[0] est l'octet de poids fort
+ * représentant la valeur (0 = false, ≠0 = true).
+ *
+ * Par défaut (valeur absente) : activées.
+ * @param {Object} event
+ * @returns {boolean}  true = notifications désactivées
+ */
+function isEventNotificationsDisabled(event) {
+  if (!event) return false;
+  const v = event.discord_notifications_enabled;
+  if (v === undefined || v === null) return false; // non défini → activées par défaut
+  if (Buffer.isBuffer(v)) return v.length === 0 || v[0] === 0;
+  if (typeof v === 'boolean') return !v;
+  return Number(v) === 0;
+}
+
+/**
  * Envoie un message (embed) sur un canal Discord.
  * Les erreurs Discord ne font jamais planter l'application.
  *
@@ -89,10 +196,10 @@ function formatDate(date) {
  * @returns {Promise<void>}
  */
 async function sendEmbed(channelId, embed, content) {
-  const rest = getRestClient();
+  const rest = await getRestClient();
 
   if (!rest) {
-    logger.warn('[DISCORD] DISCORD_BOT_TOKEN non configuré — notification ignorée.');
+    logger.warn('[DISCORD] Token bot non configuré — notification ignorée.');
     return;
   }
 
@@ -113,17 +220,39 @@ async function sendEmbed(channelId, embed, content) {
   }
 }
 
+// ─── Résolution du canal cible pour un événement ───────────────────────────
+
+/**
+ * Retourne l'ID du canal Discord à utiliser pour une rencontre ou un événement.
+ * Priorité : canal dédié de l'événement → variable d'env DISCORD_CHANNEL_EVENTS.
+ * @param {Object|null} event
+ * @returns {Promise<string>}
+ */
+async function resolveBattleChannel(event) {
+  const eventChannel = event && typeof event.discord_channel_id === 'string'
+    ? event.discord_channel_id.trim()
+    : '';
+  if (eventChannel) return eventChannel;
+
+  // Fallback sur la variable d'env (rétrocompatibilité)
+  const { channelEvents } = await getConfig();
+  return channelEvents;
+}
+
 // ─── Notifications événements ──────────────────────────────────────────────
 
 /**
  * Notifie la création d'un nouvel événement LAN.
- * @param {{ id: number, nom: string, date_heure: string|Date, lieu: string, statut: string }} event
+ * @param {{ id: number, nom: string, date_heure: string|Date, lieu: string, statut: string, discord_notifications_enabled?: any }} event
  * @returns {Promise<void>}
  */
 async function notifyEventCreated(event) {
-  const { appUrl } = getConfig();
-  const channelId = resolveBattleChannel(event);
-  const eventUrl = appUrl ? `${appUrl}/` : null;
+  const config = await getConfig();
+  if (!config.discordEnabled) return;
+  if (isEventNotificationsDisabled(event)) return;
+
+  const channelId = await resolveBattleChannel(event);
+  const eventUrl = config.appUrl ? `${config.appUrl}/` : null;
 
   const embed = {
     title:       `📅 Nouvel événement : ${event.nom}`,
@@ -151,13 +280,16 @@ async function notifyEventCreated(event) {
 
 /**
  * Notifie le début d'un événement LAN (passage en statut 'en_cours').
- * @param {{ id: number, nom: string, date_heure: string|Date, lieu: string }} event
+ * @param {{ id: number, nom: string, date_heure: string|Date, lieu: string, discord_notifications_enabled?: any }} event
  * @returns {Promise<void>}
  */
 async function notifyEventStarted(event) {
-  const { appUrl } = getConfig();
-  const channelId = resolveBattleChannel(event);
-  const eventUrl = appUrl ? `${appUrl}/` : null;
+  const config = await getConfig();
+  if (!config.discordEnabled) return;
+  if (isEventNotificationsDisabled(event)) return;
+
+  const channelId = await resolveBattleChannel(event);
+  const eventUrl = config.appUrl ? `${config.appUrl}/` : null;
 
   const embed = {
     title:       `🟢 C'est parti ! ${event.nom}`,
@@ -195,12 +327,16 @@ function buildRankingField(rankings = []) {
 
 /**
  * Notifie la fin d'un événement LAN (passage en statut 'termine').
- * @param {{ id: number, nom: string, date_heure: string|Date, lieu: string }} event
+ * @param {{ id: number, nom: string, date_heure: string|Date, lieu: string, discord_notifications_enabled?: any }} event
  * @param {Array} [rankings] classement pre-calcule de l'evenement
  * @returns {Promise<void>}
  */
 async function notifyEventEnded(event, rankings = []) {
-  const channelId = resolveBattleChannel(event);
+  const config = await getConfig();
+  if (!config.discordEnabled) return;
+  if (isEventNotificationsDisabled(event)) return;
+
+  const channelId = await resolveBattleChannel(event);
 
   const embed = {
     title:       `🏁 Fin de l'événement : ${event.nom}`,
@@ -230,7 +366,10 @@ async function notifyEventEnded(event, rankings = []) {
  * @returns {Promise<void>}
  */
 async function notifyNewsPublished(announcement) {
-  const { appUrl, channelNews } = getConfig();
+  const config = await getConfig();
+  if (!config.discordEnabled) return;
+
+  const { appUrl, channelNews } = config;
   const newsUrl = appUrl ? `${appUrl}/news/${announcement.id}` : null;
 
   // Nettoie le contenu Markdown pour le résumé Discord (max 300 caractères) :
@@ -327,14 +466,6 @@ function buildBattleWinnersField(players = []) {
   return winners.join(', ');
 }
 
-function resolveBattleChannel(event) {
-  const { channelEvents } = getConfig();
-  const eventChannel = event && typeof event.discord_channel_id === 'string'
-    ? event.discord_channel_id.trim()
-    : '';
-  return eventChannel || channelEvents;
-}
-
 function battleBaseEmbed(event, battle, color) {
   return {
     color,
@@ -374,7 +505,11 @@ function battleBaseEmbed(event, battle, color) {
 async function notifyBattleCreated({ event, battle }) {
   if (!battle) return;
 
-  const channelId = resolveBattleChannel(event);
+  const config = await getConfig();
+  if (!config.discordEnabled) return;
+  if (isEventNotificationsDisabled(event)) return;
+
+  const channelId = await resolveBattleChannel(event);
   const isQueued = battle.statut === 'file_attente';
 
   const embed = battleBaseEmbed(event, battle, isQueued ? 0xFEE75C : 0x5865F2);
@@ -400,7 +535,11 @@ async function notifyBattleCreated({ event, battle }) {
 async function notifyBattlePlanned({ event, battle }) {
   if (!battle) return;
 
-  const channelId = resolveBattleChannel(event);
+  const config = await getConfig();
+  if (!config.discordEnabled) return;
+  if (isEventNotificationsDisabled(event)) return;
+
+  const channelId = await resolveBattleChannel(event);
   const embed = battleBaseEmbed(event, battle, 0x5865F2);
   embed.title = `🗓️ Rencontre #${battle.id} planifiee`;
   embed.description = 'Une salle est disponible: la rencontre sort de la file d\'attente.';
@@ -415,7 +554,12 @@ async function notifyBattlePlanned({ event, battle }) {
  */
 async function notifyBattleInstallation({ event, battle }) {
   if (!battle) return;
-  const channelId = resolveBattleChannel(event);
+
+  const config = await getConfig();
+  if (!config.discordEnabled) return;
+  if (isEventNotificationsDisabled(event)) return;
+
+  const channelId = await resolveBattleChannel(event);
   const embed = battleBaseEmbed(event, battle, 0xFEE75C);
   embed.title = `🛠️ Installation en cours • Rencontre #${battle.id}`;
   embed.description = 'Les joueurs s\'installent en salle. Prochaine etape : lancement de la partie.';
@@ -430,7 +574,12 @@ async function notifyBattleInstallation({ event, battle }) {
  */
 async function notifyBattleStarted({ event, battle }) {
   if (!battle) return;
-  const channelId = resolveBattleChannel(event);
+
+  const config = await getConfig();
+  if (!config.discordEnabled) return;
+  if (isEventNotificationsDisabled(event)) return;
+
+  const channelId = await resolveBattleChannel(event);
   const embed = battleBaseEmbed(event, battle, 0x57F287);
   embed.title = `▶️ Rencontre #${battle.id} en cours`;
   embed.description = 'La partie vient de commencer.';
@@ -445,7 +594,12 @@ async function notifyBattleStarted({ event, battle }) {
  */
 async function notifyBattleEnded({ event, battle }) {
   if (!battle) return;
-  const channelId = resolveBattleChannel(event);
+
+  const config = await getConfig();
+  if (!config.discordEnabled) return;
+  if (isEventNotificationsDisabled(event)) return;
+
+  const channelId = await resolveBattleChannel(event);
   const embed = battleBaseEmbed(event, battle, 0xED4245);
   embed.title = `🏁 Rencontre #${battle.id} terminee`;
   embed.description = 'Resultat enregistre. La file d\'attente est en cours de re-evaluation.';
@@ -476,7 +630,9 @@ module.exports = {
   notifyBattleInstallation,
   notifyBattleStarted,
   notifyBattleEnded,
+  clearConfigCache,
   // Exposés pour les tests uniquement
   _getRestClient: getRestClient,
   _setRestClient,
 };
+

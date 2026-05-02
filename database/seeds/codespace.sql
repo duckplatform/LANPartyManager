@@ -139,9 +139,9 @@ WHERE NOT EXISTS (
 );
 
 INSERT INTO `events` (`nom`, `date_heure`, `lieu`, `statut`, `created_at`, `updated_at`)
-SELECT 'Retro Arena Weekend', '2026-04-26 14:00:00', 'Maison des Associations - Lille', 'planifie', '2026-03-28 14:00:00', '2026-04-25 10:00:00'
+SELECT 'Retro Arena Weekend', '2026-12-31 14:00:00', 'Maison des Associations - Lille', 'planifie', '2026-03-28 14:00:00', '2026-04-25 10:00:00'
 WHERE NOT EXISTS (
-  SELECT 1 FROM `events` WHERE `nom` = 'Retro Arena Weekend' AND `date_heure` = '2026-04-26 14:00:00'
+  SELECT 1 FROM `events` WHERE `nom` = 'Retro Arena Weekend' AND `date_heure` = '2026-12-31 14:00:00'
 );
 
 UPDATE `events`

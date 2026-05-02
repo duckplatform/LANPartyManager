@@ -17,6 +17,7 @@ const EventRanking      = require('../models/EventRanking');
 const Game              = require('../models/Game');
 const Room              = require('../models/Room');
 const Battle            = require('../models/Battle');
+const AppSettings       = require('../models/AppSettings');
 const { renderMarkdown } = require('../config/markdown');
 const logger       = require('../config/logger');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
@@ -422,13 +423,16 @@ router.get('/events', async (req, res) => {
 
 // ─── GET /admin/events/create ─────────────────────────────────────────────
 
-router.get('/events/create', (req, res) => {
+router.get('/events/create', async (req, res) => {
+  const settings = await AppSettings.getAll();
+  const discordEnabled = settings.discord_enabled !== '0';
   res.render('admin/events/form', {
     title:            'Nouvel événement',
     pageClass:        'page-admin',
     event:            null,
     dateHeureLocal:   '',
     errors:           [],
+    discordEnabled,
   });
 });
 
@@ -438,23 +442,27 @@ router.post('/events', eventValidation, async (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
+    const settings = await AppSettings.getAll();
     return res.status(422).render('admin/events/form', {
       title:          'Nouvel événement',
       pageClass:      'page-admin',
       event:          req.body,
       dateHeureLocal: req.body.date_heure || '',
       errors:         errors.array(),
+      discordEnabled: settings.discord_enabled !== '0',
     });
   }
 
   try {
     const { nom, date_heure, lieu, discord_channel_id } = req.body;
     const statut = req.body.statut;
-    const id = await Event.create({ nom, date_heure, lieu, statut, discord_channel_id });
+    // discord_notifications_enabled : case à cocher → '1' si cochée, absent sinon
+    const discord_notifications_enabled = req.body.discord_notifications_enabled === '1' ? 1 : 0;
+    const id = await Event.create({ nom, date_heure, lieu, statut, discord_channel_id, discord_notifications_enabled });
     logger.info(`[ADMIN/EVENTS] Événement #${id} créé par l'utilisateur #${req.session.userId}`);
 
     // Notification Discord à la création de l'événement
-    discord.notifyEventCreated({ id, nom, date_heure, lieu, statut, discord_channel_id }).catch(() => {});
+    discord.notifyEventCreated({ id, nom, date_heure, lieu, statut, discord_channel_id, discord_notifications_enabled }).catch(() => {});
 
     req.flash('success', `L'événement "${nom}" a été créé.`);
     return res.redirect('/admin/events');
@@ -478,7 +486,10 @@ router.post('/events', eventValidation, async (req, res) => {
 router.get('/events/:id/edit', async (req, res) => {
   const id = parseInt(req.params.id, 10);
   try {
-    const event = await Event.findById(id);
+    const [event, settings] = await Promise.all([
+      Event.findById(id),
+      AppSettings.getAll(),
+    ]);
     if (!event) {
       req.flash('error', 'Événement introuvable.');
       return res.redirect('/admin/events');
@@ -495,6 +506,7 @@ router.get('/events/:id/edit', async (req, res) => {
       event,
       dateHeureLocal,
       errors:         [],
+      discordEnabled: settings.discord_enabled !== '0',
     });
   } catch (err) {
     logger.error(`[ADMIN/EVENTS] Erreur chargement événement #${id} :`, err);
@@ -510,12 +522,14 @@ router.post('/events/:id', eventValidation, async (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
+    const settings = await AppSettings.getAll();
     return res.status(422).render('admin/events/form', {
       title:          'Modifier l\'événement',
       pageClass:      'page-admin',
       event:          { id, ...req.body },
       dateHeureLocal: req.body.date_heure || '',
       errors:         errors.array(),
+      discordEnabled: settings.discord_enabled !== '0',
     });
   }
 
@@ -528,12 +542,14 @@ router.post('/events/:id', eventValidation, async (req, res) => {
 
     const { nom, date_heure, lieu, discord_channel_id } = req.body;
     const statut = req.body.statut;
-    await Event.update(id, { nom, date_heure, lieu, statut, discord_channel_id });
+    // discord_notifications_enabled : case à cocher → '1' si cochée, absent sinon
+    const discord_notifications_enabled = req.body.discord_notifications_enabled === '1' ? 1 : 0;
+    await Event.update(id, { nom, date_heure, lieu, statut, discord_channel_id, discord_notifications_enabled });
     logger.info(`[ADMIN/EVENTS] Événement #${id} modifié par l'utilisateur #${req.session.userId}`);
 
     // Notifications Discord selon les transitions de statut
     if (existing.statut !== statut) {
-      const updatedEvent = { id, nom, date_heure, lieu, statut, discord_channel_id };
+      const updatedEvent = { id, nom, date_heure, lieu, statut, discord_channel_id, discord_notifications_enabled };
       if (statut === 'en_cours') {
         discord.notifyEventStarted(updatedEvent).catch(() => {});
       } else if (statut === 'termine') {
@@ -1116,16 +1132,14 @@ router.delete('/rooms/:id', async (req, res) => {
  * GET /admin/discord-test
  * Page de test des mentions Discord (@pseudo vs <@discord_id>).
  */
-router.get('/discord-test', (req, res) => {
+router.get('/discord-test', async (req, res) => {
   const { REST, Routes } = require('discord.js');
-  const config = {
-    token:         process.env.DISCORD_BOT_TOKEN      || '',
-    channelEvents: process.env.DISCORD_CHANNEL_EVENTS || '',
-  };
+  const settings = await AppSettings.getAll();
+  // Le canal de test n'a plus de valeur par défaut globale (par événement désormais)
   res.render('admin/discord-test', {
     title: 'Test Discord Mentions',
     pageClass: 'page-admin',
-    configuredChannel: config.channelEvents || null,
+    configuredChannel: null,
     channelId: null,
     pseudo: null,
     discordId: null,
@@ -1138,22 +1152,22 @@ router.get('/discord-test', (req, res) => {
  */
 router.post('/discord-test', async (req, res) => {
   const { REST, Routes } = require('discord.js');
-  const token         = process.env.DISCORD_BOT_TOKEN      || '';
-  const defaultChannel = process.env.DISCORD_CHANNEL_EVENTS || '';
+  const settings       = await AppSettings.getAll();
+  const token          = settings.discord_bot_token || process.env.DISCORD_BOT_TOKEN || '';
 
   const pseudo    = (req.body.pseudo    || '').trim();
   const discordId = (req.body.discord_id || '').trim();
-  const channelId = (req.body.channel_id || '').trim() || defaultChannel;
+  const channelId = (req.body.channel_id || '').trim();
 
   if (!token) {
     return res.render('admin/discord-test', {
       title: 'Test Discord Mentions',
       pageClass: 'page-admin',
-      configuredChannel: defaultChannel || null,
+      configuredChannel: null,
       channelId: req.body.channel_id,
       pseudo,
       discordId,
-      result: { success: false, message: 'DISCORD_BOT_TOKEN non configuré dans les variables d\'environnement.' },
+      result: { success: false, message: 'Token bot Discord non configuré. Renseignez-le dans les Paramètres de l\'application.' },
     });
   }
 
@@ -1161,11 +1175,11 @@ router.post('/discord-test', async (req, res) => {
     return res.render('admin/discord-test', {
       title: 'Test Discord Mentions',
       pageClass: 'page-admin',
-      configuredChannel: defaultChannel || null,
+      configuredChannel: null,
       channelId: req.body.channel_id,
       pseudo,
       discordId,
-      result: { success: false, message: 'Aucun canal Discord configuré. Renseignez DISCORD_CHANNEL_EVENTS ou saisissez un ID manuellement.' },
+      result: { success: false, message: 'Aucun canal Discord saisi. Entrez l\'ID du canal cible.' },
     });
   }
 
@@ -1204,7 +1218,7 @@ router.post('/discord-test', async (req, res) => {
     return res.render('admin/discord-test', {
       title: 'Test Discord Mentions',
       pageClass: 'page-admin',
-      configuredChannel: defaultChannel || null,
+      configuredChannel: null,
       channelId: req.body.channel_id,
       pseudo,
       discordId,
@@ -1215,12 +1229,184 @@ router.post('/discord-test', async (req, res) => {
     return res.render('admin/discord-test', {
       title: 'Test Discord Mentions',
       pageClass: 'page-admin',
-      configuredChannel: defaultChannel || null,
+      configuredChannel: null,
       channelId: req.body.channel_id,
       pseudo,
       discordId,
       result: { success: false, message: `Erreur Discord : ${err.message}` },
     });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PARAMÈTRES DE L'APPLICATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * GET /admin/settings
+ * Affiche le formulaire des paramètres de l'application.
+ */
+router.get('/settings', async (req, res) => {
+  try {
+    const settings = await AppSettings.getAll();
+    res.render('admin/settings', {
+      title:     'Paramètres de l\'application',
+      pageClass: 'page-admin',
+      settings,
+      appUrl:    (process.env.APP_URL || '').replace(/\/$/, ''),
+    });
+  } catch (err) {
+    logger.error('[ADMIN/SETTINGS] Erreur chargement paramètres :', err);
+    req.flash('error', 'Erreur lors du chargement des paramètres.');
+    return res.redirect('/admin');
+  }
+});
+
+// Règles de validation pour les paramètres Discord
+const settingsValidation = [
+  // Identité de l'association
+  body('organization_name')
+    .trim()
+    .isLength({ min: 1, max: 255 }).withMessage('Le nom de l\'association ne peut pas dépasser 255 caractères.')
+    .notEmpty().withMessage('Le nom de l\'association est obligatoire.'),
+  body('organization_slogan')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 255 }).withMessage('Le slogan ne peut pas dépasser 255 caractères.'),
+  body('organization_logo')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le logo doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('L\'URL du logo ne peut pas dépasser 500 caractères.'),
+  
+  // Liens communautés
+  body('community_link_discord')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le lien Discord doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
+  body('community_link_twitter')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le lien Twitter doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
+  body('community_link_twitch')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le lien Twitch doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
+  body('community_link_youtube')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le lien YouTube doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
+  body('community_link_website')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le lien site web doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
+  
+  // Discord existants
+  body('discord_bot_token')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 200 }).withMessage('Le token bot ne peut pas dépasser 200 caractères.'),
+  body('discord_channel_news')
+    .optional({ checkFalsy: true })
+    .trim()
+    .matches(/^\d{17,20}$/).withMessage('L\'ID canal actualités doit contenir entre 17 et 20 chiffres.'),
+  body('discord_client_id')
+    .optional({ checkFalsy: true })
+    .trim()
+    .matches(/^\d{17,20}$/).withMessage('Le Client ID Discord doit contenir entre 17 et 20 chiffres.'),
+  body('discord_client_secret')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 100 }).withMessage('Le Client Secret ne peut pas dépasser 100 caractères.'),
+];
+
+/**
+ * POST /admin/settings
+ * Enregistre les paramètres de l'application.
+ * Les champs laissés vides conservent leur valeur actuelle (sauf si
+ * l'utilisateur veut effacer explicitement un paramètre).
+ */
+router.post('/settings', settingsValidation, async (req, res) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const settings = await AppSettings.getAll();
+    return res.status(422).render('admin/settings', {
+      title:     'Paramètres de l\'application',
+      pageClass: 'page-admin',
+      settings,
+      errors:    errors.array(),
+    });
+  }
+
+  try {
+    const currentSettings = await AppSettings.getAll();
+
+    // Identité de l'association
+    const organization_name = (req.body.organization_name || 'LANPartyManager').trim();
+    const organization_slogan = (req.body.organization_slogan || '').trim() || null;
+    const organization_logo = (req.body.organization_logo || '').trim() || null;
+
+    // Liens communautés (null si vide)
+    const community_link_discord = (req.body.community_link_discord || '').trim() || null;
+    const community_link_twitter = (req.body.community_link_twitter || '').trim() || null;
+    const community_link_twitch = (req.body.community_link_twitch || '').trim() || null;
+    const community_link_youtube = (req.body.community_link_youtube || '').trim() || null;
+    const community_link_website = (req.body.community_link_website || '').trim() || null;
+
+    // discord_enabled : checkbox → '1' si cochée, '0' sinon
+    const discord_enabled = req.body.discord_enabled === '1' ? '1' : '0';
+
+    // Pour les champs sensibles (token, secret), on ne remplace la valeur existante
+    // que si l'utilisateur a explicitement saisi une nouvelle valeur non-vide.
+    // Un champ vide (ou whitespace seul) conserve la valeur actuelle.
+    const newToken = (req.body.discord_bot_token || '').trim();
+    const discord_bot_token = newToken !== ''
+      ? newToken
+      : (currentSettings.discord_bot_token || null);
+
+    const newSecret = (req.body.discord_client_secret || '').trim();
+    const discord_client_secret = newSecret !== ''
+      ? newSecret
+      : (currentSettings.discord_client_secret || null);
+
+    const discord_channel_news = (req.body.discord_channel_news || '').trim() || null;
+    const discord_client_id    = (req.body.discord_client_id    || '').trim() || null;
+
+    await AppSettings.setMultiple({
+      // Identité de l'association
+      organization_name,
+      organization_slogan,
+      organization_logo,
+      // Liens communautés
+      community_link_discord,
+      community_link_twitter,
+      community_link_twitch,
+      community_link_youtube,
+      community_link_website,
+      // Discord existants
+      discord_enabled,
+      discord_bot_token,
+      discord_channel_news,
+      discord_client_id,
+      discord_client_secret,
+    });
+
+    // Invalide le cache Discord pour que la nouvelle config soit prise en compte
+    discord.clearConfigCache();
+
+    logger.info(`[ADMIN/SETTINGS] Paramètres mis à jour par l'utilisateur #${req.session.userId}`);
+    req.flash('success', 'Paramètres enregistrés avec succès.');
+    return res.redirect('/admin/settings');
+  } catch (err) {
+    logger.error('[ADMIN/SETTINGS] Erreur sauvegarde paramètres :', err);
+    req.flash('error', 'Erreur lors de la sauvegarde des paramètres.');
+    return res.redirect('/admin/settings');
   }
 });
 

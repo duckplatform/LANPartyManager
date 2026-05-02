@@ -119,14 +119,15 @@ const Event = {
 
   /**
    * Crée un nouvel événement.
-   * @param {{ nom: string, date_heure: string, lieu: string, statut?: string, discord_channel_id?: string|null }} data
+   * @param {{ nom: string, date_heure: string, lieu: string, statut?: string, discord_channel_id?: string|null, discord_notifications_enabled?: number }} data
    * @returns {Promise<number>} ID du nouvel événement
    */
-  async create({ nom, date_heure, lieu, statut = 'planifie', discord_channel_id = null }) {
+  async create({ nom, date_heure, lieu, statut = 'planifie', discord_channel_id = null, discord_notifications_enabled = 1 }) {
     const statutFinal = STATUTS_VALIDES.includes(statut) ? statut : 'planifie';
     const discordChannelIdFinal = typeof discord_channel_id === 'string' && discord_channel_id.trim()
       ? discord_channel_id.trim()
       : null;
+    const discordNotifFinal = discord_notifications_enabled === 0 || discord_notifications_enabled === '0' ? 0 : 1;
 
     if (statutFinal === 'en_cours') {
       const conflict = await Event.findCurrentLive();
@@ -137,9 +138,9 @@ const Event = {
 
     try {
       const [result] = await db.pool.execute(
-        `INSERT INTO events (nom, date_heure, lieu, discord_channel_id, statut)
-         VALUES (?, ?, ?, ?, ?)`,
-        [nom.trim(), date_heure, lieu.trim(), discordChannelIdFinal, statutFinal]
+        `INSERT INTO events (nom, date_heure, lieu, discord_channel_id, statut, discord_notifications_enabled)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [nom.trim(), date_heure, lieu.trim(), discordChannelIdFinal, statutFinal, discordNotifFinal]
       );
       return result.insertId;
     } catch (err) {
@@ -153,14 +154,15 @@ const Event = {
   /**
    * Met à jour un événement.
    * @param {number} id
-   * @param {{ nom: string, date_heure: string, lieu: string, statut?: string, discord_channel_id?: string|null }} data
+   * @param {{ nom: string, date_heure: string, lieu: string, statut?: string, discord_channel_id?: string|null, discord_notifications_enabled?: number }} data
    * @returns {Promise<boolean>}
    */
-  async update(id, { nom, date_heure, lieu, statut = 'planifie', discord_channel_id = null }) {
+  async update(id, { nom, date_heure, lieu, statut = 'planifie', discord_channel_id = null, discord_notifications_enabled = 1 }) {
     const statutFinal = STATUTS_VALIDES.includes(statut) ? statut : 'planifie';
     const discordChannelIdFinal = typeof discord_channel_id === 'string' && discord_channel_id.trim()
       ? discord_channel_id.trim()
       : null;
+    const discordNotifFinal = discord_notifications_enabled === 0 || discord_notifications_enabled === '0' ? 0 : 1;
 
     if (statutFinal === 'en_cours') {
       const conflict = await Event.findCurrentLive(id);
@@ -172,9 +174,9 @@ const Event = {
     try {
       const [result] = await db.pool.execute(
         `UPDATE events
-            SET nom = ?, date_heure = ?, lieu = ?, discord_channel_id = ?, statut = ?, updated_at = NOW()
+            SET nom = ?, date_heure = ?, lieu = ?, discord_channel_id = ?, statut = ?, discord_notifications_enabled = ?, updated_at = NOW()
           WHERE id = ?`,
-        [nom.trim(), date_heure, lieu.trim(), discordChannelIdFinal, statutFinal, id]
+        [nom.trim(), date_heure, lieu.trim(), discordChannelIdFinal, statutFinal, discordNotifFinal, id]
       );
       return result.affectedRows > 0;
     } catch (err) {

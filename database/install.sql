@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `prenom`        VARCHAR(100)  NOT NULL COMMENT 'Prenom',
   `pseudo`        VARCHAR(50)   NOT NULL COMMENT 'Pseudo en jeu',
   `email`         VARCHAR(255)  NOT NULL COMMENT 'Adresse e-mail de connexion',
-  `password`      VARCHAR(255)  NULL    DEFAULT NULL COMMENT 'Mot de passe hashé (bcrypt), NULL pour les comptes créés via OAuth Discord',
+  `password`      VARCHAR(255)  NULL    DEFAULT NULL COMMENT 'Mot de passe hashé (bcrypt). Les comptes OAuth Discord reçoivent un hash aléatoire non divulgué.',
   `is_admin`      TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = administrateur',
   `is_moderator`  TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = moderateur',
   `badge_token`   CHAR(36)      NOT NULL COMMENT 'Token UUID permanent pour badge membre',
@@ -84,7 +84,8 @@ CREATE TABLE IF NOT EXISTS `events` (
   `nom`         VARCHAR(255)                           NOT NULL COMMENT 'Nom de l''evenement',
   `date_heure`  DATETIME                               NOT NULL COMMENT 'Date et heure de debut',
   `lieu`        VARCHAR(255)                           NOT NULL COMMENT 'Lieu de l''evenement',
-  `discord_channel_id` VARCHAR(32)                     NULL COMMENT 'ID du canal Discord dedie a l''evenement',
+  `discord_channel_id` VARCHAR(32)                     NULL COMMENT 'ID du canal Discord dedie a l''evenement (remplace DISCORD_CHANNEL_EVENTS)',
+  `discord_notifications_enabled` TINYINT(1)           NOT NULL DEFAULT 1 COMMENT 'Activer les notifications Discord pour cet evenement (1=oui, 0=non)',
   `statut`      ENUM('planifie','en_cours','termine') NOT NULL DEFAULT 'planifie',
   `active_unique_slot` TINYINT GENERATED ALWAYS AS (CASE WHEN `statut` = 'en_cours' THEN 1 ELSE NULL END) STORED,
   `created_at`  DATETIME                               NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -243,6 +244,42 @@ CREATE TABLE IF NOT EXISTS `event_rankings` (
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
   COMMENT='Classement des joueurs par evenement, recalcule apres chaque resultat';
+
+-- ------------------------------------------------------------
+-- Table `app_settings`
+-- ------------------------------------------------------------
+-- Configuration globale de l'application.
+-- Remplace les variables d'environnement Discord pour un
+-- paramétrage entièrement géré depuis l'interface d'administration.
+-- ------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS `app_settings` (
+  `cle`        VARCHAR(100) NOT NULL  COMMENT 'Clé du paramètre (identifiant unique)',
+  `valeur`     TEXT         NULL      COMMENT 'Valeur du paramètre (NULL = non défini)',
+  `updated_at` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`cle`)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='Configuration globale de l''application (remplace les variables d''environnement Discord)';
+
+-- Valeurs par défaut : Discord désactivé jusqu'à configuration explicite
+-- Paramètres d'identité : nom, logo, slogan
+-- Liens communautés : community_link_* (affichés seulement s'ils sont renseignés)
+INSERT IGNORE INTO `app_settings` (`cle`, `valeur`) VALUES
+  ('discord_enabled',       '0'),
+  ('discord_bot_token',     NULL),
+  ('discord_channel_news',  NULL),
+  ('discord_client_id',     NULL),
+  ('discord_client_secret', NULL),
+  ('organization_name',     'LANPartyManager'),
+  ('organization_logo',     NULL),
+  ('organization_slogan',   NULL),
+  ('community_link_discord',   NULL),
+  ('community_link_twitter',   NULL),
+  ('community_link_twitch',    NULL),
+  ('community_link_youtube',   NULL),
+  ('community_link_website',   NULL);
 
 SET FOREIGN_KEY_CHECKS = 1;
 

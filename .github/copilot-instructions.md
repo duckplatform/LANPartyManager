@@ -4,6 +4,7 @@ Prendre systematiquement en compte l'existant et l'adapter à la demande.
 Controleras que tu a appliqué tous les points à pour chaque demande.
 
 # Techniques
+
 Type d'application: Web application (site web publique)
 Stack : Node.js + Express + MySQL.
 Application pensée pour être déployée sur un VPS simple (Type cPanel).

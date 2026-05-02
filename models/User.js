@@ -6,7 +6,7 @@
  */
 
 const bcrypt  = require('bcryptjs');
-const { randomUUID } = require('crypto');
+const { randomBytes, randomUUID } = require('crypto');
 const db      = require('../config/database');
 const BCRYPT_ROUNDS = 12;
 
@@ -55,16 +55,19 @@ const User = {
   },
 
   /**
-   * Crée un utilisateur via Discord OAuth (sans mot de passe)
+   * Crée un utilisateur via Discord OAuth avec un mot de passe aléatoire hashé.
+   * Le mot de passe n'est jamais connu de l'utilisateur mais évite un stockage vide.
    * @param {Object} data - { nom, prenom, pseudo, email, discordId }
    * @returns {Promise<number>} ID du nouvel utilisateur
    */
   async createFromDiscord({ nom, prenom, pseudo, email, discordId }) {
+    const randomPassword = randomBytes(32).toString('hex');
+    const hashedPassword = await bcrypt.hash(randomPassword, BCRYPT_ROUNDS);
     const badgeToken = randomUUID();
     const [result] = await db.pool.execute(
       `INSERT INTO users (nom, prenom, pseudo, email, password, is_admin, is_moderator, badge_token, discord_user_id)
-       VALUES (?, ?, ?, ?, NULL, 0, 0, ?, ?)`,
-      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), badgeToken, discordId]
+       VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?)`,
+      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), hashedPassword, badgeToken, discordId]
     );
     return result.insertId;
   },
@@ -132,7 +135,7 @@ const User = {
 
   /**
    * Vérifie un mot de passe en clair contre le hash stocké
-   * Retourne false si le hash est null (compte OAuth sans mot de passe)
+    * Retourne false si le hash est absent (données legacy/incomplètes)
    * @param {string} plainPassword
    * @param {string|null} hashedPassword
    * @returns {Promise<boolean>}

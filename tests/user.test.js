@@ -255,13 +255,15 @@ describe('User Model', function () {
       expect(poolStub.execute.calledOnce).to.be.true;
 
       const callArgs = poolStub.execute.firstCall.args[1];
-      // Ordre : [nom, prenom, pseudo, email, badgeToken, discordId]
+      // Ordre : [nom, prenom, pseudo, email, hashedPassword, badgeToken, discordId]
       expect(callArgs[0]).to.equal('Dupont');
       expect(callArgs[3]).to.equal('jean@discord.com');
-      // badge_token est un UUID (index 4)
-      expect(callArgs[4]).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
-      // discord_user_id (index 5)
-      expect(callArgs[5]).to.equal('123456789012345678');
+      // mot de passe hashé bcrypt (index 4)
+      expect(callArgs[4]).to.match(/^\$2[ab]\$\d+\$/);
+      // badge_token est un UUID (index 5)
+      expect(callArgs[5]).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
+      // discord_user_id (index 6)
+      expect(callArgs[6]).to.equal('123456789012345678');
     });
   });
 

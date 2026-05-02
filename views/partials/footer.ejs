@@ -3,10 +3,16 @@
     <div class="footer-grid">
       <div class="footer-brand">
         <a href="/" class="logo logo--sm">
-          <span class="logo-icon"><i class="fas fa-gamepad"></i></span>
-          <span class="logo-text">LAN<span class="logo-accent">Party</span>Manager</span>
+          <% if (appSettings.organization_logo) { %>
+            <img src="<%= appSettings.organization_logo %>" alt="Logo" style="max-height: 30px; max-width: 150px;" />
+          <% } else { %>
+            <span class="logo-icon"><i class="fas fa-gamepad"></i></span>
+          <% } %>
+          <span class="logo-text"><%= appSettings.organization_name %></span>
         </a>
-        <p class="footer-tagline">L'association gaming qui vous connecte.</p>
+        <% if (appSettings.organization_slogan) { %>
+          <p class="footer-tagline"><%= appSettings.organization_slogan %></p>
+        <% } %>
       </div>
 
       <nav class="footer-nav" aria-label="Navigation pied de page">
@@ -29,15 +35,27 @@
       <div class="footer-social">
         <h3 class="footer-nav-title">Communauté</h3>
         <div class="social-links">
-          <a href="#" class="social-link" aria-label="Discord"><i class="fab fa-discord"></i></a>
-          <a href="#" class="social-link" aria-label="Twitch"><i class="fab fa-twitch"></i></a>
-          <a href="#" class="social-link" aria-label="Twitter / X"><i class="fab fa-x-twitter"></i></a>
+          <% if (appSettings.community_link_discord) { %>
+            <a href="<%= appSettings.community_link_discord %>" class="social-link" aria-label="Discord" target="_blank" rel="noopener noreferrer"><i class="fab fa-discord"></i></a>
+          <% } %>
+          <% if (appSettings.community_link_twitch) { %>
+            <a href="<%= appSettings.community_link_twitch %>" class="social-link" aria-label="Twitch" target="_blank" rel="noopener noreferrer"><i class="fab fa-twitch"></i></a>
+          <% } %>
+          <% if (appSettings.community_link_twitter) { %>
+            <a href="<%= appSettings.community_link_twitter %>" class="social-link" aria-label="Twitter / X" target="_blank" rel="noopener noreferrer"><i class="fab fa-x-twitter"></i></a>
+          <% } %>
+          <% if (appSettings.community_link_youtube) { %>
+            <a href="<%= appSettings.community_link_youtube %>" class="social-link" aria-label="YouTube" target="_blank" rel="noopener noreferrer"><i class="fab fa-youtube"></i></a>
+          <% } %>
+          <% if (appSettings.community_link_website) { %>
+            <a href="<%= appSettings.community_link_website %>" class="social-link" aria-label="Site web" target="_blank" rel="noopener noreferrer"><i class="fas fa-globe"></i></a>
+          <% } %>
         </div>
       </div>
     </div>
 
     <div class="footer-bottom">
-      <p>&copy; <%= new Date().getFullYear() %> LANPartyManager. Tous droits réservés.</p>
+      <p>&copy; <%= new Date().getFullYear() %> <%= appSettings.organization_name %>. Tous droits réservés.</p>
     </div>
   </div>
 </footer>

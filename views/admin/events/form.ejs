@@ -96,7 +96,8 @@
           />
         </div>
 
-        <!-- Canal Discord -->
+        <!-- Canal Discord (affiché uniquement si Discord est activé globalement) -->
+        <% if (typeof discordEnabled !== 'undefined' && discordEnabled) { %>
         <div class="form-group">
           <label class="form-label" for="discord_channel_id">
             <i class="fab fa-discord"></i> ID canal Discord (optionnel)
@@ -114,9 +115,41 @@
             autocomplete="off"
           />
           <span class="form-hint">
-            Facultatif. Utilisez l'identifiant numérique du canal Discord dédié à cet événement.
+            Facultatif. Identifiant numérique du canal Discord dédié à cet événement.
+            Les notifications (création, début, fin, rencontres) seront envoyées sur ce canal.
           </span>
         </div>
+
+        <!-- Activer/désactiver les notifications Discord pour cet événement -->
+        <div class="form-group">
+          <label class="form-label">
+            <i class="fas fa-bell"></i> Notifications Discord
+          </label>
+          <div style="display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-xs);">
+            <input
+              type="checkbox"
+              id="discord_notifications_enabled"
+              name="discord_notifications_enabled"
+              value="1"
+              <%
+                // Activées par défaut (1) ou si l'option n'est pas encore définie
+                const notifEnabled = (event && event.discord_notifications_enabled !== undefined)
+                  ? (Number(event.discord_notifications_enabled) !== 0)
+                  : true;
+              %>
+              <%= notifEnabled ? 'checked' : '' %>
+              style="width: 1.2rem; height: 1.2rem; cursor: pointer;"
+            />
+            <label for="discord_notifications_enabled" style="cursor: pointer; font-weight: normal;">
+              Activer les notifications Discord pour cet événement
+            </label>
+          </div>
+          <span class="form-hint">
+            Si désactivé, aucune notification Discord ne sera envoyée pour cet événement
+            (ni à la création, ni lors des changements de statut, ni pour les rencontres).
+          </span>
+        </div>
+        <% } %>
 
       </div>
 
