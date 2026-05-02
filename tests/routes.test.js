@@ -794,4 +794,14 @@ describe('Routes - Tests d\'intégration', function () {
     });
   });
 
+  // ── Routes Paramètres ──────────────────────────────────────────────────
+
+  describe('GET /admin/settings (sans authentification)', function () {
+    it('doit rediriger vers /auth/login si non connecté', async function () {
+      const res = await request(app).get('/admin/settings');
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.include('/auth/login');
+    });
+  });
+
 });

@@ -10,14 +10,19 @@ const express   = require('express');
 const { body, validationResult } = require('express-validator');
 const router    = express.Router();
 const User      = require('../models/User');
+const AppSettings = require('../models/AppSettings');
 const logger    = require('../config/logger');
 const { authLimiter } = require('../middleware/rateLimiter');
 
 // ─── Configuration Discord OAuth2 ─────────────────────────────────────────
-// Variables d'environnement (définies dans cPanel en production) :
-//   DISCORD_CLIENT_ID      — ID de l'application Discord
-//   DISCORD_CLIENT_SECRET  — Secret de l'application Discord
-//   APP_URL                — URL publique du site (ex: https://lanparty.example.com)
+// Les paramètres Discord sont lus prioritairement depuis la table `app_settings`
+// (administrable via l'interface d'administration), avec fallback sur les
+// variables d'environnement pour la rétrocompatibilité.
+//
+// Clés `app_settings` utilisées :
+//   discord_client_id      — ID de l'application Discord OAuth2
+//   discord_client_secret  — Secret de l'application Discord OAuth2
+//   discord_enabled        — activer/désactiver la connexion Discord ('1'/'0')
 
 const DISCORD_AUTH_URL    = 'https://discord.com/oauth2/authorize';
 const DISCORD_TOKEN_URL   = 'https://discord.com/api/oauth2/token';
@@ -278,15 +283,18 @@ router.post('/logout', (req, res) => {
 // ─── GET /auth/discord ─────────────────────────────────────────────────────
 // Démarre le flux OAuth2 Discord en redirigeant vers la page d'autorisation.
 
-router.get('/discord', (req, res) => {
+router.get('/discord', async (req, res) => {
   if (req.session.userId) return res.redirect('/');
 
-  const clientId     = process.env.DISCORD_CLIENT_ID     || '';
-  const redirectUri  = getDiscordRedirectUri();
-  const promptMode   = req.query.prompt === 'consent' ? 'consent' : 'none';
+  // Lecture prioritaire depuis app_settings, fallback env vars
+  const settings   = await AppSettings.getAll();
+  const discordEnabled = settings.discord_enabled !== '0'; // non défini ou '1' → activé
+  const clientId   = settings.discord_client_id  || process.env.DISCORD_CLIENT_ID  || '';
+  const redirectUri = getDiscordRedirectUri();
+  const promptMode = req.query.prompt === 'consent' ? 'consent' : 'none';
 
-  if (!clientId || !redirectUri) {
-    logger.warn('[AUTH DISCORD] DISCORD_CLIENT_ID ou APP_URL non configuré — OAuth Discord désactivé.');
+  if (!discordEnabled || !clientId || !redirectUri) {
+    logger.warn('[AUTH DISCORD] Discord non configuré ou désactivé — OAuth Discord indisponible.');
     req.flash('error', 'La connexion via Discord n\'est pas disponible actuellement.');
     return res.redirect('/auth/login');
   }
@@ -353,8 +361,10 @@ router.get('/discord/callback', async (req, res) => {
       return res.redirect('/auth/login');
     }
 
-    const clientId     = process.env.DISCORD_CLIENT_ID     || '';
-    const clientSecret = process.env.DISCORD_CLIENT_SECRET || '';
+    // Lecture prioritaire depuis app_settings, fallback env vars
+    const settings     = await AppSettings.getAll();
+    const clientId     = settings.discord_client_id     || process.env.DISCORD_CLIENT_ID     || '';
+    const clientSecret = settings.discord_client_secret || process.env.DISCORD_CLIENT_SECRET || '';
     const redirectUri  = getDiscordRedirectUri();
 
     if (!clientId || !clientSecret || !redirectUri) {

@@ -421,4 +421,65 @@ describe('Discord Service', function () {
 
   });
 
+  // ── discord_notifications_enabled ─────────────────────────────────────
+
+  describe('discord_notifications_enabled par événement', function () {
+
+    it('ne doit pas envoyer de notification si discord_notifications_enabled = 0', async function () {
+      const event = {
+        id: 1, nom: 'LAN Test', date_heure: new Date(), lieu: 'Paris', statut: 'planifie',
+        discord_channel_id: '111111111111111111',
+        discord_notifications_enabled: 0,
+      };
+      await discord.notifyEventCreated(event);
+      expect(postCalls).to.have.length(0);
+    });
+
+    it('ne doit pas envoyer de notification si discord_notifications_enabled = false', async function () {
+      const event = {
+        id: 2, nom: 'LAN Test', date_heure: new Date(), lieu: 'Paris',
+        discord_channel_id: '111111111111111111',
+        discord_notifications_enabled: false,
+      };
+      await discord.notifyEventStarted(event);
+      expect(postCalls).to.have.length(0);
+    });
+
+    it('doit envoyer si discord_notifications_enabled = 1', async function () {
+      const event = {
+        id: 3, nom: 'LAN Test', date_heure: new Date(), lieu: 'Paris',
+        discord_channel_id: '111111111111111111',
+        discord_notifications_enabled: 1,
+      };
+      await discord.notifyEventStarted(event);
+      expect(postCalls).to.have.length(1);
+    });
+
+    it('doit envoyer si discord_notifications_enabled est absent (par défaut activé)', async function () {
+      const event = {
+        id: 4, nom: 'LAN Test', date_heure: new Date(), lieu: 'Paris',
+        discord_channel_id: '111111111111111111',
+        // discord_notifications_enabled absent
+      };
+      await discord.notifyEventEnded(event);
+      expect(postCalls).to.have.length(1);
+    });
+
+    it('ne doit pas envoyer la notification battle si discord_notifications_enabled = 0', async function () {
+      const event = {
+        id: 5, nom: 'LAN Test',
+        discord_channel_id: '111111111111111111',
+        discord_notifications_enabled: 0,
+      };
+      const battle = {
+        id: 10, event_id: 5, statut: 'planifie',
+        game_nom: 'SF6', game_console: 'PS5', room_nom: 'Salle A',
+        players: [],
+      };
+      await discord.notifyBattleCreated({ event, battle });
+      expect(postCalls).to.have.length(0);
+    });
+
+  });
+
 });
