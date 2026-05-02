@@ -1415,7 +1415,7 @@ router.post('/settings', settingsValidation, async (req, res) => {
     const discord_client_id    = (req.body.discord_client_id    || '').trim() || null;
 
     // Clé publique Discord pour la vérification des interactions (slash commands)
-    const discord_application_public_key = (req.body.discord_application_public_key || '').trim().toLowerCase() || null;
+    const discord_application_public_key = (req.body.discord_application_public_key || '').trim() || null;
 
     await AppSettings.setMultiple({
       // Identité de l'association

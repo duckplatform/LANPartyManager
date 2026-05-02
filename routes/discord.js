@@ -11,6 +11,7 @@
  *   - Le corps brut de la requête est capturé via express.raw() (AVANT express.json()).
  *   - La signature Ed25519 fournie par Discord est vérifiée avant tout traitement.
  *   - Toute requête avec signature invalide reçoit une réponse 401.
+ *   - Un rate limiter est appliqué pour prévenir les attaques par déni de service.
  *
  * Configuration requise dans app_settings :
  *   discord_application_public_key  — Clé publique hexadécimale de l'application Discord
@@ -19,24 +20,40 @@
  * Important :
  *   Ce routeur doit être monté dans app.js AVANT express.json() et AVANT la
  *   protection CSRF, afin de recevoir le corps brut non parsé.
+ *   Le rate limiting est géré en interne par ce routeur (globalLimiter).
  */
 
-const express  = require('express');
-const router   = express.Router();
-const logger   = require('../config/logger');
+const express    = require('express');
+const rateLimit  = require('express-rate-limit');
+const router     = express.Router();
+const logger     = require('../config/logger');
 const { verifySignature, handleInteraction } = require('../services/discordCommands');
 const AppSettings = require('../models/AppSettings');
+
+// ─── Rate limiting propre à l'endpoint interactions ────────────────────────
+// Monté avant le globalLimiter de app.js (le routeur discord est chargé en amont),
+// ce rate limiter protège l'endpoint contre les abus.
+
+const discordInteractionsLimiter = rateLimit({
+  windowMs:        1 * 60 * 1000, // 1 minute
+  max:             60,             // 60 requêtes/minute/IP (Discord peut envoyer plusieurs interactions)
+  standardHeaders: true,
+  legacyHeaders:   false,
+  message:         { error: 'Trop de requêtes. Veuillez réessayer plus tard.' },
+});
 
 /**
  * POST /discord/interactions
  * Point d'entrée pour toutes les interactions Discord.
  *
- * 1. Capture le corps brut (express.raw) pour la vérification de signature
- * 2. Vérifie la signature Ed25519 — 401 si invalide
- * 3. Parse le JSON et dispatche l'interaction
+ * 1. Rate limiting
+ * 2. Capture le corps brut (express.raw) pour la vérification de signature
+ * 3. Vérifie la signature Ed25519 — 401 si invalide
+ * 4. Parse le JSON et dispatche l'interaction
  */
 router.post(
   '/interactions',
+  discordInteractionsLimiter,
   // express.raw() capture le corps en Buffer (nécessaire pour la vérification Ed25519)
   express.raw({ type: 'application/json' }),
   async (req, res) => {
