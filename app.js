@@ -69,6 +69,13 @@ app.use(helmet({
 const morganStream = { write: (msg) => logger.http(msg.trim()) };
 app.use(morgan(ENV === 'production' ? 'combined' : 'dev', { stream: morganStream }));
 
+// ─── Discord Interactions (doit précéder les parseurs de corps et le CSRF) ───
+// Le routeur /discord/interactions utilise express.raw() en interne pour capturer
+// le corps brut nécessaire à la vérification de signature Ed25519.
+// Il doit être monté avant express.json() et avant csrfSynchronisedProtection.
+
+app.use('/discord', require('./routes/discord'));
+
 // ─── Parsing des requêtes ──────────────────────────────────────────────────
 
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));

@@ -369,6 +369,56 @@
                   </span>
                 </div>
 
+                <hr style="border-color: var(--color-border); margin: var(--space-md) 0;" />
+
+                <!-- Slash Commands -->
+                <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: var(--space-md);">
+                  <i class="fas fa-terminal"></i> Commandes Slash Discord
+                </h3>
+                <p class="form-hint" style="margin-bottom: var(--space-md);">
+                  Permet aux membres d'utiliser les commandes <code>/classement</code>, <code>/position</code>,
+                  <code>/statistiques</code> et <code>/evenement</code> dans votre serveur Discord.
+                  Nécessite la configuration de la <strong>Clé publique</strong> et de l'URL d'interaction
+                  dans le <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer">Developer Portal</a>.
+                </p>
+
+                <!-- Clé publique -->
+                <div class="form-group">
+                  <label class="form-label" for="discord_application_public_key">
+                    <i class="fas fa-shield-alt"></i> Clé publique de l'application
+                  </label>
+                  <input
+                    type="text"
+                    id="discord_application_public_key"
+                    name="discord_application_public_key"
+                    class="form-input"
+                    placeholder="Ex. : a1b2c3d4e5f6… (64 caractères hexadécimaux)"
+                    value="<%= (settings && settings.discord_application_public_key) ? settings.discord_application_public_key : '' %>"
+                    maxlength="64"
+                    pattern="[0-9a-fA-F]{64}"
+                    autocomplete="off"
+                    style="font-family: monospace; font-size: 0.85rem;"
+                  />
+                  <span class="form-hint">
+                    Clé publique Ed25519 (Discord Developer Portal → General Information → Public Key).
+                    Utilisée pour vérifier les requêtes entrantes de Discord (interactions / slash commands).
+                    <% if (settings && settings.discord_application_public_key) { %>
+                      <span style="color: var(--color-success);">
+                        <i class="fas fa-check-circle"></i> Clé configurée.
+                      </span>
+                    <% } else { %>
+                      <span style="color: var(--color-warning);">
+                        <i class="fas fa-exclamation-triangle"></i> Non configurée — les commandes slash ne fonctionneront pas.
+                      </span>
+                    <% } %>
+                    <br>
+                    URL d'interaction à renseigner dans Discord Developer Portal :<br>
+                    <code style="font-size: 0.75rem; word-break: break-all;">
+                      <%= appUrl || 'https://votre-domaine.example.com' %>/discord/interactions
+                    </code>
+                  </span>
+                </div>
+
               </div>
             </div>
 
@@ -396,6 +446,36 @@
               </div>
             </div>
 
+            <!-- Commandes Slash -->
+            <div class="card sidebar-card">
+              <div class="card-header">
+                <h2><i class="fas fa-terminal"></i> Commandes Slash</h2>
+              </div>
+              <div class="card-body">
+                <p style="font-size: 0.875rem; margin-bottom: var(--space-sm);">
+                  Enregistrez les slash commands sur Discord pour qu'elles apparaissent
+                  dans la liste des commandes de votre serveur.
+                </p>
+                <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: var(--space-md);">
+                  Commandes disponibles : <code>/classement</code>, <code>/position</code>,
+                  <code>/statistiques</code>, <code>/evenement</code>
+                </p>
+                <% if (settings && settings.discord_client_id && (settings.discord_bot_token || process.env.DISCORD_BOT_TOKEN)) { %>
+                  <form action="/admin/discord/register-commands" method="POST" style="margin: 0;">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                    <button type="submit" class="btn btn--ghost btn--full btn--sm">
+                      <i class="fab fa-discord"></i> Enregistrer les commandes
+                    </button>
+                  </form>
+                <% } else { %>
+                  <p style="font-size: 0.8rem; color: var(--color-warning);">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Configurez d'abord le <strong>Client ID</strong> et le <strong>Token bot</strong>.
+                  </p>
+                <% } %>
+              </div>
+            </div>
+
             <!-- Guide Discord -->
             <div class="card sidebar-card">
               <div class="card-header">
@@ -411,12 +491,18 @@
                     </code>
                   </li>
                   <li>Créez un <strong>Bot</strong>, copiez son <strong>Token</strong></li>
+                  <li>Copiez la <strong>Public Key</strong> (General Information)</li>
+                  <li>Renseignez l'<strong>Interactions Endpoint URL</strong> :<br>
+                    <code style="font-size: 0.75rem; word-break: break-all;">
+                      <%= appUrl || 'https://votre-domaine.example.com' %>/discord/interactions
+                    </code>
+                  </li>
                   <li>Invitez le bot sur votre serveur Discord</li>
-                  <li>Activez le <em>Mode développeur</em> dans Discord pour obtenir les IDs de canaux</li>
+                  <li>Cliquez sur <strong>Enregistrer les commandes</strong> ci-dessus</li>
                 </ol>
                 <div style="margin-top: var(--space-sm);">
                   <a href="/admin/discord-test" class="btn btn--ghost btn--full btn--sm">
-                    <i class="fab fa-discord"></i> Tester
+                    <i class="fab fa-discord"></i> Tester les notifications
                   </a>
                 </div>
               </div>

@@ -267,11 +267,12 @@ CREATE TABLE IF NOT EXISTS `app_settings` (
 -- Paramètres d'identité : nom, logo, slogan
 -- Liens communautés : community_link_* (affichés seulement s'ils sont renseignés)
 INSERT IGNORE INTO `app_settings` (`cle`, `valeur`) VALUES
-  ('discord_enabled',       '0'),
-  ('discord_bot_token',     NULL),
-  ('discord_channel_news',  NULL),
-  ('discord_client_id',     NULL),
-  ('discord_client_secret', NULL),
+  ('discord_enabled',               '0'),
+  ('discord_bot_token',             NULL),
+  ('discord_channel_news',          NULL),
+  ('discord_client_id',             NULL),
+  ('discord_client_secret',         NULL),
+  ('discord_application_public_key', NULL),
   ('organization_name',     'LANPartyManager'),
   ('organization_logo',     NULL),
   ('organization_slogan',   NULL),

@@ -27,6 +27,7 @@
  *   discord_channel_news      — ID du canal Discord pour les actualités
  *   discord_client_id         — Client ID OAuth2 Discord (connexion utilisateur)
  *   discord_client_secret     — Client Secret OAuth2 Discord (connexion utilisateur)
+ *   discord_application_public_key — Clé publique hex (interactions endpoint / slash commands)
  */
 
 const db     = require('../config/database');
