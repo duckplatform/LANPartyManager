@@ -8,14 +8,19 @@
       <span><i class="fas fa-bolt"></i> Association Gaming</span>
     </div>
     <h1 class="hero-title">
-      Rejoignez la<br />
-      <span class="text-gradient">LAN Party</span><br />
-      ultime
+      Bienvenue à<br />
+      <span class="text-gradient"><%= appSettings.organization_name %></span><br />
     </h1>
-    <p class="hero-subtitle">
-      Compétitions, soirées gaming, tournois et bien plus encore.
-      Rejoignez notre communauté de passionnés !
-    </p>
+    <% if (appSettings.organization_slogan) { %>
+      <p class="hero-subtitle">
+        <%= appSettings.organization_slogan %>
+      </p>
+    <% } else { %>
+      <p class="hero-subtitle">
+        Compétitions, soirées gaming, tournois et bien plus encore.
+        Rejoignez notre communauté de passionnés !
+      </p>
+    <% } %>
     <div class="hero-actions">
       <% if (!currentUser) { %>
         <a href="/auth/register" class="btn btn--primary btn--lg">

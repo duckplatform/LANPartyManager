@@ -120,7 +120,7 @@ describe('Middleware Auth', function () {
   // ── injectLocals ───────────────────────────────────────────────────────
 
   describe('injectLocals()', function () {
-    it('doit injecter null dans currentUser si non connecté', function () {
+    it('doit injecter null dans currentUser si non connecté', async function () {
       const req = {
         session: {},
         flash:   sinon.stub().returns([]),
@@ -129,12 +129,15 @@ describe('Middleware Auth', function () {
       const res  = { locals: {} };
       const next = sinon.spy();
 
-      injectLocals(req, res, next);
+      await injectLocals(req, res, next);
       expect(res.locals.currentUser).to.be.null;
       expect(next.calledOnce).to.be.true;
+      // Vérifie que les paramètres d'app sont présents
+      expect(res.locals.appSettings).to.exist;
+      expect(res.locals.appSettings.organization_name).to.equal('LANPartyManager');
     });
 
-    it('doit injecter les données utilisateur si connecté', function () {
+    it('doit injecter les données utilisateur si connecté', async function () {
       const req = {
         session: { userId: 5, pseudo: 'GamerX', isAdmin: false, isModerator: false },
         flash:   sinon.stub().returns([]),
@@ -143,7 +146,7 @@ describe('Middleware Auth', function () {
       const res  = { locals: {} };
       const next = sinon.spy();
 
-      injectLocals(req, res, next);
+      await injectLocals(req, res, next);
       expect(res.locals.currentUser).to.deep.equal({
         id:          5,
         pseudo:      'GamerX',
@@ -152,7 +155,7 @@ describe('Middleware Auth', function () {
       });
     });
 
-    it('doit rendre csrfToken accessible dans les locals', function () {
+    it('doit rendre csrfToken accessible dans les locals', async function () {
       const tokenFn = sinon.stub().returns('csrf-token-value');
       const req = {
         session: {},
@@ -162,7 +165,7 @@ describe('Middleware Auth', function () {
       const res  = { locals: {} };
       const next = sinon.spy();
 
-      injectLocals(req, res, next);
+      await injectLocals(req, res, next);
       expect(typeof res.locals.csrfToken).to.equal('function');
       const token = res.locals.csrfToken();
       expect(token).to.equal('csrf-token-value');

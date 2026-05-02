@@ -8,11 +8,25 @@
  * stocké en base de données et administrable depuis l'interface admin.
  *
  * Clés reconnues :
- *   discord_enabled       — '1' | '0'  (activer/désactiver Discord globalement)
- *   discord_bot_token     — Token du bot Discord (notifications)
- *   discord_channel_news  — ID du canal Discord pour les actualités
- *   discord_client_id     — Client ID OAuth2 Discord (connexion utilisateur)
- *   discord_client_secret — Client Secret OAuth2 Discord (connexion utilisateur)
+ *   
+ *   # Identité de l'association
+ *   organization_name         — Nom de l'association (ex: "LANPartyManager")
+ *   organization_logo         — URL du logo (PNG, SVG recommandé)
+ *   organization_slogan       — Slogan ou tagline
+ *   
+ *   # Liens des communautés (affichés seulement s'ils sont renseignés)
+ *   community_link_discord    — URL d'invitation Discord
+ *   community_link_twitter    — URL du profil Twitter/X
+ *   community_link_twitch     — URL de la chaîne Twitch
+ *   community_link_youtube    — URL de la chaîne YouTube
+ *   community_link_website    — URL du site web officiel
+ *   
+ *   # Discord (notifications et OAuth2)
+ *   discord_enabled           — '1' | '0'  (activer/désactiver Discord globalement)
+ *   discord_bot_token         — Token du bot Discord (notifications)
+ *   discord_channel_news      — ID du canal Discord pour les actualités
+ *   discord_client_id         — Client ID OAuth2 Discord (connexion utilisateur)
+ *   discord_client_secret     — Client Secret OAuth2 Discord (connexion utilisateur)
  */
 
 const db     = require('../config/database');

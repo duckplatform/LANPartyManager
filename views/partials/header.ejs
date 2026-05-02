@@ -1,9 +1,13 @@
 <header class="site-header">
   <div class="container header-inner">
     <!-- Logo / Nom du site -->
-    <a href="/" class="logo" aria-label="LANPartyManager - Accueil">
-      <span class="logo-icon"><i class="fas fa-gamepad"></i></span>
-      <span class="logo-text">LAN<span class="logo-accent">Party</span>Manager</span>
+    <a href="/" class="logo" aria-label="<%= appSettings.organization_name %> - Accueil">
+      <% if (appSettings.organization_logo) { %>
+        <img src="<%= appSettings.organization_logo %>" alt="Logo" class="logo-image" style="max-height: 40px; max-width: 200px;" />
+      <% } else { %>
+        <span class="logo-icon"><i class="fas fa-gamepad"></i></span>
+      <% } %>
+      <span class="logo-text"><%= appSettings.organization_name %></span>
     </a>
 
     <!-- Bouton menu mobile -->

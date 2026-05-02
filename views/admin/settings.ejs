@@ -36,6 +36,188 @@
           <!-- ── Colonne principale ── -->
           <div class="news-form-main">
 
+            <!-- Section Identité de l'association -->
+            <div class="card" style="margin-bottom: var(--space-lg);">
+              <div class="card-header">
+                <h2><i class="fas fa-building"></i> Identité de l'association</h2>
+              </div>
+              <div class="card-body">
+
+                <!-- Nom de l'association -->
+                <div class="form-group">
+                  <label class="form-label" for="organization_name">
+                    <i class="fas fa-heading"></i> Nom de l'association
+                  </label>
+                  <input
+                    type="text"
+                    id="organization_name"
+                    name="organization_name"
+                    class="form-input"
+                    placeholder="Ex. : LANPartyManager"
+                    value="<%= (settings && settings.organization_name) ? settings.organization_name : 'LANPartyManager' %>"
+                    maxlength="255"
+                    required
+                  />
+                  <span class="form-hint">
+                    Nom de votre association affiché sur toutes les pages publiques.
+                  </span>
+                </div>
+
+                <!-- Slogan -->
+                <div class="form-group">
+                  <label class="form-label" for="organization_slogan">
+                    <i class="fas fa-quote-left"></i> Slogan
+                  </label>
+                  <input
+                    type="text"
+                    id="organization_slogan"
+                    name="organization_slogan"
+                    class="form-input"
+                    placeholder="Ex. : Le meilleur événement gaming de la région"
+                    value="<%= (settings && settings.organization_slogan) ? settings.organization_slogan : '' %>"
+                    maxlength="255"
+                  />
+                  <span class="form-hint">
+                    Slogan ou tagline de votre association (affiché si configuré).
+                  </span>
+                </div>
+
+                <!-- Logo -->
+                <div class="form-group">
+                  <label class="form-label" for="organization_logo">
+                    <i class="fas fa-image"></i> Logo (URL)
+                  </label>
+                  <input
+                    type="url"
+                    id="organization_logo"
+                    name="organization_logo"
+                    class="form-input"
+                    placeholder="Ex. : https://votre-domaine.com/logo.png"
+                    value="<%= (settings && settings.organization_logo) ? settings.organization_logo : '' %>"
+                    maxlength="500"
+                  />
+                  <span class="form-hint">
+                    URL du logo de votre association. Format recommandé: PNG ou SVG, dimensions au moins 200x200px.
+                    <% if (settings && settings.organization_logo) { %>
+                      <div style="margin-top: var(--space-sm);">
+                        <img src="<%= settings.organization_logo %>" alt="Logo" style="max-height: 60px; max-width: 200px; border: 1px solid var(--color-border); border-radius: 4px; padding: 4px;" />
+                      </div>
+                    <% } %>
+                  </span>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Section Liens communautés -->
+            <div class="card" style="margin-bottom: var(--space-lg);">
+              <div class="card-header">
+                <h2><i class="fas fa-share-alt"></i> Liens des communautés</h2>
+              </div>
+              <div class="card-body">
+                <p class="form-hint" style="margin-bottom: var(--space-md);">
+                  Configurez les liens de vos communautés pour qu'ils s'affichent sur le site.
+                  Laissez vide pour masquer un lien.
+                </p>
+
+                <!-- Discord -->
+                <div class="form-group">
+                  <label class="form-label" for="community_link_discord">
+                    <i class="fab fa-discord"></i> Discord
+                  </label>
+                  <input
+                    type="url"
+                    id="community_link_discord"
+                    name="community_link_discord"
+                    class="form-input"
+                    placeholder="Ex. : https://discord.gg/invite-code"
+                    value="<%= (settings && settings.community_link_discord) ? settings.community_link_discord : '' %>"
+                    maxlength="500"
+                  />
+                  <span class="form-hint">
+                    Lien d'invitation vers votre serveur Discord.
+                  </span>
+                </div>
+
+                <!-- Twitter -->
+                <div class="form-group">
+                  <label class="form-label" for="community_link_twitter">
+                    <i class="fab fa-twitter"></i> Twitter / X
+                  </label>
+                  <input
+                    type="url"
+                    id="community_link_twitter"
+                    name="community_link_twitter"
+                    class="form-input"
+                    placeholder="Ex. : https://twitter.com/votre_compte"
+                    value="<%= (settings && settings.community_link_twitter) ? settings.community_link_twitter : '' %>"
+                    maxlength="500"
+                  />
+                  <span class="form-hint">
+                    Lien vers votre profil Twitter/X.
+                  </span>
+                </div>
+
+                <!-- Twitch -->
+                <div class="form-group">
+                  <label class="form-label" for="community_link_twitch">
+                    <i class="fab fa-twitch"></i> Twitch
+                  </label>
+                  <input
+                    type="url"
+                    id="community_link_twitch"
+                    name="community_link_twitch"
+                    class="form-input"
+                    placeholder="Ex. : https://www.twitch.tv/votre_canal"
+                    value="<%= (settings && settings.community_link_twitch) ? settings.community_link_twitch : '' %>"
+                    maxlength="500"
+                  />
+                  <span class="form-hint">
+                    Lien vers votre chaîne Twitch.
+                  </span>
+                </div>
+
+                <!-- YouTube -->
+                <div class="form-group">
+                  <label class="form-label" for="community_link_youtube">
+                    <i class="fab fa-youtube"></i> YouTube
+                  </label>
+                  <input
+                    type="url"
+                    id="community_link_youtube"
+                    name="community_link_youtube"
+                    class="form-input"
+                    placeholder="Ex. : https://www.youtube.com/@votre_chaine"
+                    value="<%= (settings && settings.community_link_youtube) ? settings.community_link_youtube : '' %>"
+                    maxlength="500"
+                  />
+                  <span class="form-hint">
+                    Lien vers votre chaîne YouTube.
+                  </span>
+                </div>
+
+                <!-- Website -->
+                <div class="form-group">
+                  <label class="form-label" for="community_link_website">
+                    <i class="fas fa-globe"></i> Site web
+                  </label>
+                  <input
+                    type="url"
+                    id="community_link_website"
+                    name="community_link_website"
+                    class="form-input"
+                    placeholder="Ex. : https://votre-association.com"
+                    value="<%= (settings && settings.community_link_website) ? settings.community_link_website : '' %>"
+                    maxlength="500"
+                  />
+                  <span class="form-hint">
+                    Lien vers le site web officiel de votre association.
+                  </span>
+                </div>
+
+              </div>
+            </div>
+
             <!-- Section Discord -->
             <div class="card" style="margin-bottom: var(--space-lg);">
               <div class="card-header">

@@ -1264,6 +1264,49 @@ router.get('/settings', async (req, res) => {
 
 // Règles de validation pour les paramètres Discord
 const settingsValidation = [
+  // Identité de l'association
+  body('organization_name')
+    .trim()
+    .isLength({ min: 1, max: 255 }).withMessage('Le nom de l\'association ne peut pas dépasser 255 caractères.')
+    .notEmpty().withMessage('Le nom de l\'association est obligatoire.'),
+  body('organization_slogan')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isLength({ max: 255 }).withMessage('Le slogan ne peut pas dépasser 255 caractères.'),
+  body('organization_logo')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le logo doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('L\'URL du logo ne peut pas dépasser 500 caractères.'),
+  
+  // Liens communautés
+  body('community_link_discord')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le lien Discord doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
+  body('community_link_twitter')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le lien Twitter doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
+  body('community_link_twitch')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le lien Twitch doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
+  body('community_link_youtube')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le lien YouTube doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
+  body('community_link_website')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isURL().withMessage('Le lien site web doit être une URL valide.')
+    .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
+  
+  // Discord existants
   body('discord_bot_token')
     .optional({ checkFalsy: true })
     .trim()
@@ -1304,6 +1347,18 @@ router.post('/settings', settingsValidation, async (req, res) => {
   try {
     const currentSettings = await AppSettings.getAll();
 
+    // Identité de l'association
+    const organization_name = (req.body.organization_name || 'LANPartyManager').trim();
+    const organization_slogan = (req.body.organization_slogan || '').trim() || null;
+    const organization_logo = (req.body.organization_logo || '').trim() || null;
+
+    // Liens communautés (null si vide)
+    const community_link_discord = (req.body.community_link_discord || '').trim() || null;
+    const community_link_twitter = (req.body.community_link_twitter || '').trim() || null;
+    const community_link_twitch = (req.body.community_link_twitch || '').trim() || null;
+    const community_link_youtube = (req.body.community_link_youtube || '').trim() || null;
+    const community_link_website = (req.body.community_link_website || '').trim() || null;
+
     // discord_enabled : checkbox → '1' si cochée, '0' sinon
     const discord_enabled = req.body.discord_enabled === '1' ? '1' : '0';
 
@@ -1324,6 +1379,17 @@ router.post('/settings', settingsValidation, async (req, res) => {
     const discord_client_id    = (req.body.discord_client_id    || '').trim() || null;
 
     await AppSettings.setMultiple({
+      // Identité de l'association
+      organization_name,
+      organization_slogan,
+      organization_logo,
+      // Liens communautés
+      community_link_discord,
+      community_link_twitter,
+      community_link_twitch,
+      community_link_youtube,
+      community_link_website,
+      // Discord existants
       discord_enabled,
       discord_bot_token,
       discord_channel_news,
