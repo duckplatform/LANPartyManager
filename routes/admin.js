@@ -1253,6 +1253,7 @@ router.get('/settings', async (req, res) => {
       title:     'Paramètres de l\'application',
       pageClass: 'page-admin',
       settings,
+      appUrl:    (process.env.APP_URL || '').replace(/\/$/, ''),
     });
   } catch (err) {
     logger.error('[ADMIN/SETTINGS] Erreur chargement paramètres :', err);
@@ -1306,13 +1307,18 @@ router.post('/settings', settingsValidation, async (req, res) => {
     // discord_enabled : checkbox → '1' si cochée, '0' sinon
     const discord_enabled = req.body.discord_enabled === '1' ? '1' : '0';
 
-    // Pour les champs sensibles (token, secret), on ne remplace la valeur
-    // que si l'utilisateur a saisi quelque chose. Un champ vide = conserver.
-    const discord_bot_token = (req.body.discord_bot_token || '').trim()
-      || currentSettings.discord_bot_token || null;
+    // Pour les champs sensibles (token, secret), on ne remplace la valeur existante
+    // que si l'utilisateur a explicitement saisi une nouvelle valeur non-vide.
+    // Un champ vide (ou whitespace seul) conserve la valeur actuelle.
+    const newToken = (req.body.discord_bot_token || '').trim();
+    const discord_bot_token = newToken !== ''
+      ? newToken
+      : (currentSettings.discord_bot_token || null);
 
-    const discord_client_secret = (req.body.discord_client_secret || '').trim()
-      || currentSettings.discord_client_secret || null;
+    const newSecret = (req.body.discord_client_secret || '').trim();
+    const discord_client_secret = newSecret !== ''
+      ? newSecret
+      : (currentSettings.discord_client_secret || null);
 
     const discord_channel_news = (req.body.discord_channel_news || '').trim() || null;
     const discord_client_id    = (req.body.discord_client_id    || '').trim() || null;

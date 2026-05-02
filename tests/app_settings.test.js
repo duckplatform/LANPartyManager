@@ -123,15 +123,15 @@ describe('AppSettings Model', function () {
     });
 
     it('doit invalider le cache après la mise à jour', async function () {
-      // 1er appel (initial)
+      // 1er appel getAll() → remplit le cache
       poolStub.execute.onFirstCall().resolves([[{ cle: 'discord_enabled', valeur: '0' }]]);
-      // Appel SET (INSERT)
+      // Appel set() → INSERT (cache invalidé APRÈS)
       poolStub.execute.onSecondCall().resolves([{ affectedRows: 1 }]);
-      // 3e appel après invalidation du cache
+      // 3e appel getAll() → relit depuis la BDD car cache invalidé
       poolStub.execute.onThirdCall().resolves([[{ cle: 'discord_enabled', valeur: '1' }]]);
 
       await AppSettings.getAll();   // charge le cache
-      await AppSettings.set('discord_enabled', '1'); // invalide le cache
+      await AppSettings.set('discord_enabled', '1'); // écriture BDD puis invalidation
       const settings = await AppSettings.getAll();   // relit depuis la BDD
       expect(settings.discord_enabled).to.equal('1');
       expect(poolStub.execute.callCount).to.equal(3);
@@ -143,14 +143,27 @@ describe('AppSettings Model', function () {
 
   describe('setMultiple()', function () {
 
-    it('doit exécuter autant de requêtes que de clés', async function () {
-      poolStub.execute.resolves([{ affectedRows: 1 }]);
+    it('doit exécuter autant de requêtes que de clés dans une transaction', async function () {
+      // Simule une connexion de pool avec une transaction
+      const connStub = {
+        beginTransaction: sinon.stub().resolves(),
+        execute:          sinon.stub().resolves([{ affectedRows: 1 }]),
+        commit:           sinon.stub().resolves(),
+        rollback:         sinon.stub().resolves(),
+        release:          sinon.stub(),
+      };
+      poolStub.getConnection = sinon.stub().resolves(connStub);
+
       await AppSettings.setMultiple({
         discord_enabled:      '1',
         discord_bot_token:    'token123',
         discord_channel_news: '123456789012345678',
       });
-      expect(poolStub.execute.callCount).to.equal(3);
+
+      expect(connStub.beginTransaction.calledOnce).to.be.true;
+      expect(connStub.execute.callCount).to.equal(3);
+      expect(connStub.commit.calledOnce).to.be.true;
+      expect(connStub.release.calledOnce).to.be.true;
     });
 
   });

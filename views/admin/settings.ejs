@@ -225,7 +225,7 @@
                   <li>Copiez le <strong>Client ID</strong> et le <strong>Client Secret</strong></li>
                   <li>Ajoutez l'URI de redirection OAuth2 :<br>
                     <code style="font-size: 0.75rem; word-break: break-all;">
-                      <%= process.env.APP_URL || 'https://votre-domaine.example.com' %>/auth/discord/callback
+                      <%= appUrl || 'https://votre-domaine.example.com' %>/auth/discord/callback
                     </code>
                   </li>
                   <li>Créez un <strong>Bot</strong>, copiez son <strong>Token</strong></li>

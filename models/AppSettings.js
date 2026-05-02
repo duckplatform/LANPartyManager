@@ -75,33 +75,44 @@ const AppSettings = {
 
   /**
    * Enregistre la valeur d'un paramètre (INSERT … ON DUPLICATE KEY UPDATE).
-   * Invalide le cache après la mise à jour.
+   * Le cache est invalidé APRÈS l'écriture en BDD pour éviter une fenêtre
+   * de lecture incohérente.
    * @param {string} key
    * @param {string|null} value
    * @returns {Promise<void>}
    */
   async set(key, value) {
-    AppSettings.clearCache();
     await db.pool.execute(
       'INSERT INTO `app_settings` (`cle`, `valeur`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `valeur` = VALUES(`valeur`)',
       [key, value ?? null]
     );
+    AppSettings.clearCache(); // Invalidation après l'écriture réussie
   },
 
   /**
-   * Enregistre plusieurs paramètres en une seule opération.
-   * Chaque entrée de l'objet est traitée via AppSettings.set().
+   * Enregistre plusieurs paramètres de manière atomique dans une transaction.
+   * Le cache est invalidé une seule fois après l'ensemble des écritures.
    * @param {Object} settings  — ex: { discord_enabled: '1', discord_bot_token: 'MTx…' }
    * @returns {Promise<void>}
    */
   async setMultiple(settings) {
-    AppSettings.clearCache();
-    for (const [key, value] of Object.entries(settings)) {
-      await db.pool.execute(
-        'INSERT INTO `app_settings` (`cle`, `valeur`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `valeur` = VALUES(`valeur`)',
-        [key, value ?? null]
-      );
+    const conn = await db.pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      for (const [key, value] of Object.entries(settings)) {
+        await conn.execute(
+          'INSERT INTO `app_settings` (`cle`, `valeur`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `valeur` = VALUES(`valeur`)',
+          [key, value ?? null]
+        );
+      }
+      await conn.commit();
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
     }
+    AppSettings.clearCache(); // Invalidation après la transaction réussie
   },
 
   /**

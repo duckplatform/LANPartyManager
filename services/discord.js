@@ -73,7 +73,10 @@ async function getConfig() {
     const settings = await AppSettings.getAll();
 
     // discord_enabled : '0' → désactivé, toute autre valeur (ou absent) → activé
-    // On considère que l'absence de la clé = activé (comportement legacy).
+    // Note : le script install.sql insère '0' par défaut (Discord désactivé à l'installation).
+    // Pour les installations existantes sans la table app_settings (ex: avant migration),
+    // l'absence de la clé est interprétée comme "activé" pour maintenir le comportement
+    // legacy (les installations existantes avaient Discord configuré via env vars).
     const rawEnabled = settings.discord_enabled;
     const discordEnabled = rawEnabled === undefined || rawEnabled === null
       ? true  // non défini → comportement legacy (activé)
@@ -165,6 +168,11 @@ function formatDate(date) {
 /**
  * Détermine si les notifications Discord sont désactivées pour un événement.
  * Gère les différents types MySQL (Buffer, boolean, number, string).
+ *
+ * Note : MySQL retourne les colonnes TINYINT(1) sous forme de Buffer via
+ * certaines versions du driver node. Buffer[0] est l'octet de poids fort
+ * représentant la valeur (0 = false, ≠0 = true).
+ *
  * Par défaut (valeur absente) : activées.
  * @param {Object} event
  * @returns {boolean}  true = notifications désactivées
