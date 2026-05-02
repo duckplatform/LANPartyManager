@@ -155,7 +155,7 @@ Le seed est idempotent : il ajoute uniquement des enregistrements de demonstrati
 | prenom | VARCHAR(100) | Prénom |
 | pseudo | VARCHAR(50) | Surnom en jeu (unique dans l'interface) |
 | email | VARCHAR(255) UNIQUE | Adresse e-mail (login) |
-| password | VARCHAR(255) NULL | Mot de passe haché (bcrypt 12 rounds) — NULL pour les comptes créés via Discord OAuth |
+| password | VARCHAR(255) NULL | Mot de passe haché (bcrypt 12 rounds). Pour Discord OAuth, un hash aléatoire non divulgué est stocké |
 | is_admin | TINYINT(1) DEFAULT 0 | 1 = admin, 0 = membre |
 | discord_user_id | VARCHAR(20) UNIQUE NULL | ID Discord Snowflake — utilisé pour l'authentification OAuth et les mentions dans les notifications |
 | badge_token | CHAR(36) UNIQUE | Token UUID permanent pour QR code badge |
@@ -270,7 +270,7 @@ Les routes `/auth/discord`, `/auth/discord/callback` et `/auth/discord/complete`
 4. **Cas 1** : Discord ID déjà lié à un compte → connexion directe
 5. **Cas 2** : E-mail Discord déjà enregistré → liaison automatique du compte + connexion
 6. **Cas 3** : Nouvel utilisateur → formulaire de complétion du profil (nom, prénom, pseudo, e-mail)
-7. Le compte est créé avec `discord_user_id` renseigné et `password = NULL`
+7. Le compte est créé avec `discord_user_id` renseigné et un mot de passe aléatoire hashé (non divulgué)
 
 > **Sécurité** : un paramètre `state` aléatoire est généré et stocké en session pour protéger le callback OAuth contre les attaques CSRF.
 
@@ -310,7 +310,7 @@ Toutes les transitions du cycle de vie d'une rencontre sont couvertes :
 2. **Rate Limiting** — 200 req/15min global, 10 req/15min sur les routes auth
 3. **Sessions** — express-session avec cookie `httpOnly`, `sameSite: lax`, `secure` en prod
 4. **CSRF** — csrf-sync (Synchroniser Token Pattern) sur toutes les routes POST
-5. **Bcrypt** — Mots de passe hachés avec 12 rounds (NULL pour les comptes Discord)
+5. **Bcrypt** — Mots de passe hachés avec 12 rounds (y compris hash aléatoire pour les comptes Discord)
 6. **Validation** — express-validator sur tous les formulaires
 7. **Requêtes préparées** — mysql2 avec paramètres bind (anti-injection SQL)
 8. **Session regenerate** — Régénération de session après login/register (anti-fixation)

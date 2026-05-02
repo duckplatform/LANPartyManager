@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   `prenom`        VARCHAR(100)  NOT NULL COMMENT 'Prenom',
   `pseudo`        VARCHAR(50)   NOT NULL COMMENT 'Pseudo en jeu',
   `email`         VARCHAR(255)  NOT NULL COMMENT 'Adresse e-mail de connexion',
-  `password`      VARCHAR(255)  NULL    DEFAULT NULL COMMENT 'Mot de passe hashé (bcrypt), NULL pour les comptes créés via OAuth Discord',
+  `password`      VARCHAR(255)  NULL    DEFAULT NULL COMMENT 'Mot de passe hashé (bcrypt). Les comptes OAuth Discord reçoivent un hash aléatoire non divulgué.',
   `is_admin`      TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = administrateur',
   `is_moderator`  TINYINT(1)    NOT NULL DEFAULT 0 COMMENT '1 = moderateur',
   `badge_token`   CHAR(36)      NOT NULL COMMENT 'Token UUID permanent pour badge membre',
