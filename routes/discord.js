@@ -36,7 +36,7 @@ const AppSettings = require('../models/AppSettings');
 
 const discordInteractionsLimiter = rateLimit({
   windowMs:        1 * 60 * 1000, // 1 minute
-  max:             60,             // 60 requêtes/minute/IP (Discord peut envoyer plusieurs interactions)
+  max:             120,            // 120 requêtes/minute/IP — Discord peut envoyer des retries rapides
   standardHeaders: true,
   legacyHeaders:   false,
   message:         { error: 'Trop de requêtes. Veuillez réessayer plus tard.' },
@@ -61,7 +61,9 @@ router.post(
     const timestamp = req.headers['x-signature-timestamp'];
     const rawBody   = req.body; // Buffer grâce à express.raw()
 
-    // Récupérer la clé publique depuis la configuration
+    // Récupérer la clé publique depuis la configuration.
+    // AppSettings met en cache toutes les valeurs pendant 60 secondes ;
+    // cette lecture est donc très peu coûteuse dans la majorité des cas.
     let publicKey = '';
     try {
       publicKey = (await AppSettings.get('discord_application_public_key')) || '';

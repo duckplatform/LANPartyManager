@@ -19,6 +19,14 @@ const { REST, Routes, InteractionType, InteractionResponseType } = require('disc
 const crypto = require('crypto');
 const logger = require('../config/logger');
 
+// ─── Constantes ────────────────────────────────────────────────────────────────
+
+/**
+ * Flag Discord pour les réponses éphémères (visibles uniquement par l'auteur).
+ * Valeur numérique selon la spécification de l'API Discord.
+ */
+const EPHEMERAL_FLAG = 64;
+
 // ─── Définitions des commandes slash ──────────────────────────────────────────
 
 /**
@@ -139,6 +147,20 @@ function formatDate(date) {
   });
 }
 
+/**
+ * Retourne l'emoji médaille correspondant à un rang dans le classement.
+ * Utilisé par handleClassement() et handlePosition() pour assurer la cohérence.
+ *
+ * @param {number} rang  — Position dans le classement (1 = premier)
+ * @returns {string}     — Emoji médaille ou numéro de rang
+ */
+function getMedalForRank(rang) {
+  if (rang === 1) return '🥇';
+  if (rang === 2) return '🥈';
+  if (rang === 3) return '🥉';
+  return `🏅 #${rang}`;
+}
+
 // ─── Handlers de commandes ────────────────────────────────────────────────────
 
 /**
@@ -160,7 +182,7 @@ async function handleClassement() {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: "❌ Aucun événement LAN n'est actuellement en cours.",
-        flags: 64, // EPHEMERAL
+        flags: EPHEMERAL_FLAG,
       },
     };
   }
@@ -176,7 +198,7 @@ async function handleClassement() {
   } else {
     rankingText = rankings
       .map(entry => {
-        const medal = entry.rang === 1 ? '🥇' : entry.rang === 2 ? '🥈' : entry.rang === 3 ? '🥉' : `${entry.rang}.`;
+        const medal = getMedalForRank(entry.rang);
         return `${medal} **${entry.pseudo}** — ${entry.points} pts (${entry.wins} victoire${entry.wins > 1 ? 's' : ''})`;
       })
       .join('\n');
@@ -219,7 +241,7 @@ async function handlePosition(discordUserId) {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: '❌ Impossible de déterminer votre identifiant Discord.',
-        flags: 64,
+        flags: EPHEMERAL_FLAG,
       },
     };
   }
@@ -231,7 +253,7 @@ async function handlePosition(discordUserId) {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: "❌ Votre compte Discord n'est pas lié à un compte LANPartyManager. Connectez-vous via Discord sur notre site pour lier votre compte.",
-        flags: 64,
+        flags: EPHEMERAL_FLAG,
       },
     };
   }
@@ -243,7 +265,7 @@ async function handlePosition(discordUserId) {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: "❌ Aucun événement LAN n'est actuellement en cours.",
-        flags: 64,
+        flags: EPHEMERAL_FLAG,
       },
     };
   }
@@ -256,19 +278,19 @@ async function handlePosition(discordUserId) {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: `📊 Vous n'êtes pas encore classé(e) dans **${event.nom}**. Participez à des rencontres pour apparaître au classement !`,
-        flags: 64,
+        flags: EPHEMERAL_FLAG,
       },
     };
   }
 
-  const medal = myEntry.rang === 1 ? '🥇' : myEntry.rang === 2 ? '🥈' : myEntry.rang === 3 ? '🥉' : `🏅 #${myEntry.rang}`;
+  const medal   = getMedalForRank(myEntry.rang);
   const battles = myEntry.battles_played;
 
   return {
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
       content: `${medal} **${user.pseudo}**, vous êtes actuellement **${myEntry.rang}e** dans **${event.nom}** avec **${myEntry.points} point${myEntry.points > 1 ? 's' : ''}** et **${myEntry.wins} victoire${myEntry.wins > 1 ? 's' : ''}** sur ${battles} rencontre${battles > 1 ? 's' : ''}.`,
-      flags: 64,
+      flags: EPHEMERAL_FLAG,
     },
   };
 }
@@ -291,7 +313,7 @@ async function handleStatistiques(discordUserId) {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: '❌ Impossible de déterminer votre identifiant Discord.',
-        flags: 64,
+        flags: EPHEMERAL_FLAG,
       },
     };
   }
@@ -303,7 +325,7 @@ async function handleStatistiques(discordUserId) {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: "❌ Votre compte Discord n'est pas lié à un compte LANPartyManager. Connectez-vous via Discord sur notre site pour lier votre compte.",
-        flags: 64,
+        flags: EPHEMERAL_FLAG,
       },
     };
   }
@@ -315,7 +337,7 @@ async function handleStatistiques(discordUserId) {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
         content: "❌ Aucun événement LAN n'est actuellement en cours.",
-        flags: 64,
+        flags: EPHEMERAL_FLAG,
       },
     };
   }

@@ -16,7 +16,7 @@ const discordCommands = require('../services/discordCommands');
 const { InteractionType, InteractionResponseType } = require('discord.js');
 
 // Flags Discord
-const EPHEMERAL_FLAG = 64;
+const EPHEMERAL_FLAG = 64; // Correspond à InteractionResponseFlag.Ephemeral
 
 // ─────────────────────────────────────────────────────────────────────────────
 
