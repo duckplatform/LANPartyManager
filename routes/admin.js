@@ -1398,21 +1398,34 @@ router.post('/settings', settingsValidation, async (req, res) => {
     // discord_enabled : checkbox → '1' si cochée, '0' sinon
     const discord_enabled = req.body.discord_enabled === '1' ? '1' : '0';
 
-    // Pour les champs sensibles (token, secret), on ne remplace la valeur existante
-    // que si l'utilisateur a explicitement saisi une nouvelle valeur non-vide.
-    // Un champ vide (ou whitespace seul) conserve la valeur actuelle.
-    const newToken = (req.body.discord_bot_token || '').trim();
-    const discord_bot_token = newToken !== ''
-      ? newToken
-      : (currentSettings.discord_bot_token || null);
-
-    const newSecret = (req.body.discord_client_secret || '').trim();
-    const discord_client_secret = newSecret !== ''
-      ? newSecret
-      : (currentSettings.discord_client_secret || null);
+    // Champs sensibles Discord : un champ vide signifie une suppression explicite
+    // de la valeur stockée (mise a NULL en base).
+    const discord_bot_token = (req.body.discord_bot_token || '').trim() || null;
+    const discord_client_secret = (req.body.discord_client_secret || '').trim() || null;
 
     const discord_channel_news = (req.body.discord_channel_news || '').trim() || null;
-    const discord_client_id    = (req.body.discord_client_id    || '').trim() || null;
+    // Contrairement au token/secret, un Client ID vide signifie une volonté explicite
+    // de retirer la configuration OAuth côté base.
+    const discord_client_id    = (req.body.discord_client_id || '').trim() || null;
+
+    // Sécurité OAuth : impossible d'activer Discord si les identifiants OAuth
+    // ne sont pas configurés (Client ID + Client Secret).
+    if (discord_enabled === '1' && (!discord_client_id || !discord_client_secret)) {
+      return res.status(422).render('admin/settings', {
+        title:     'Paramètres de l\'application',
+        pageClass: 'page-admin',
+        settings: {
+          ...currentSettings,
+          ...req.body,
+          discord_enabled,
+          discord_client_id,
+        },
+        errors: [{
+          msg: 'Impossible d\'activer Discord OAuth2 : renseignez le Client ID et le Client Secret.'
+        }],
+        appUrl:    (process.env.APP_URL || '').replace(/\/$/, ''),
+      });
+    }
 
     // Clé publique Discord pour la vérification des interactions (slash commands)
     const discord_application_public_key = (req.body.discord_application_public_key || '').trim() || null;

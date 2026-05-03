@@ -16,7 +16,7 @@
  */
 
 const { REST, Routes, InteractionType, InteractionResponseType } = require('discord.js');
-const crypto = require('crypto');
+const nacl = require('tweetnacl');
 const logger = require('../config/logger');
 
 // ─── Constantes ────────────────────────────────────────────────────────────────
@@ -85,21 +85,12 @@ async function registerCommands(applicationId, token) {
 // ─── Vérification de signature Ed25519 ────────────────────────────────────────
 
 /**
- * Préfixe DER (SubjectPublicKeyInfo) pour une clé publique Ed25519 brute de 32 octets.
- * Permet de créer une clé utilisable par crypto.createPublicKey() à partir des
- * 32 octets bruts fournis par Discord (format hexadécimal).
- *
- * Structure ASN.1 :
- *   SEQUENCE {
- *     SEQUENCE { OID 1.3.101.112 }   — id-EdDSA Ed25519
- *     BIT STRING { 0x00 + 32 bytes } — clé publique brute
- *   }
- */
-const ED25519_DER_PREFIX = Buffer.from('302a300506032b6570032100', 'hex');
-
-/**
  * Vérifie la signature Discord (Ed25519) d'une interaction entrante.
- * Discord exige cette vérification ; une réponse 401 doit être renvoyée en cas d'échec.
+ * Utilise tweetnacl pour la vérification Ed25519 (conforme à la documentation Discord).
+ * Une réponse 401 doit être renvoyée en cas d'échec.
+ *
+ * Référence Discord :
+ * https://discord.com/developers/docs/interactions/receiving-and-responding#security
  *
  * @param {Buffer} rawBody       — Corps brut de la requête (Buffer)
  * @param {string} signature     — Valeur de l'en-tête X-Signature-Ed25519
@@ -111,18 +102,12 @@ function verifySignature(rawBody, signature, timestamp, publicKeyHex) {
   if (!rawBody || !signature || !timestamp || !publicKeyHex) return false;
 
   try {
-    // Construire la clé publique au format DER (SPKI) attendu par Node.js crypto
-    const rawKeyBytes = Buffer.from(publicKeyHex, 'hex');
-    if (rawKeyBytes.length !== 32) return false;
+    // Message = timestamp + body (concatenation d'octets)
+    const message = Buffer.from(timestamp + rawBody.toString('utf-8'));
+    const signatureBuffer = Buffer.from(signature, 'hex');
+    const publicKeyBuffer = Buffer.from(publicKeyHex, 'hex');
 
-    const derKey = Buffer.concat([ED25519_DER_PREFIX, rawKeyBytes]);
-    const publicKey = crypto.createPublicKey({ key: derKey, format: 'der', type: 'spki' });
-
-    // Message = timestamp || body (concatenation d'octets)
-    const message = Buffer.concat([Buffer.from(timestamp, 'utf-8'), rawBody]);
-    const sig = Buffer.from(signature, 'hex');
-
-    return crypto.verify(null, message, publicKey, sig);
+    return nacl.sign.detached.verify(message, signatureBuffer, publicKeyBuffer);
   } catch (err) {
     logger.warn('[DISCORD_COMMANDS] Erreur vérification signature :', err.message);
     return false;

@@ -265,7 +265,7 @@
                   />
                   <span class="form-hint">
                     Token du bot Discord utilisé pour envoyer des notifications.
-                    Laissez vide pour conserver la valeur actuelle.
+                    Laissez vide pour supprimer la valeur actuelle.
                     <% if (settings && settings.discord_bot_token) { %>
                       <span style="color: var(--color-success);">
                         <i class="fas fa-check-circle"></i> Token configuré.
@@ -356,7 +356,7 @@
                   />
                   <span class="form-hint">
                     Secret de l'application Discord (OAuth2 → Client Information → Client Secret).
-                    Laissez vide pour conserver la valeur actuelle.
+                    Laissez vide pour supprimer la valeur actuelle.
                     <% if (settings && settings.discord_client_secret) { %>
                       <span style="color: var(--color-success);">
                         <i class="fas fa-check-circle"></i> Secret configuré.
@@ -519,6 +519,29 @@
       <form id="discordRegisterCommandsForm" action="/admin/discord/register-commands" method="POST" style="display: none;">
         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
       </form>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          const settingsForm = document.querySelector('form[action="/admin/settings"]');
+          const discordEnabledInput = document.getElementById('discord_enabled');
+          const clientIdInput = document.getElementById('discord_client_id');
+          const clientSecretInput = document.getElementById('discord_client_secret');
+
+          if (!settingsForm || !discordEnabledInput || !clientIdInput || !clientSecretInput) return;
+
+          settingsForm.addEventListener('submit', function (event) {
+            const wantsDiscordEnabled = discordEnabledInput.checked;
+            const hasClientId = clientIdInput.value.trim().length > 0;
+            const hasClientSecret = clientSecretInput.value.trim().length > 0;
+
+            if (wantsDiscordEnabled && (!hasClientId || !hasClientSecret)) {
+              event.preventDefault();
+              alert('Pour activer Discord OAuth2, renseignez le Client ID et le Client Secret.');
+              (hasClientId ? clientSecretInput : clientIdInput).focus();
+            }
+          });
+        });
+      </script>
 
     </section>
   </div>
