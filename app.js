@@ -294,10 +294,10 @@ async function startServer() {
   }
 }
 
-// Démarre le serveur uniquement lorsque ce fichier est exécuté directement.
-// En production cPanel (Phusion Passenger), le fichier est chargé via require()
-// et doit simplement exporter l'application Express sans appeler listen().
-if (process.env.NODE_ENV !== 'test' && require.main === module) {
+// Démarre le serveur sauf en mode test.
+// module.exports = app est conservé pour les tests (supertest) et tout chargement
+// externe éventuel (ex : Phusion Passenger chargé via require()).
+if (process.env.NODE_ENV !== 'test') {
   startServer();
 }
 
