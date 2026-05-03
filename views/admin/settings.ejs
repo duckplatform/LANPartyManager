@@ -514,6 +514,52 @@
         </div>
       </form>
 
+      <!-- Rafraîchissement du token CSRF avant soumission -->
+      <script>
+        document.addEventListener('DOMContentLoaded', function() {
+          const form = document.querySelector('form[action="/admin/settings"]');
+          if (!form) return;
+
+          form.addEventListener('submit', async function(event) {
+            // Empêche la soumission par défaut
+            event.preventDefault();
+
+            try {
+              // Appelle l'endpoint pour obtenir un nouveau token CSRF
+              const response = await fetch('/admin/csrf-token', {
+                method: 'GET',
+                headers: {
+                  'Accept': 'application/json'
+                }
+              });
+
+              if (!response.ok) {
+                console.error('Erreur lors du rafraîchissement du token CSRF');
+                // Continue quand même - le token actuel pourrait être valide
+                form.submit();
+                return;
+              }
+
+              const data = await response.json();
+              if (data.token) {
+                // Met à jour le champ CSRF caché
+                const csrfInput = form.querySelector('input[name="_csrf"]');
+                if (csrfInput) {
+                  csrfInput.value = data.token;
+                }
+              }
+
+              // Soumet le formulaire avec le nouveau token
+              form.submit();
+            } catch (err) {
+              console.error('Erreur lors du rafraîchissement du token CSRF:', err);
+              // En cas d'erreur, soumet quand même avec le token actuel
+              form.submit();
+            }
+          });
+        });
+      </script>
+
     </section>
   </div>
 </div>

@@ -77,6 +77,22 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ─── GET /admin/csrf-token ────────────────────────────────────────────────
+/**
+ * Retourne un nouveau token CSRF en JSON.
+ * Utilisé par les formulaires pour régénérer le token dynamiquement
+ * avant la soumission, évitant les expiration de tokens.
+ */
+router.get('/csrf-token', (req, res) => {
+  try {
+    const token = req.csrfToken();
+    return res.json({ token });
+  } catch (err) {
+    logger.error('[ADMIN] Erreur génération CSRF token :', err);
+    return res.status(500).json({ error: 'Erreur lors de la génération du token.' });
+  }
+});
+
 // ─── GET /admin/users/:id/badge ───────────────────────────────────────────
 
 router.get('/users/:id/badge', async (req, res) => {
