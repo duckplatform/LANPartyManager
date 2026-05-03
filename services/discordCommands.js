@@ -99,17 +99,35 @@ async function registerCommands(applicationId, token) {
  * @returns {boolean}            true si la signature est valide
  */
 function verifySignature(rawBody, signature, timestamp, publicKeyHex) {
-  if (!rawBody || !signature || !timestamp || !publicKeyHex) return false;
+  if (!rawBody || !signature || !timestamp || !publicKeyHex) {
+    const missing = [];
+    if (!rawBody) missing.push('rawBody');
+    if (!signature) missing.push('signature');
+    if (!timestamp) missing.push('timestamp');
+    if (!publicKeyHex) missing.push('publicKeyHex');
+    logger.debug(`[DISCORD_INTERACTIONS] Signature verification failed: missing ${missing.join(', ')}`);
+    return false;
+  }
 
   try {
+    logger.debug(`[DISCORD_INTERACTIONS] Verifying signature - timestamp: ${timestamp}, bodySize: ${rawBody.length} bytes, pubKeyLen: ${publicKeyHex.length} chars`);
+    
     // Message = timestamp + body (concatenation d'octets)
     const message = Buffer.from(timestamp + rawBody.toString('utf-8'));
     const signatureBuffer = Buffer.from(signature, 'hex');
     const publicKeyBuffer = Buffer.from(publicKeyHex, 'hex');
 
-    return nacl.sign.detached.verify(message, signatureBuffer, publicKeyBuffer);
+    const isValid = nacl.sign.detached.verify(message, signatureBuffer, publicKeyBuffer);
+    
+    if (isValid) {
+      logger.debug(`[DISCORD_INTERACTIONS] OK - Signature verification successful`);
+    } else {
+      logger.warn(`[DISCORD_INTERACTIONS] FAILED - Signature doesn't match`);
+    }
+    
+    return isValid;
   } catch (err) {
-    logger.warn('[DISCORD_COMMANDS] Erreur vérification signature :', err.message);
+    logger.error(`[DISCORD_INTERACTIONS] Signature verification error: ${err.message}`, { stack: err.stack });
     return false;
   }
 }
