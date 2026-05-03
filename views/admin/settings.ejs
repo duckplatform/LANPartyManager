@@ -461,12 +461,14 @@
                   <code>/statistiques</code>, <code>/evenement</code>
                 </p>
                 <% if (settings && settings.discord_client_id && (settings.discord_bot_token || process.env.DISCORD_BOT_TOKEN)) { %>
-                  <form action="/admin/discord/register-commands" method="POST" style="margin: 0;">
-                    <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
-                    <button type="submit" class="btn btn--ghost btn--full btn--sm">
-                      <i class="fab fa-discord"></i> Enreg. les commandes
-                    </button>
-                  </form>
+                  <button
+                    type="submit"
+                    class="btn btn--ghost btn--full btn--sm"
+                    form="discordRegisterCommandsForm"
+                    formnovalidate
+                  >
+                    <i class="fab fa-discord"></i> Enreg. les commandes
+                  </button>
                 <% } else { %>
                   <p style="font-size: 0.8rem; color: var(--color-warning);">
                     <i class="fas fa-exclamation-triangle"></i>
@@ -512,6 +514,10 @@
           </aside>
 
         </div>
+      </form>
+
+      <form id="discordRegisterCommandsForm" action="/admin/discord/register-commands" method="POST" style="display: none;">
+        <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
       </form>
 
     </section>
