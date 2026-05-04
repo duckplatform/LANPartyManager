@@ -61,9 +61,11 @@ router.post(
     const timestampHeader = req.headers['x-signature-timestamp'];
     const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader;
     const timestamp = Array.isArray(timestampHeader) ? timestampHeader[0] : timestampHeader;
-    const rawBody   = req.body; // Buffer grâce à express.raw()
+    const rawBody = Buffer.isBuffer(req.body)
+      ? req.body
+      : (typeof req.body === 'string' ? Buffer.from(req.body, 'utf-8') : null);
 
-    if (typeof signature !== 'string' || typeof timestamp !== 'string' || !Buffer.isBuffer(rawBody)) {
+    if (typeof signature !== 'string' || typeof timestamp !== 'string' || !rawBody) {
       logger.warn(`[DISCORD_INTERACTIONS] Invalid request parameter types (ip=${req.ip})`);
       return res.status(401).json({ error: 'Invalid request signature' });
     }
