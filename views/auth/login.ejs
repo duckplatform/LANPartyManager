@@ -65,15 +65,17 @@
       </button>
     </form>
 
-    <!-- Séparateur -->
-    <div class="auth-divider">
-      <span>ou</span>
-    </div>
+    <% if (discordEnabled) { %>
+      <!-- Séparateur -->
+      <div class="auth-divider">
+        <span>ou</span>
+      </div>
 
-    <!-- Connexion via Discord -->
-    <a href="/auth/discord" class="btn btn--discord btn--full">
-      <i class="fab fa-discord"></i> Se connecter avec Discord
-    </a>
+      <!-- Connexion via Discord -->
+      <a href="/auth/discord" class="btn btn--discord btn--full">
+        <i class="fab fa-discord"></i> Se connecter avec Discord
+      </a>
+    <% } %>
 
     <!-- Lien vers l'inscription -->
     <div class="auth-switch">

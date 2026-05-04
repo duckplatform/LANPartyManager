@@ -21,7 +21,8 @@ const AppSettings       = require('../models/AppSettings');
 const { renderMarkdown } = require('../config/markdown');
 const logger       = require('../config/logger');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
-const discord      = require('../services/discord');
+const discord         = require('../services/discord');
+const discordCommands = require('../services/discordCommands');
 
 // Toutes les routes admin nécessitent auth + admin
 router.use(requireAuth, requireAdmin);
@@ -1239,6 +1240,37 @@ router.post('/discord-test', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
+// COMMANDES SLASH DISCORD
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * POST /admin/discord/register-commands
+ * Enregistre (ou met à jour) les slash commands Discord globalement.
+ * Requiert que discord_client_id et discord_bot_token soient configurés.
+ */
+router.post('/discord/register-commands', async (req, res) => {
+  try {
+    const settings      = await AppSettings.getAll();
+    const applicationId = settings.discord_client_id || '';
+    const token         = settings.discord_bot_token || process.env.DISCORD_BOT_TOKEN || '';
+
+    if (!applicationId || !token) {
+      req.flash('error', 'Le Client ID Discord et le Token du bot doivent être configurés avant d\'enregistrer les commandes.');
+      return res.redirect('/admin/settings');
+    }
+
+    const registered = await discordCommands.registerCommands(applicationId, token);
+    logger.info(`[ADMIN/DISCORD] ${registered.length} commande(s) slash enregistrée(s) par l'admin #${req.session.userId}`);
+    req.flash('success', `${registered.length} commande(s) slash Discord enregistrée(s) avec succès.`);
+    return res.redirect('/admin/settings');
+  } catch (err) {
+    logger.error('[ADMIN/DISCORD] Erreur lors de l\'enregistrement des commandes slash :', err);
+    req.flash('error', `Erreur Discord lors de l'enregistrement des commandes : ${err.message}`);
+    return res.redirect('/admin/settings');
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
 // PARAMÈTRES DE L'APPLICATION
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1323,6 +1355,10 @@ const settingsValidation = [
     .optional({ checkFalsy: true })
     .trim()
     .isLength({ max: 100 }).withMessage('Le Client Secret ne peut pas dépasser 100 caractères.'),
+  body('discord_application_public_key')
+    .optional({ checkFalsy: true })
+    .trim()
+    .matches(/^[0-9a-fA-F]{64}$/).withMessage('La clé publique Discord doit contenir exactement 64 caractères hexadécimaux.'),
 ];
 
 /**
@@ -1362,21 +1398,37 @@ router.post('/settings', settingsValidation, async (req, res) => {
     // discord_enabled : checkbox → '1' si cochée, '0' sinon
     const discord_enabled = req.body.discord_enabled === '1' ? '1' : '0';
 
-    // Pour les champs sensibles (token, secret), on ne remplace la valeur existante
-    // que si l'utilisateur a explicitement saisi une nouvelle valeur non-vide.
-    // Un champ vide (ou whitespace seul) conserve la valeur actuelle.
-    const newToken = (req.body.discord_bot_token || '').trim();
-    const discord_bot_token = newToken !== ''
-      ? newToken
-      : (currentSettings.discord_bot_token || null);
-
-    const newSecret = (req.body.discord_client_secret || '').trim();
-    const discord_client_secret = newSecret !== ''
-      ? newSecret
-      : (currentSettings.discord_client_secret || null);
+    // Champs sensibles Discord : un champ vide signifie une suppression explicite
+    // de la valeur stockée (mise a NULL en base).
+    const discord_bot_token = (req.body.discord_bot_token || '').trim() || null;
+    const discord_client_secret = (req.body.discord_client_secret || '').trim() || null;
 
     const discord_channel_news = (req.body.discord_channel_news || '').trim() || null;
-    const discord_client_id    = (req.body.discord_client_id    || '').trim() || null;
+    // Contrairement au token/secret, un Client ID vide signifie une volonté explicite
+    // de retirer la configuration OAuth côté base.
+    const discord_client_id    = (req.body.discord_client_id || '').trim() || null;
+
+    // Sécurité OAuth : impossible d'activer Discord si les identifiants OAuth
+    // ne sont pas configurés (Client ID + Client Secret).
+    if (discord_enabled === '1' && (!discord_client_id || !discord_client_secret)) {
+      return res.status(422).render('admin/settings', {
+        title:     'Paramètres de l\'application',
+        pageClass: 'page-admin',
+        settings: {
+          ...currentSettings,
+          ...req.body,
+          discord_enabled,
+          discord_client_id,
+        },
+        errors: [{
+          msg: 'Impossible d\'activer Discord OAuth2 : renseignez le Client ID et le Client Secret.'
+        }],
+        appUrl:    (process.env.APP_URL || '').replace(/\/$/, ''),
+      });
+    }
+
+    // Clé publique Discord pour la vérification des interactions (slash commands)
+    const discord_application_public_key = (req.body.discord_application_public_key || '').trim() || null;
 
     await AppSettings.setMultiple({
       // Identité de l'association
@@ -1389,12 +1441,13 @@ router.post('/settings', settingsValidation, async (req, res) => {
       community_link_twitch,
       community_link_youtube,
       community_link_website,
-      // Discord existants
+      // Discord
       discord_enabled,
       discord_bot_token,
       discord_channel_news,
       discord_client_id,
       discord_client_secret,
+      discord_application_public_key,
     });
 
     // Invalide le cache Discord pour que la nouvelle config soit prise en compte

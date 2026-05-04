@@ -137,14 +137,27 @@ const loginRules = [
 
 // ─── GET /auth/login ───────────────────────────────────────────────────────
 
-router.get('/login', (req, res) => {
+router.get('/login', async (req, res) => {
   if (req.session.userId) return res.redirect('/');
-  res.render('auth/login', {
-    title:     'Connexion',
-    pageClass: 'page-auth',
-    errors:    [],
-    old:       {},
-  });
+  try {
+    const discordEnabled = (await AppSettings.get('discord_enabled')) === '1';
+    res.render('auth/login', {
+      title:     'Connexion',
+      pageClass: 'page-auth',
+      discordEnabled,
+      errors:    [],
+      old:       {},
+    });
+  } catch (err) {
+    logger.error('[AUTH] Erreur lors du chargement des paramètres Discord :', err);
+    res.render('auth/login', {
+      title:     'Connexion',
+      pageClass: 'page-auth',
+      discordEnabled: false,
+      errors:    [],
+      old:       {},
+    });
+  }
 });
 
 // ─── POST /auth/login ──────────────────────────────────────────────────────
@@ -152,9 +165,11 @@ router.get('/login', (req, res) => {
 router.post('/login', authLimiter, loginRules, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    const discordEnabled = (await AppSettings.get('discord_enabled')) === '1';
     return res.render('auth/login', {
       title:     'Connexion',
       pageClass: 'page-auth',
+      discordEnabled,
       errors:    errors.array(),
       old:       { email: req.body.email },
     });
@@ -166,9 +181,11 @@ router.post('/login', authLimiter, loginRules, async (req, res) => {
 
     if (!user || !(await User.verifyPassword(password, user.password))) {
       logger.warn(`[AUTH] Tentative de connexion échouée pour : ${email}`);
+      const discordEnabled = (await AppSettings.get('discord_enabled')) === '1';
       return res.render('auth/login', {
         title:     'Connexion',
         pageClass: 'page-auth',
+        discordEnabled,
         errors:    [{ msg: 'Email ou mot de passe incorrect.' }],
         old:       { email: req.body.email },
       });
@@ -198,14 +215,27 @@ router.post('/login', authLimiter, loginRules, async (req, res) => {
 
 // ─── GET /auth/register ────────────────────────────────────────────────────
 
-router.get('/register', (req, res) => {
+router.get('/register', async (req, res) => {
   if (req.session.userId) return res.redirect('/');
-  res.render('auth/register', {
-    title:     'Inscription',
-    pageClass: 'page-auth',
-    errors:    [],
-    old:       {},
-  });
+  try {
+    const discordEnabled = (await AppSettings.get('discord_enabled')) === '1';
+    res.render('auth/register', {
+      title:     'Inscription',
+      pageClass: 'page-auth',
+      discordEnabled,
+      errors:    [],
+      old:       {},
+    });
+  } catch (err) {
+    logger.error('[AUTH] Erreur lors du chargement des paramètres Discord :', err);
+    res.render('auth/register', {
+      title:     'Inscription',
+      pageClass: 'page-auth',
+      discordEnabled: false,
+      errors:    [],
+      old:       {},
+    });
+  }
 });
 
 // ─── POST /auth/register ───────────────────────────────────────────────────
@@ -218,11 +248,13 @@ router.post('/register', authLimiter, registerRules, async (req, res) => {
     pseudo: req.body.pseudo,
     email:  req.body.email,
   };
+  const discordEnabled = (await AppSettings.get('discord_enabled')) === '1';
 
   if (!errors.isEmpty()) {
     return res.render('auth/register', {
       title:     'Inscription',
       pageClass: 'page-auth',
+      discordEnabled,
       errors:    errors.array(),
       old,
     });
@@ -236,6 +268,7 @@ router.post('/register', authLimiter, registerRules, async (req, res) => {
       return res.render('auth/register', {
         title:     'Inscription',
         pageClass: 'page-auth',
+        discordEnabled,
         errors:    [{ msg: 'Cette adresse e-mail est déjà utilisée.' }],
         old,
       });

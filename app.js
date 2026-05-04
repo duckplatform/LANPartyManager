@@ -69,6 +69,13 @@ app.use(helmet({
 const morganStream = { write: (msg) => logger.http(msg.trim()) };
 app.use(morgan(ENV === 'production' ? 'combined' : 'dev', { stream: morganStream }));
 
+// ─── Discord Interactions (doit précéder les parseurs de corps et le CSRF) ───
+// Le routeur /discord/interactions utilise express.raw() en interne pour capturer
+// le corps brut nécessaire à la vérification de signature Ed25519.
+// Il doit être monté avant express.json() et avant csrfSynchronisedProtection.
+
+app.use('/discord', require('./routes/discord'));
+
 // ─── Parsing des requêtes ──────────────────────────────────────────────────
 
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
@@ -287,10 +294,10 @@ async function startServer() {
   }
 }
 
-// Démarre le serveur uniquement lorsque ce fichier est exécuté directement.
-// En production cPanel (Phusion Passenger), le fichier est chargé via require()
-// et doit simplement exporter l'application Express sans appeler listen().
-if (process.env.NODE_ENV !== 'test' && require.main === module) {
+// Démarre le serveur sauf en mode test.
+// module.exports = app est conservé pour les tests (supertest) et tout chargement
+// externe éventuel (ex : Phusion Passenger chargé via require()).
+if (process.env.NODE_ENV !== 'test') {
   startServer();
 }
 
