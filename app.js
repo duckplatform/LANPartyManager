@@ -118,6 +118,9 @@ const {
   getTokenFromRequest: (req) => req.body._csrf || req.headers['x-csrf-token'],
 });
 
+// Applique la vérification CSRF sur les routes protégées par session/cookie.
+app.use(csrfSynchronisedProtection);
+
 // Rend csrfToken() disponible dans les routes via req.csrfToken()
 app.use((req, res, next) => {
   req.csrfToken = () => generateCsrfToken(req);
