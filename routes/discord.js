@@ -57,9 +57,16 @@ router.post(
   // express.raw() capture le corps en Buffer (nécessaire pour la vérification Ed25519)
   express.raw({ type: 'application/json' }),
   async (req, res) => {
-    const signature = req.headers['x-signature-ed25519'];
-    const timestamp = req.headers['x-signature-timestamp'];
+    const signatureHeader = req.headers['x-signature-ed25519'];
+    const timestampHeader = req.headers['x-signature-timestamp'];
+    const signature = Array.isArray(signatureHeader) ? signatureHeader[0] : signatureHeader;
+    const timestamp = Array.isArray(timestampHeader) ? timestampHeader[0] : timestampHeader;
     const rawBody   = req.body; // Buffer grâce à express.raw()
+
+    if (typeof signature !== 'string' || typeof timestamp !== 'string' || !Buffer.isBuffer(rawBody)) {
+      logger.warn(`[DISCORD_INTERACTIONS] Invalid request parameter types (ip=${req.ip})`);
+      return res.status(401).json({ error: 'Invalid request signature' });
+    }
 
     logger.info(`[DISCORD_INTERACTIONS] Received interaction - IP: ${req.ip}, timestamp: ${timestamp}`);
 
