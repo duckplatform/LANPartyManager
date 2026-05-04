@@ -179,7 +179,7 @@
               <form action="/events/<%= event.id %>/unregister" method="POST" style="display:inline;">
                 <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                 <button type="submit" class="btn btn--ghost btn--xs"
-                        onclick="return confirm('Annuler votre inscription à « <%= event.nom.replace(/'/g, '\\\'') %> » ?')">
+                        onclick="return confirm('Annuler votre inscription à « ' + <%- JSON.stringify(event.nom) %> + ' » ?')">
                   <i class="fas fa-user-minus"></i> Se désinscrire
                 </button>
               </form>
