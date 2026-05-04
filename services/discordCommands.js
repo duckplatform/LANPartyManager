@@ -109,6 +109,11 @@ function verifySignature(rawBody, signature, timestamp, publicKeyHex) {
     return false;
   }
 
+  if (!Buffer.isBuffer(rawBody) || typeof signature !== 'string' || typeof timestamp !== 'string' || typeof publicKeyHex !== 'string') {
+    logger.warn('[DISCORD_INTERACTIONS] Signature verification failed: invalid parameter types');
+    return false;
+  }
+
   try {
     logger.debug(`[DISCORD_INTERACTIONS] Verifying signature - timestamp: ${timestamp}, bodySize: ${rawBody.length} bytes, pubKeyLen: ${publicKeyHex.length} chars`);
     
