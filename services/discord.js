@@ -30,6 +30,15 @@
 const { REST, Routes } = require('discord.js');
 const logger = require('../config/logger');
 
+// ─── Constantes ────────────────────────────────────────────────────────────
+
+/**
+ * Longueur maximale du contenu utilisateur traité par les regex.
+ * Limite la taille de l'entrée pour prévenir les attaques ReDoS
+ * sur des données non contrôlées (ex. : contenu d'une actualité).
+ */
+const MAX_NEWS_CONTENT_LEN = 10000;
+
 // ─── Cache de configuration ────────────────────────────────────────────────
 // Évite une lecture BDD à chaque envoi de notification.
 
@@ -373,12 +382,11 @@ async function notifyNewsPublished(announcement) {
   const newsUrl = appUrl ? `${appUrl}/news/${announcement.id}` : null;
 
   // Nettoie le contenu Markdown pour le résumé Discord (max 300 caractères) :
-  //   1. Tronque à MAX_CONTENT_LEN avant tout traitement regex pour prévenir le ReDoS
+  //   1. Tronque à MAX_NEWS_CONTENT_LEN avant tout traitement regex pour prévenir le ReDoS
   //      sur des données utilisateur non contrôlées (contenu de l'annonce)
   //   2. Convertit les liens [texte](url) en conservant uniquement le texte
   //   3. Supprime les symboles Markdown restants
-  const MAX_CONTENT_LEN = 10000;
-  let description = (announcement.contenu || '').slice(0, MAX_CONTENT_LEN)
+  let description = (announcement.contenu || '').slice(0, MAX_NEWS_CONTENT_LEN)
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // [texte](url) → texte
     .replace(/[#*_~`>!]/g, '')               // titres, gras, italic, barré, code, blockquote, images
     .replace(/\s+/g, ' ')                    // normalise les espaces multiples
