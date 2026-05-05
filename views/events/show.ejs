@@ -1,0 +1,378 @@
+<%- include('../partials/head') %>
+
+<style>
+  .battle-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .25rem .65rem;
+    border-radius: 1rem;
+    font-size: .8rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .battle-status--live      { background: #E8F5E9; color: #388E3C; }
+  .battle-status--planned   { background: #E3F2FD; color: #1976D2; }
+  .battle-status--queue     { background: #FFF8E1; color: #F57F17; }
+  .battle-status--install   { background: #F3E5F5; color: #7B1FA2; }
+  .battle-status--done      { background: #F5F5F5; color: #757575; }
+  .ranking-row-hover:hover  { background-color: rgba(0,0,0,0.02); }
+  .stat-card {
+    background: var(--color-surface, #fff);
+    border: 1px solid rgba(0,0,0,.07);
+    border-radius: var(--radius-md, .75rem);
+    padding: var(--space-md, 1rem) var(--space-lg, 1.5rem);
+    text-align: center;
+    flex: 1;
+    min-width: 130px;
+  }
+  .stat-card .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-primary, #5865F2);
+    line-height: 1;
+    margin-bottom: .25rem;
+  }
+  .stat-card .stat-label {
+    font-size: .8rem;
+    color: var(--color-text-muted, #888);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+</style>
+
+<div class="container" style="padding-top: var(--space-xl); padding-bottom: 8rem; min-height: 80vh;">
+
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" style="margin-bottom: var(--space-md); font-size: .85rem; color: var(--color-text-muted);">
+    <a href="/events" style="color: var(--color-primary);">
+      <i class="fas fa-calendar-days"></i> Événements
+    </a>
+    <span style="margin: 0 .4rem;">/</span>
+    <span><%= event.nom %></span>
+  </nav>
+
+  <%
+    const dateObj    = new Date(event.date_heure);
+    const dateFr     = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const timeFr     = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const isLive     = event.statut === 'en_cours';
+    const isDone     = event.statut === 'termine';
+    const deadlineISO = dateObj.toISOString();
+    const totalBattles   = battles.length;
+    const doneBattles    = battles.filter(b => b.statut === 'termine').length;
+    const activeBattles  = battles.filter(b => ['en_cours', 'installation'].includes(b.statut)).length;
+  %>
+
+  <!-- En-tête événement -->
+  <div class="card" style="margin-bottom: var(--space-lg);">
+    <div class="card-body">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap: var(--space-sm);">
+
+        <div style="flex:1; min-width:200px;">
+          <!-- Statut -->
+          <div style="margin-bottom: var(--space-sm);">
+            <% if (isLive) { %>
+              <span class="event-status-badge event-status--live">
+                <i class="fas fa-circle-play"></i> En cours
+              </span>
+            <% } else if (isDone) { %>
+              <span class="event-status-badge" style="background:#3c3f45;color:#fff;">
+                <i class="fas fa-flag-checkered"></i> Terminé
+              </span>
+            <% } else { %>
+              <span class="event-status-badge event-status--upcoming">
+                <i class="fas fa-calendar-check"></i> Planifié
+              </span>
+            <% } %>
+          </div>
+
+          <h1 style="font-size:1.6rem; margin:0 0 var(--space-sm) 0;">
+            <i class="fas fa-gamepad"></i> <%= event.nom %>
+          </h1>
+
+          <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.4rem; color: var(--color-text-muted); font-size:.9rem;">
+            <li><i class="fas fa-calendar-alt" style="width:1.2rem;"></i> <%= dateFr %> à <%= timeFr %></li>
+            <li><i class="fas fa-location-dot" style="width:1.2rem;"></i> <%= event.lieu %></li>
+          </ul>
+        </div>
+
+        <!-- Actions -->
+        <div style="display:flex; flex-direction:column; gap:.5rem; align-items:flex-end;">
+          <% if (!currentUser) { %>
+            <a href="/auth/login?redirect=/events/<%= event.id %>" class="btn btn--primary btn--sm">
+              <i class="fas fa-right-to-bracket"></i> Connexion pour s'inscrire
+            </a>
+          <% } else if (isRegistered) { %>
+            <div class="event-registered-badge" style="font-size:.9rem;">
+              <i class="fas fa-circle-check"></i> Inscrit
+            </div>
+            <% if (event.registrationOpen) { %>
+              <form action="/events/<%= event.id %>/unregister" method="POST" style="display:inline;">
+                <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+                <button type="submit" class="btn btn--ghost btn--xs"
+                        onclick="return confirm('Annuler votre inscription à « <%= event.nom.replace(/'/g, '\\\'') %> » ?')">
+                  <i class="fas fa-user-minus"></i> Se désinscrire
+                </button>
+              </form>
+            <% } %>
+            <a href="/profile" class="btn btn--ghost btn--xs" title="Voir mon billet">
+              <i class="fas fa-ticket"></i> Mon billet
+            </a>
+          <% } else if (event.registrationOpen) { %>
+            <form action="/events/<%= event.id %>/register" method="POST" style="display:inline;">
+              <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
+              <button type="submit" class="btn btn--primary btn--sm">
+                <i class="fas fa-user-plus"></i> S'inscrire
+              </button>
+            </form>
+          <% } else if (!isDone) { %>
+            <span class="text-muted" style="font-size:.85rem; display:flex; align-items:center; gap:.4rem;">
+              <i class="fas fa-lock"></i> Inscriptions fermées
+            </span>
+          <% } %>
+          <a href="/events" class="btn btn--ghost btn--xs">
+            <i class="fas fa-arrow-left"></i> Retour aux événements
+          </a>
+        </div>
+
+      </div>
+
+      <!-- Compte à rebours si inscriptions ouvertes -->
+      <% if (event.registrationOpen && !isLive) { %>
+        <div class="event-countdown-wrap" style="margin-top: var(--space-md);">
+          <p class="event-countdown-label" style="font-size:.8rem;">
+            <i class="fas fa-hourglass-half"></i> Inscriptions ouvertes — fermeture dans :
+          </p>
+          <div class="event-countdown event-countdown--sm" data-deadline="<%= deadlineISO %>">
+            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">j</span></div>
+            <span class="countdown-sep">:</span>
+            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">h</span></div>
+            <span class="countdown-sep">:</span>
+            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">min</span></div>
+            <span class="countdown-sep">:</span>
+            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">s</span></div>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+
+  <!-- Statistiques générales -->
+  <div style="display:flex; flex-wrap:wrap; gap: var(--space-md); margin-bottom: var(--space-lg);">
+    <div class="stat-card">
+      <div class="stat-value"><%= registrationCount %></div>
+      <div class="stat-label"><i class="fas fa-users"></i> Inscrit<%= registrationCount !== 1 ? 's' : '' %></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= rankings.length %></div>
+      <div class="stat-label"><i class="fas fa-ranking-star"></i> Classé<%= rankings.length !== 1 ? 's' : '' %></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value"><%= totalBattles %></div>
+      <div class="stat-label"><i class="fas fa-sword"></i> Rencontre<%= totalBattles !== 1 ? 's' : '' %></div>
+    </div>
+    <% if (totalBattles > 0) { %>
+    <div class="stat-card">
+      <div class="stat-value"><%= doneBattles %></div>
+      <div class="stat-label"><i class="fas fa-flag-checkered"></i> Terminée<%= doneBattles !== 1 ? 's' : '' %></div>
+    </div>
+    <% if (activeBattles > 0) { %>
+    <div class="stat-card">
+      <div class="stat-value" style="color: #388E3C;"><%= activeBattles %></div>
+      <div class="stat-label"><i class="fas fa-bolt"></i> En cours</div>
+    </div>
+    <% } %>
+    <% } %>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);">
+
+    <!-- Classement -->
+    <div>
+      <h2 style="font-size:1.1rem; margin-bottom: var(--space-md); display:flex; align-items:center; gap:.5rem;">
+        <i class="fas fa-ranking-star"></i> Classement
+      </h2>
+
+      <% if (rankings.length === 0) { %>
+        <div class="card" style="text-align:center; padding: var(--space-lg); color: var(--color-text-muted);">
+          <i class="fas fa-ranking-star" style="font-size:2rem; margin-bottom:.5rem; display:block; opacity:.3;"></i>
+          <p style="margin:0;">
+            <% if (isDone) { %>
+              Aucun point attribué lors de cet événement.
+            <% } else { %>
+              Le classement sera disponible dès les premières rencontres terminées.
+            <% } %>
+          </p>
+        </div>
+      <% } else { %>
+        <div class="card" style="overflow:hidden;">
+          <div class="card-body" style="padding:0;">
+            <table style="width:100%; border-collapse:collapse; font-size:.9rem;">
+              <thead>
+                <tr style="background: rgba(0,0,0,.03);">
+                  <th style="padding: var(--space-sm) var(--space-md); text-align:left;">#</th>
+                  <th style="padding: var(--space-sm) var(--space-md); text-align:left;">Joueur</th>
+                  <th style="padding: var(--space-sm); text-align:right;">Pts</th>
+                  <th style="padding: var(--space-sm); text-align:right;">V</th>
+                  <th style="padding: var(--space-sm) var(--space-md); text-align:right;">Rencontres</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% rankings.forEach(function(entry) {
+                  let medalIcon = '';
+                  let medalColor = '';
+                  if (entry.rang === 1)      { medalIcon = '🥇'; medalColor = '#FFD700'; }
+                  else if (entry.rang === 2) { medalIcon = '🥈'; medalColor = '#C0C0C0'; }
+                  else if (entry.rang === 3) { medalIcon = '🥉'; medalColor = '#CD7F32'; }
+                %>
+                  <tr class="ranking-row-hover" style="border-top:1px solid rgba(0,0,0,.05);">
+                    <td style="padding: var(--space-sm) var(--space-md); font-weight:bold; color:<%= medalColor || 'inherit' %>; font-size:<%= entry.rang <= 3 ? '1.1rem' : '.95rem' %>;">
+                      <%= medalIcon || entry.rang %>
+                    </td>
+                    <td style="padding: var(--space-sm) var(--space-md); font-weight:600; color:var(--color-text);">
+                      <%= entry.pseudo %>
+                    </td>
+                    <td style="padding: var(--space-sm); text-align:right;">
+                      <span style="background:#E3F2FD; color:#1976D2; padding:.2rem .5rem; border-radius:1rem; font-size:.82rem; font-weight:600;">
+                        <%= entry.points %>
+                      </span>
+                    </td>
+                    <td style="padding: var(--space-sm); text-align:right;">
+                      <span style="background:#E8F5E9; color:#388E3C; padding:.2rem .5rem; border-radius:1rem; font-size:.82rem; font-weight:600;">
+                        <%= entry.wins %>
+                      </span>
+                    </td>
+                    <td style="padding: var(--space-sm) var(--space-md); text-align:right; color:var(--color-text-muted); font-size:.85rem;">
+                      <%= entry.battles_played %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Rencontres -->
+    <div>
+      <h2 style="font-size:1.1rem; margin-bottom: var(--space-md); display:flex; align-items:center; gap:.5rem;">
+        <i class="fas fa-gamepad"></i> Rencontres
+      </h2>
+
+      <% if (battles.length === 0) { %>
+        <div class="card" style="text-align:center; padding: var(--space-lg); color: var(--color-text-muted);">
+          <i class="fas fa-gamepad" style="font-size:2rem; margin-bottom:.5rem; display:block; opacity:.3;"></i>
+          <p style="margin:0;">Aucune rencontre créée pour le moment.</p>
+        </div>
+      <% } else { %>
+        <div style="display:flex; flex-direction:column; gap:.5rem; max-height:600px; overflow-y:auto;">
+          <% battles.forEach(function(battle) {
+            let statusClass = 'battle-status--queue';
+            let statusIcon  = 'fas fa-clock';
+            let statusLabel = 'File d\'attente';
+            if (battle.statut === 'planifie')    { statusClass = 'battle-status--planned'; statusIcon = 'fas fa-calendar-check'; statusLabel = 'Planifié'; }
+            if (battle.statut === 'installation'){ statusClass = 'battle-status--install'; statusIcon = 'fas fa-screwdriver-wrench'; statusLabel = 'Installation'; }
+            if (battle.statut === 'en_cours')    { statusClass = 'battle-status--live';    statusIcon = 'fas fa-bolt'; statusLabel = 'En cours'; }
+            if (battle.statut === 'termine')     { statusClass = 'battle-status--done';    statusIcon = 'fas fa-flag-checkered'; statusLabel = 'Terminé'; }
+            const winners = (battle.players || []).filter(p => p.est_gagnant);
+            const allPlayers = battle.players || [];
+          %>
+            <div class="card" style="padding: var(--space-sm) var(--space-md);">
+              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; flex-wrap:wrap;">
+                <div style="flex:1; min-width:0;">
+                  <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.25rem; flex-wrap:wrap;">
+                    <span class="battle-status-badge <%= statusClass %>">
+                      <i class="<%= statusIcon %>"></i> <%= statusLabel %>
+                    </span>
+                    <span style="font-size:.8rem; color:var(--color-text-muted);">
+                      #<%= battle.id %> · <%= battle.game_nom %>
+                      <% if (battle.type_rencontre) { %> · <%= battle.type_rencontre %><% } %>
+                    </span>
+                  </div>
+
+                  <!-- Joueurs -->
+                  <% if (allPlayers.length > 0) { %>
+                    <div style="font-size:.85rem; color:var(--color-text-muted);">
+                      <% allPlayers.forEach(function(p, pi) { %>
+                        <span style="color: <%= p.est_gagnant ? '#388E3C' : 'inherit' %>; font-weight: <%= p.est_gagnant ? 600 : 'normal' %>;">
+                          <%= p.est_gagnant ? '🏆 ' : '' %><%= p.pseudo %>
+                        </span><% if (pi < allPlayers.length - 1) { %> <span style="margin:0 .2rem;">vs</span> <% } %>
+                      <% }); %>
+                    </div>
+                  <% } %>
+
+                  <!-- Score -->
+                  <% if (battle.score) { %>
+                    <div style="font-size:.8rem; color:var(--color-text-muted); margin-top:.1rem;">
+                      <i class="fas fa-trophy" style="font-size:.7rem;"></i> Score : <strong><%= battle.score %></strong>
+                    </div>
+                  <% } %>
+                </div>
+
+                <!-- Salle -->
+                <% if (battle.room_nom) { %>
+                  <div style="font-size:.75rem; color:var(--color-text-muted); text-align:right; white-space:nowrap;">
+                    <i class="fas fa-door-open"></i> <%= battle.room_nom %>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+
+  </div><!-- /grid -->
+
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+/* ── Compte à rebours ── */
+(function () {
+  'use strict';
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  document.querySelectorAll('.event-countdown--sm').forEach(function (el) {
+    const deadline = new Date(el.dataset.deadline).getTime();
+    const nums = el.querySelectorAll('.countdown-num');
+    if (nums.length < 4) return;
+
+    function tick() {
+      const diff = deadline - Date.now();
+      if (diff <= 0) {
+        el.closest('.event-countdown-wrap').innerHTML =
+          '<p style="font-size:.85rem;"><i class="fas fa-lock"></i> Inscriptions closes</p>';
+        return;
+      }
+      nums[0].textContent = Math.floor(diff / 86400000);
+      nums[1].textContent = pad(Math.floor((diff % 86400000) / 3600000));
+      nums[2].textContent = pad(Math.floor((diff % 3600000)  / 60000));
+      nums[3].textContent = pad(Math.floor((diff % 60000)    / 1000));
+      setTimeout(tick, 1000);
+    }
+    tick();
+  });
+
+  /* ── Socket.IO — rechargement auto sur mise à jour du classement ── */
+  if (typeof window.io === 'function') {
+    const socket = window.io({ path: '/socket.io', transports: ['websocket', 'polling'] });
+    let reloadTimer = null;
+
+    socket.on('connect', function () {
+      socket.emit('ranking:join-all');
+    });
+
+    socket.on('ranking:update', function () {
+      if (reloadTimer) window.clearTimeout(reloadTimer);
+      reloadTimer = window.setTimeout(function () {
+        window.location.reload();
+      }, 500);
+    });
+  }
+}());
+</script>
+
+<%- include('../partials/foot') %>

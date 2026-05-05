@@ -11,6 +11,9 @@ const router            = express.Router();
 const Event             = require('../models/Event');
 const EventRanking      = require('../models/EventRanking');
 const EventRegistration = require('../models/EventRegistration');
+const Battle            = require('../models/Battle');
+const User              = require('../models/User');
+const discord           = require('../services/discord');
 const logger            = require('../config/logger');
 const { requireAuth }   = require('../middleware/auth');
 
@@ -54,6 +57,55 @@ router.get('/', async (req, res) => {
   }
 });
 
+// ─── GET /events/:id ──────────────────────────────────────────────────────
+// Page de détail d'un événement avec stats, classement et rencontres
+
+router.get('/:id', async (req, res) => {
+  const eventId = parseInt(req.params.id, 10);
+
+  if (isNaN(eventId)) {
+    req.flash('error', 'Identifiant d\'événement invalide.');
+    return res.redirect('/events');
+  }
+
+  try {
+    const event = await Event.findById(eventId);
+    if (!event) {
+      req.flash('error', 'Événement introuvable.');
+      return res.redirect('/events');
+    }
+
+    event.registrationOpen = EventRegistration.isRegistrationOpen(event);
+
+    // Chargement parallèle des données de l'événement
+    const [registrationCount, rankings, battles] = await Promise.all([
+      EventRegistration.countByEvent(eventId),
+      EventRanking.findByEvent(eventId),
+      Battle.findByEvent(eventId),
+    ]);
+
+    // Vérifier si l'utilisateur connecté est inscrit
+    let isRegistered = false;
+    if (req.session && req.session.userId) {
+      isRegistered = await EventRegistration.isRegistered(eventId, req.session.userId);
+    }
+
+    res.render('events/show', {
+      title:             event.nom,
+      pageClass:         'page-events',
+      event,
+      registrationCount,
+      rankings,
+      battles,
+      isRegistered,
+    });
+  } catch (err) {
+    logger.error(`[EVENTS] Erreur chargement événement #${eventId} :`, err);
+    req.flash('error', 'Erreur lors du chargement de l\'événement.');
+    return res.redirect('/events');
+  }
+});
+
 // ─── POST /events/:id/register ─────────────────────────────────────────────
 // Inscription à un événement (utilisateur connecté uniquement)
 
@@ -86,7 +138,15 @@ router.post('/:id/register', requireAuth, async (req, res) => {
     await EventRegistration.create(eventId, req.session.userId);
     logger.info(`[EVENTS] Inscription : user #${req.session.userId} → event #${eventId}`);
     req.flash('success', `Inscription confirmée pour « ${event.nom} » !`);
-    return res.redirect('/events');
+
+    // Notification Discord (fire-and-forget)
+    User.findById(req.session.userId).then(async user => {
+      if (!user) return;
+      const count = await EventRegistration.countByEvent(eventId);
+      discord.notifyUserRegistered({ event, user, registrationCount: count }).catch(() => {});
+    }).catch(() => {});
+
+    return res.redirect(`/events/${eventId}`);
   } catch (err) {
     logger.error(`[EVENTS] Erreur inscription event #${eventId} :`, err);
     req.flash('error', 'Erreur lors de l\'inscription. Veuillez réessayer.');
@@ -115,7 +175,7 @@ router.post('/:id/unregister', requireAuth, async (req, res) => {
     // Bloquer la désinscription si l'événement a déjà commencé
     if (event.statut === 'en_cours' || new Date(event.date_heure) <= new Date()) {
       req.flash('error', 'Impossible de se désinscrire d\'un événement en cours ou passé.');
-      return res.redirect('/events');
+      return res.redirect(`/events/${eventId}`);
     }
 
     const deleted = await EventRegistration.delete(eventId, req.session.userId);
@@ -125,7 +185,7 @@ router.post('/:id/unregister', requireAuth, async (req, res) => {
     } else {
       req.flash('info', 'Vous n\'étiez pas inscrit à cet événement.');
     }
-    return res.redirect('/events');
+    return res.redirect(`/events/${eventId}`);
   } catch (err) {
     logger.error(`[EVENTS] Erreur désinscription event #${eventId} :`, err);
     req.flash('error', 'Erreur lors de la désinscription. Veuillez réessayer.');
