@@ -40,7 +40,7 @@ async function notifyPromotedBattlesForEvent(eventId) {
 
   for (const battleId of promotedBattleIds) {
     const battle = await Battle.findById(battleId);
-    if (!battle || battle.statut !== 'planifie') {
+    if (!battle || battle.status !== 'planned') {
       continue;
     }
     discord.notifyBattlePlanned({ event, battle }).catch(() => {});
@@ -108,7 +108,7 @@ router.get('/users/:id/badge', async (req, res) => {
     logger.info(`[ADMIN] Utilisateur #${req.session.userId} consulte le badge du membre #${targetId}`);
 
     return res.render('badge', {
-      title:     `Badge membre - ${user.pseudo}`,
+      title:     `Badge membre - ${user.username}`,
       pageClass: 'page-badge',
       user,
       qrDataUrl,
@@ -142,7 +142,7 @@ router.post('/users/:id/toggle-admin', async (req, res) => {
     const newStatus = !user.is_admin;
     await User.setAdmin(targetId, newStatus);
     logger.info(`[ADMIN] Utilisateur #${req.session.userId} a ${newStatus ? 'promu' : 'rétrogradé'} l'utilisateur #${targetId}`);
-    req.flash('success', `Droits administrateur ${newStatus ? 'accordés' : 'retirés'} à ${user.pseudo}.`);
+    req.flash('success', `Droits administrateur ${newStatus ? 'accordés' : 'retirés'} à ${user.username}.`);
   } catch (err) {
     logger.error('[ADMIN] Erreur toggle-admin :', err);
     req.flash('error', 'Erreur lors de la modification des droits.');
@@ -170,7 +170,7 @@ router.post('/users/:id/toggle-moderator', async (req, res) => {
     const newStatus = !user.is_moderator;
     await User.setModerator(targetId, newStatus);
     logger.info(`[ADMIN] Utilisateur #${req.session.userId} a ${newStatus ? 'accordé' : 'retiré'} le rôle modérateur à l'utilisateur #${targetId}`);
-    req.flash('success', `Rôle modérateur ${newStatus ? 'accordé à' : 'retiré de'} ${user.pseudo}.`);
+    req.flash('success', `Rôle modérateur ${newStatus ? 'accordé à' : 'retiré de'} ${user.username}.`);
   } catch (err) {
     logger.error('[ADMIN] Erreur toggle-moderator :', err);
     req.flash('error', 'Erreur lors de la modification du rôle modérateur.');
@@ -197,7 +197,7 @@ router.post('/users/:id/delete', async (req, res) => {
     }
     await User.delete(targetId);
     logger.info(`[ADMIN] Utilisateur #${req.session.userId} a supprimé l'utilisateur #${targetId} (${user.email})`);
-    req.flash('success', `L'utilisateur ${user.pseudo} a été supprimé.`);
+    req.flash('success', `L'utilisateur ${user.username} a été supprimé.`);
   } catch (err) {
     logger.error('[ADMIN] Erreur suppression utilisateur :', err);
     req.flash('error', 'Erreur lors de la suppression de l\'utilisateur.');
@@ -211,14 +211,14 @@ router.post('/users/:id/delete', async (req, res) => {
 
 // Règles de validation communes aux formulaires d'annonces
 const announcementValidation = [
-  body('titre')
+  body('title')
     .trim()
     .notEmpty().withMessage('Le titre est obligatoire.')
     .isLength({ max: 255 }).withMessage('Le titre ne peut pas dépasser 255 caractères.'),
-  body('contenu')
+  body('content')
     .notEmpty().withMessage('Le contenu est obligatoire.'),
-  body('statut')
-    .isIn(['publie', 'brouillon']).withMessage('Statut invalide.'),
+  body('status')
+    .isIn(['published', 'draft']).withMessage('Statut invalide.'),
 ];
 
 // ─── GET /admin/news ──────────────────────────────────────────────────────
@@ -264,16 +264,16 @@ router.post('/news', announcementValidation, async (req, res) => {
   }
 
   try {
-    const { titre, contenu, statut } = req.body;
-    const id = await Announcement.create({ titre, contenu, statut });
-    logger.info(`[ADMIN/NEWS] Annonce #${id} créée par l'utilisateur #${req.session.userId} (statut: ${statut})`);
+    const { title, content, status } = req.body;
+    const id = await Announcement.create({ title, content, status });
+    logger.info(`[ADMIN/NEWS] Annonce #${id} créée par l'utilisateur #${req.session.userId} (statut: ${status})`);
 
     // Notification Discord si l'annonce est directement publiée
-    if (statut === 'publie') {
-      discord.notifyNewsPublished({ id, titre, contenu }).catch(() => {});
+    if (status === 'published') {
+      discord.notifyNewsPublished({ id, title, content }).catch(() => {});
     }
 
-    req.flash('success', `L'annonce "${titre}" a été créée.`);
+    req.flash('success', `L'annonce "${title}" a été créée.`);
     return res.redirect('/admin/news');
   } catch (err) {
     logger.error('[ADMIN/NEWS] Erreur création :', err);
@@ -293,7 +293,7 @@ router.get('/news/:id/edit', async (req, res) => {
       return res.redirect('/admin/news');
     }
     res.render('admin/news/form', {
-      title:        `Modifier : ${announcement.titre}`,
+      title:        `Modifier : ${announcement.title}`,
       pageClass:    'page-admin',
       announcement,
       errors:       [],
@@ -327,16 +327,16 @@ router.post('/news/:id', announcementValidation, async (req, res) => {
       return res.redirect('/admin/news');
     }
 
-    const { titre, contenu, statut } = req.body;
-    await Announcement.update(id, { titre, contenu, statut });
+    const { title, content, status } = req.body;
+    await Announcement.update(id, { title, content, status });
     logger.info(`[ADMIN/NEWS] Annonce #${id} modifiée par l'utilisateur #${req.session.userId}`);
 
-    // Notification Discord lors du passage en statut 'publie'
-    if (statut === 'publie' && existing.statut !== 'publie') {
-      discord.notifyNewsPublished({ id, titre, contenu }).catch(() => {});
+    // Notification Discord lors du passage en statut 'published'
+    if (status === 'published' && existing.status !== 'published') {
+      discord.notifyNewsPublished({ id, title, content }).catch(() => {});
     }
 
-    req.flash('success', `L'annonce "${titre}" a été mise à jour.`);
+    req.flash('success', `L'annonce "${title}" a été mise à jour.`);
     return res.redirect('/admin/news');
   } catch (err) {
     logger.error(`[ADMIN/NEWS] Erreur modification annonce #${id} :`, err);
@@ -357,7 +357,7 @@ router.post('/news/:id/delete', async (req, res) => {
     }
     await Announcement.delete(id);
     logger.info(`[ADMIN/NEWS] Annonce #${id} supprimée par l'utilisateur #${req.session.userId}`);
-    req.flash('success', `L'annonce "${announcement.titre}" a été supprimée.`);
+    req.flash('success', `L'annonce "${announcement.title}" a été supprimée.`);
   } catch (err) {
     logger.error(`[ADMIN/NEWS] Erreur suppression annonce #${id} :`, err);
     req.flash('error', 'Erreur lors de la suppression de l\'annonce.');
@@ -370,8 +370,8 @@ router.post('/news/:id/delete', async (req, res) => {
 
 router.post('/news/preview', async (req, res) => {
   try {
-    const { contenu } = req.body;
-    const html = renderMarkdown(contenu || '');
+    const { content } = req.body;
+    const html = renderMarkdown(content || '');
     return res.json({ html });
   } catch (err) {
     logger.error('[ADMIN/NEWS] Erreur prévisualisation :', err);
@@ -385,14 +385,14 @@ router.post('/news/preview', async (req, res) => {
 
 // Règles de validation communes aux formulaires d'événements
 const eventValidation = [
-  body('nom')
+  body('name')
     .trim()
     .notEmpty().withMessage('Le nom de l\'événement est obligatoire.')
     .isLength({ max: 255 }).withMessage('Le nom ne peut pas dépasser 255 caractères.'),
-  body('date_heure')
+  body('start_at')
     .notEmpty().withMessage('La date et l\'heure sont obligatoires.')
     .isISO8601().withMessage('Format de date invalide.'),
-  body('lieu')
+  body('location')
     .trim()
     .notEmpty().withMessage('Le lieu est obligatoire.')
     .isLength({ max: 255 }).withMessage('Le lieu ne peut pas dépasser 255 caractères.'),
@@ -400,8 +400,8 @@ const eventValidation = [
     .optional({ checkFalsy: true })
     .trim()
     .matches(/^\d{17,20}$/).withMessage('L\'ID de canal Discord doit contenir entre 17 et 20 chiffres.'),
-  body('statut')
-    .isIn(['planifie', 'en_cours', 'termine']).withMessage('Statut invalide.'),
+  body('status')
+    .isIn(['planned', 'in_progress', 'ended']).withMessage('Statut invalide.'),
 ];
 
 // ─── GET /admin/events ────────────────────────────────────────────────────
@@ -448,29 +448,29 @@ router.post('/events', eventValidation, async (req, res) => {
       title:          'Nouvel événement',
       pageClass:      'page-admin',
       event:          req.body,
-      dateHeureLocal: req.body.date_heure || '',
+      dateHeureLocal: req.body.start_at || '',
       errors:         errors.array(),
       discordEnabled: settings.discord_enabled !== '0',
     });
   }
 
   try {
-    const { nom, date_heure, lieu, discord_channel_id } = req.body;
-    const statut = req.body.statut;
+    const { name, start_at, location, discord_channel_id } = req.body;
+    const status = req.body.status;
     // discord_notifications_enabled : case à cocher → '1' si cochée, absent sinon
     const discord_notifications_enabled = req.body.discord_notifications_enabled === '1' ? 1 : 0;
-    const id = await Event.create({ nom, date_heure, lieu, statut, discord_channel_id, discord_notifications_enabled });
+    const id = await Event.create({ name, start_at, location, status, discord_channel_id, discord_notifications_enabled });
     logger.info(`[ADMIN/EVENTS] Événement #${id} créé par l'utilisateur #${req.session.userId}`);
 
     // Notification Discord à la création de l'événement
-    discord.notifyEventCreated({ id, nom, date_heure, lieu, statut, discord_channel_id, discord_notifications_enabled }).catch(() => {});
+    discord.notifyEventCreated({ id, name, start_at, location, status, discord_channel_id, discord_notifications_enabled }).catch(() => {});
 
-    req.flash('success', `L'événement "${nom}" a été créé.`);
+    req.flash('success', `L'événement "${name}" a été créé.`);
     return res.redirect('/admin/events');
   } catch (err) {
     if (err && err.code === 'EVENT_ACTIVE_CONFLICT') {
-      const conflictName = err.conflictEvent && err.conflictEvent.nom
-        ? ` (${err.conflictEvent.nom})`
+      const conflictName = err.conflictEvent && err.conflictEvent.name
+        ? ` (${err.conflictEvent.name})`
         : '';
       req.flash('error', `Impossible de créer un deuxième événement en cours${conflictName}. Terminez d'abord l'événement actif.`);
       return res.redirect('/admin/events/create');
@@ -496,13 +496,13 @@ router.get('/events/:id/edit', async (req, res) => {
       return res.redirect('/admin/events');
     }
     // Formate la date pour l'input datetime-local (sans offset TZ)
-    const d = new Date(event.date_heure);
+    const d = new Date(event.start_at);
     const dateHeureLocal = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
       .toISOString()
       .slice(0, 16);
 
     res.render('admin/events/form', {
-      title:          `Modifier : ${event.nom}`,
+      title:          `Modifier : ${event.name}`,
       pageClass:      'page-admin',
       event,
       dateHeureLocal,
@@ -528,7 +528,7 @@ router.post('/events/:id', eventValidation, async (req, res) => {
       title:          'Modifier l\'événement',
       pageClass:      'page-admin',
       event:          { id, ...req.body },
-      dateHeureLocal: req.body.date_heure || '',
+      dateHeureLocal: req.body.start_at || '',
       errors:         errors.array(),
       discordEnabled: settings.discord_enabled !== '0',
     });
@@ -541,19 +541,19 @@ router.post('/events/:id', eventValidation, async (req, res) => {
       return res.redirect('/admin/events');
     }
 
-    const { nom, date_heure, lieu, discord_channel_id } = req.body;
-    const statut = req.body.statut;
+    const { name, start_at, location, discord_channel_id } = req.body;
+    const status = req.body.status;
     // discord_notifications_enabled : case à cocher → '1' si cochée, absent sinon
     const discord_notifications_enabled = req.body.discord_notifications_enabled === '1' ? 1 : 0;
-    await Event.update(id, { nom, date_heure, lieu, statut, discord_channel_id, discord_notifications_enabled });
+    await Event.update(id, { name, start_at, location, status, discord_channel_id, discord_notifications_enabled });
     logger.info(`[ADMIN/EVENTS] Événement #${id} modifié par l'utilisateur #${req.session.userId}`);
 
     // Notifications Discord selon les transitions de statut
-    if (existing.statut !== statut) {
-      const updatedEvent = { id, nom, date_heure, lieu, statut, discord_channel_id, discord_notifications_enabled };
-      if (statut === 'en_cours') {
+    if (existing.status !== status) {
+      const updatedEvent = { id, name, start_at, location, status, discord_channel_id, discord_notifications_enabled };
+      if (status === 'in_progress') {
         discord.notifyEventStarted(updatedEvent).catch(() => {});
-      } else if (statut === 'termine') {
+      } else if (status === 'ended') {
         try {
           await EventRanking.recalculateForEvent(id);
           const rankings = await EventRanking.findByEvent(id, 10);
@@ -565,12 +565,12 @@ router.post('/events/:id', eventValidation, async (req, res) => {
       }
     }
 
-    req.flash('success', `L'événement "${nom}" a été mis à jour.`);
+    req.flash('success', `L'événement "${name}" a été mis à jour.`);
     return res.redirect('/admin/events');
   } catch (err) {
     if (err && err.code === 'EVENT_ACTIVE_CONFLICT') {
-      const conflictName = err.conflictEvent && err.conflictEvent.nom
-        ? ` (${err.conflictEvent.nom})`
+      const conflictName = err.conflictEvent && err.conflictEvent.name
+        ? ` (${err.conflictEvent.name})`
         : '';
       req.flash('error', `Impossible d'activer cet événement${conflictName}. Un seul événement peut être en cours à la fois.`);
       return res.redirect(`/admin/events/${id}/edit`);
@@ -594,7 +594,7 @@ router.post('/events/:id/delete', async (req, res) => {
     }
     await Event.delete(id);
     logger.info(`[ADMIN/EVENTS] Événement #${id} supprimé par l'utilisateur #${req.session.userId}`);
-    req.flash('success', `L'événement "${event.nom}" a été supprimé.`);
+    req.flash('success', `L'événement "${event.name}" a été supprimé.`);
   } catch (err) {
     logger.error(`[ADMIN/EVENTS] Erreur suppression événement #${id} :`, err);
     req.flash('error', 'Erreur lors de la suppression de l\'événement.');
@@ -624,7 +624,7 @@ router.get('/events/:id/registrations', async (req, res) => {
     const registrationOpen = EventRegistration.isRegistrationOpen(event);
 
     res.render('admin/events/registrations', {
-      title:            `Inscrits — ${event.nom}`,
+      title:            `Inscrits — ${event.name}`,
       pageClass:        'page-admin',
       event,
       registrations,
@@ -667,13 +667,13 @@ router.post('/events/:id/registrations', async (req, res) => {
 
     const alreadyRegistered = await EventRegistration.isRegistered(id, userId);
     if (alreadyRegistered) {
-      req.flash('error', `${user.pseudo} est déjà inscrit à cet événement.`);
+      req.flash('error', `${user.username} est déjà inscrit à cet événement.`);
       return res.redirect(`/admin/events/${id}/registrations`);
     }
 
     await EventRegistration.create(id, userId);
     logger.info(`[ADMIN/EVENTS] Admin #${req.session.userId} a inscrit l'utilisateur #${userId} à l'événement #${id}`);
-    req.flash('success', `${user.pseudo} a été inscrit à l'événement.`);
+    req.flash('success', `${user.username} a été inscrit à l'événement.`);
   } catch (err) {
     logger.error(`[ADMIN/EVENTS] Erreur inscription manuelle :`, err);
     req.flash('error', 'Erreur lors de l\'inscription.');
@@ -730,7 +730,7 @@ router.get('/games/create', (req, res) => {
     pageClass: 'page-admin',
     errors:    [],
     old:       {},
-    TYPES_RENCONTRE: Game.TYPES_RENCONTRE,
+    MATCH_TYPES: Game.MATCH_TYPES,
   });
 });
 
@@ -740,11 +740,11 @@ router.get('/games/create', (req, res) => {
 router.post(
   '/games',
   [
-    body('nom').trim().notEmpty().withMessage('Le nom est obligatoire.')
+    body('name').trim().notEmpty().withMessage('Le nom est obligatoire.')
       .isLength({ max: 100 }).withMessage('Le nom ne peut pas dépasser 100 caractères.'),
     body('console').trim().notEmpty().withMessage('La console est obligatoire.')
       .isLength({ max: 100 }).withMessage('La console ne peut pas dépasser 100 caractères.'),
-    body('type_rencontre').isIn(Game.TYPES_RENCONTRE).withMessage('Type de rencontre invalide.'),
+    body('match_type').isIn(Game.MATCH_TYPES).withMessage('Type de rencontre invalide.'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -754,18 +754,18 @@ router.post(
         pageClass: 'page-admin',
         errors:    errors.array(),
         old:       req.body,
-        TYPES_RENCONTRE: Game.TYPES_RENCONTRE,
+        MATCH_TYPES: Game.MATCH_TYPES,
       });
     }
 
     try {
       const id = await Game.create({
-        nom:            req.body.nom,
-        console:        req.body.console,
-        type_rencontre: req.body.type_rencontre,
+        name:       req.body.name,
+        console:    req.body.console,
+        match_type: req.body.match_type,
       });
-      logger.info(`[ADMIN/GAMES] Admin #${req.session.userId} a créé le jeu #${id} : ${req.body.nom}`);
-      req.flash('success', `Jeu "${req.body.nom}" créé avec succès.`);
+      logger.info(`[ADMIN/GAMES] Admin #${req.session.userId} a créé le jeu #${id} : ${req.body.name}`);
+      req.flash('success', `Jeu "${req.body.name}" créé avec succès.`);
       return res.redirect('/admin/games');
     } catch (err) {
       logger.error('[ADMIN/GAMES] Erreur création jeu :', err);
@@ -787,12 +787,12 @@ router.get('/games/:id/edit', async (req, res) => {
       return res.redirect('/admin/games');
     }
     res.render('admin/games/edit', {
-      title:     `Modifier — ${game.nom}`,
+      title:     `Modifier — ${game.name}`,
       pageClass: 'page-admin',
       game,
       errors:    [],
       old:       game,
-      TYPES_RENCONTRE: Game.TYPES_RENCONTRE,
+      MATCH_TYPES: Game.MATCH_TYPES,
     });
   } catch (err) {
     logger.error(`[ADMIN/GAMES] Erreur chargement édition jeu #${id} :`, err);
@@ -807,11 +807,11 @@ router.get('/games/:id/edit', async (req, res) => {
 router.put(
   '/games/:id',
   [
-    body('nom').trim().notEmpty().withMessage('Le nom est obligatoire.')
+    body('name').trim().notEmpty().withMessage('Le nom est obligatoire.')
       .isLength({ max: 100 }).withMessage('Le nom ne peut pas dépasser 100 caractères.'),
     body('console').trim().notEmpty().withMessage('La console est obligatoire.')
       .isLength({ max: 100 }).withMessage('La console ne peut pas dépasser 100 caractères.'),
-    body('type_rencontre').isIn(Game.TYPES_RENCONTRE).withMessage('Type de rencontre invalide.'),
+    body('match_type').isIn(Game.MATCH_TYPES).withMessage('Type de rencontre invalide.'),
   ],
   async (req, res) => {
     const id     = parseInt(req.params.id, 10);
@@ -820,20 +820,20 @@ router.put(
     if (!errors.isEmpty()) {
       const game = await Game.findById(id).catch(() => null);
       return res.render('admin/games/edit', {
-        title:     `Modifier — ${game ? game.nom : 'Jeu'}`,
+        title:     `Modifier — ${game ? game.name : 'Jeu'}`,
         pageClass: 'page-admin',
         game:      game || { id },
         errors:    errors.array(),
         old:       req.body,
-        TYPES_RENCONTRE: Game.TYPES_RENCONTRE,
+        MATCH_TYPES: Game.MATCH_TYPES,
       });
     }
 
     try {
       const updated = await Game.update(id, {
-        nom:            req.body.nom,
-        console:        req.body.console,
-        type_rencontre: req.body.type_rencontre,
+        name:       req.body.name,
+        console:    req.body.console,
+        match_type: req.body.match_type,
       });
       if (!updated) {
         req.flash('error', 'Jeu introuvable.');
@@ -893,8 +893,8 @@ router.get('/rooms', async (req, res) => {
       rooms,
       selectedEvent,
       eventId,
-      TYPES_SALLE:      Room.TYPES_SALLE,
-      TYPES_RENCONTRE:  Room.TYPES_RENCONTRE,
+      ROOM_TYPES:      Room.ROOM_TYPES,
+      MATCH_TYPES:     Room.MATCH_TYPES,
     });
   } catch (err) {
     logger.error('[ADMIN/ROOMS] Erreur chargement salles :', err);
@@ -918,9 +918,9 @@ router.get('/rooms/create', async (req, res) => {
       pageClass: 'page-admin',
       events,
       errors:   [],
-      old:      { event_id: eventId, nom: suggestedName },
-      TYPES_SALLE:      Room.TYPES_SALLE,
-      TYPES_RENCONTRE:  Room.TYPES_RENCONTRE,
+      old:      { event_id: eventId, name: suggestedName },
+      ROOM_TYPES:      Room.ROOM_TYPES,
+      MATCH_TYPES:     Room.MATCH_TYPES,
     });
   } catch (err) {
     logger.error('[ADMIN/ROOMS] Erreur chargement formulaire création salle :', err);
@@ -936,10 +936,10 @@ router.post(
   '/rooms',
   [
     body('event_id').isInt({ min: 1 }).withMessage('Événement invalide.'),
-    body('nom').trim().notEmpty().withMessage('Le nom est obligatoire.')
+    body('name').trim().notEmpty().withMessage('Le nom est obligatoire.')
       .isLength({ max: 100 }).withMessage('Le nom ne peut pas dépasser 100 caractères.'),
-    body('type').isIn(Room.TYPES_SALLE).withMessage('Type de salle invalide.'),
-    body('type_rencontre').isIn(Room.TYPES_RENCONTRE).withMessage('Type de rencontre invalide.'),
+    body('type').isIn(Room.ROOM_TYPES).withMessage('Type de salle invalide.'),
+    body('match_type').isIn(Room.MATCH_TYPES).withMessage('Type de rencontre invalide.'),
   ],
   async (req, res) => {
     const errors = validationResult(req);
@@ -951,26 +951,26 @@ router.post(
         events,
         errors:   errors.array(),
         old:      req.body,
-        TYPES_SALLE:      Room.TYPES_SALLE,
-        TYPES_RENCONTRE:  Room.TYPES_RENCONTRE,
+        ROOM_TYPES:      Room.ROOM_TYPES,
+        MATCH_TYPES:     Room.MATCH_TYPES,
       });
     }
 
     try {
       const eventId = parseInt(req.body.event_id, 10);
       const id = await Room.create({
-        nom:            req.body.nom,
-        type:           req.body.type,
-        type_rencontre: req.body.type_rencontre,
-        actif:          req.body.actif === '1' ? 1 : 0,
-        event_id:       eventId,
+        name:       req.body.name,
+        type:       req.body.type,
+        match_type: req.body.match_type,
+        is_active:  req.body.is_active === '1' ? 1 : 0,
+        event_id:   eventId,
       });
-      logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a créé la salle #${id} : ${req.body.nom}`);
+      logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a créé la salle #${id} : ${req.body.name}`);
 
       // Une nouvelle salle disponible peut libérer des rencontres en file d'attente
       await notifyPromotedBattlesForEvent(eventId).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
 
-      req.flash('success', `Salle "${req.body.nom}" créée avec succès.`);
+      req.flash('success', `Salle "${req.body.name}" créée avec succès.`);
       return res.redirect(`/admin/rooms?event_id=${req.body.event_id}`);
     } catch (err) {
       logger.error('[ADMIN/ROOMS] Erreur création salle :', err);
@@ -995,14 +995,14 @@ router.get('/rooms/:id/edit', async (req, res) => {
       return res.redirect('/admin/rooms');
     }
     res.render('admin/rooms/edit', {
-      title:     `Modifier — ${room.nom}`,
+      title:     `Modifier — ${room.name}`,
       pageClass: 'page-admin',
       room,
       events,
       errors:    [],
       old:       room,
-      TYPES_SALLE:      Room.TYPES_SALLE,
-      TYPES_RENCONTRE:  Room.TYPES_RENCONTRE,
+      ROOM_TYPES:      Room.ROOM_TYPES,
+      MATCH_TYPES:     Room.MATCH_TYPES,
     });
   } catch (err) {
     logger.error(`[ADMIN/ROOMS] Erreur chargement édition salle #${id} :`, err);
@@ -1017,10 +1017,10 @@ router.get('/rooms/:id/edit', async (req, res) => {
 router.put(
   '/rooms/:id',
   [
-    body('nom').trim().notEmpty().withMessage('Le nom est obligatoire.')
+    body('name').trim().notEmpty().withMessage('Le nom est obligatoire.')
       .isLength({ max: 100 }).withMessage('Le nom ne peut pas dépasser 100 caractères.'),
-    body('type').isIn(Room.TYPES_SALLE).withMessage('Type de salle invalide.'),
-    body('type_rencontre').isIn(Room.TYPES_RENCONTRE).withMessage('Type de rencontre invalide.'),
+    body('type').isIn(Room.ROOM_TYPES).withMessage('Type de salle invalide.'),
+    body('match_type').isIn(Room.MATCH_TYPES).withMessage('Type de rencontre invalide.'),
   ],
   async (req, res) => {
     const id     = parseInt(req.params.id, 10);
@@ -1032,23 +1032,23 @@ router.put(
         Event.findAll().catch(() => []),
       ]);
       return res.render('admin/rooms/edit', {
-        title:     `Modifier — ${room ? room.nom : 'Salle'}`,
+        title:     `Modifier — ${room ? room.name : 'Salle'}`,
         pageClass: 'page-admin',
         room:      room || { id },
         events,
         errors:    errors.array(),
         old:       req.body,
-        TYPES_SALLE:      Room.TYPES_SALLE,
-        TYPES_RENCONTRE:  Room.TYPES_RENCONTRE,
+        ROOM_TYPES:      Room.ROOM_TYPES,
+        MATCH_TYPES:     Room.MATCH_TYPES,
       });
     }
 
     try {
       const updated = await Room.update(id, {
-        nom:            req.body.nom,
-        type:           req.body.type,
-        type_rencontre: req.body.type_rencontre,
-        actif:          req.body.actif === '1' ? 1 : 0,
+        name:       req.body.name,
+        type:       req.body.type,
+        match_type: req.body.match_type,
+        is_active:  req.body.is_active === '1' ? 1 : 0,
       });
       if (!updated) {
         req.flash('error', 'Salle introuvable.');
@@ -1081,13 +1081,13 @@ router.post('/rooms/:id/toggle', async (req, res) => {
       req.flash('error', 'Salle introuvable.');
       return res.redirect('/admin/rooms');
     }
-    await Room.setActif(id, !room.actif);
-    logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a ${room.actif ? 'désactivé' : 'activé'} la salle #${id}`);
+    await Room.setActive(id, !room.is_active);
+    logger.info(`[ADMIN/ROOMS] Admin #${req.session.userId} a ${room.is_active ? 'désactivé' : 'activé'} la salle #${id}`);
 
     // Un changement d'état de salle doit réévaluer la file d'attente
     await notifyPromotedBattlesForEvent(room.event_id).catch(e => logger.error('[ADMIN/ROOMS] reevaluateQueue erreur :', e));
 
-    req.flash('success', `Salle "${room.nom}" ${room.actif ? 'désactivée' : 'activée'}.`);
+    req.flash('success', `Salle "${room.name}" ${room.is_active ? 'désactivée' : 'activée'}.`);
     return res.redirect(`/admin/rooms?event_id=${room.event_id}`);
   } catch (err) {
     logger.error(`[ADMIN/ROOMS] Erreur toggle salle #${id} :`, err);

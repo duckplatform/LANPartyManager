@@ -21,7 +21,7 @@ const EventRegistration = {
   async findByEvent(eventId) {
     const [rows] = await db.pool.execute(
       `SELECT er.id, er.event_id, er.user_id, er.created_at,
-              u.pseudo, u.nom, u.prenom, u.email
+              u.username, u.last_name, u.first_name, u.email
          FROM event_registrations er
          JOIN users u ON u.id = er.user_id
         WHERE er.event_id = ?
@@ -40,11 +40,11 @@ const EventRegistration = {
   async findByUser(userId) {
     const [rows] = await db.pool.execute(
       `SELECT er.id, er.event_id, er.user_id, er.created_at,
-              e.nom, e.date_heure, e.lieu, e.statut
+              e.name, e.start_at, e.location, e.status
          FROM event_registrations er
          JOIN events e ON e.id = er.event_id
         WHERE er.user_id = ?
-        ORDER BY e.date_heure DESC`,
+        ORDER BY e.start_at DESC`,
       [userId]
     );
     return rows;
@@ -73,7 +73,7 @@ const EventRegistration = {
   async findByEventAndUser(eventId, userId) {
     const [rows] = await db.pool.execute(
       `SELECT er.id, er.event_id, er.user_id, er.created_at,
-              e.nom, e.date_heure, e.lieu, e.statut
+              e.name, e.start_at, e.location, e.status
          FROM event_registrations er
          JOIN events e ON e.id = er.event_id
         WHERE er.event_id = ? AND er.user_id = ?`,
@@ -149,7 +149,7 @@ const EventRegistration = {
    * @returns {boolean}
    */
   isRegistrationOpen(event) {
-    return event.statut === 'planifie' && new Date() < new Date(event.date_heure);
+    return event.status === 'planned' && new Date() < new Date(event.start_at);
   },
 };
 

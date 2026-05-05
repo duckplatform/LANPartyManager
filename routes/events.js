@@ -18,17 +18,17 @@ const logger            = require('../config/logger');
 const { requireAuth }   = require('../middleware/auth');
 
 const BATTLE_STATUS_META = {
-  en_cours: { label: 'En cours', color: '#388E3C' },
-  installation: { label: 'Installation', color: '#7B1FA2' },
-  planifie: { label: 'Planifié', color: '#1976D2' },
-  file_attente: { label: 'File d\'attente', color: '#F57F17' },
-  termine: { label: 'Terminé', color: '#757575' },
+  in_progress: { label: 'En cours', color: '#388E3C' },
+  setup: { label: 'Installation', color: '#7B1FA2' },
+  planned: { label: 'Planifié', color: '#1976D2' },
+  queue: { label: 'File d\'attente', color: '#F57F17' },
+  ended: { label: 'Terminé', color: '#757575' },
 };
 
 function buildStatusChart(battles) {
-  const order = ['en_cours', 'installation', 'planifie', 'file_attente', 'termine'];
+  const order = ['in_progress', 'setup', 'planned', 'queue', 'ended'];
   const counts = battles.reduce((acc, battle) => {
-    acc[battle.statut] = (acc[battle.statut] || 0) + 1;
+    acc[battle.status] = (acc[battle.status] || 0) + 1;
     return acc;
   }, {});
 
@@ -66,10 +66,10 @@ function buildGameChart(battles) {
   const gameMap = new Map();
 
   battles.forEach((battle) => {
-    const key = `${battle.game_nom}__${battle.game_console || ''}`;
+    const key = `${battle.game_name}__${battle.game_console || ''}`;
     if (!gameMap.has(key)) {
       gameMap.set(key, {
-        name: battle.game_nom,
+        name: battle.game_name,
         console: battle.game_console || '',
         total: 0,
         done: 0,
@@ -79,8 +79,8 @@ function buildGameChart(battles) {
 
     const entry = gameMap.get(key);
     entry.total += 1;
-    if (battle.statut === 'termine') entry.done += 1;
-    if (['en_cours', 'installation'].includes(battle.statut)) entry.active += 1;
+    if (battle.status === 'ended') entry.done += 1;
+    if (['in_progress', 'setup'].includes(battle.status)) entry.active += 1;
   });
 
   const items = Array.from(gameMap.values())
@@ -104,7 +104,7 @@ function buildRankingChart(rankings) {
     max,
     items: items.map((item) => ({
       rang: item.rang,
-      pseudo: item.pseudo,
+      pseudo: item.username,
       points: item.points,
       wins: item.wins,
       battles_played: item.battles_played,
@@ -116,10 +116,10 @@ function buildRankingChart(rankings) {
 function buildRoomChart(rooms, battles) {
   const roomMap = new Map(rooms.map(room => [room.id, {
     id: room.id,
-    name: room.nom,
+    name: room.name,
     type: room.type,
-    matchType: room.type_rencontre,
-    actif: room.actif === 1,
+    matchType: room.match_type,
+    isActive: room.is_active === 1,
     assigned: 0,
     active: 0,
     done: 0,
@@ -129,8 +129,8 @@ function buildRoomChart(rooms, battles) {
     if (!battle.room_id || !roomMap.has(battle.room_id)) return;
     const room = roomMap.get(battle.room_id);
     room.assigned += 1;
-    if (['planifie', 'installation', 'en_cours'].includes(battle.statut)) room.active += 1;
-    if (battle.statut === 'termine') room.done += 1;
+    if (['planned', 'setup', 'in_progress'].includes(battle.status)) room.active += 1;
+    if (battle.status === 'ended') room.done += 1;
   });
 
   const items = Array.from(roomMap.values())
@@ -141,7 +141,7 @@ function buildRoomChart(rooms, battles) {
     max,
     total: rooms.length,
     activeNow: items.filter(item => item.active > 0).length,
-    availableNow: items.filter(item => item.actif && item.active === 0).length,
+    availableNow: items.filter(item => item.isActive && item.active === 0).length,
     items: items.map(item => ({
       ...item,
       width: max > 0 ? Math.max((item.assigned / max) * 100, item.assigned > 0 ? 10 : 0) : 0,
@@ -233,7 +233,7 @@ router.get('/:id', async (req, res) => {
     }
 
     res.render('events/show', {
-      title:             event.nom,
+      title:             event.name,
       pageClass:         'page-events',
       event,
       registrationCount,
@@ -263,7 +263,7 @@ router.post('/:id/register', requireAuth, async (req, res) => {
 
   try {
     const event = await Event.findById(eventId);
-    if (!event || !['planifie', 'en_cours'].includes(event.statut)) {
+    if (!event || !['planned', 'in_progress'].includes(event.status)) {
       req.flash('error', 'Événement introuvable ou terminé.');
       return res.redirect('/events');
     }
@@ -281,7 +281,7 @@ router.post('/:id/register', requireAuth, async (req, res) => {
 
     await EventRegistration.create(eventId, req.session.userId);
     logger.info(`[EVENTS] Inscription : user #${req.session.userId} → event #${eventId}`);
-    req.flash('success', `Inscription confirmée pour « ${event.nom} » !`);
+    req.flash('success', `Inscription confirmée pour « ${event.name} » !`);
 
     // Notification Discord (fire-and-forget)
     discord.notifyUserRegisteredAsync(eventId, req.session.userId, event);
@@ -313,7 +313,7 @@ router.post('/:id/unregister', requireAuth, async (req, res) => {
     }
 
     // Bloquer la désinscription si l'événement a déjà commencé
-    if (event.statut === 'en_cours' || new Date(event.date_heure) <= new Date()) {
+    if (event.status === 'in_progress' || new Date(event.start_at) <= new Date()) {
       req.flash('error', 'Impossible de se désinscrire d\'un événement en cours ou passé.');
       return res.redirect(`/events/${eventId}`);
     }
@@ -321,7 +321,7 @@ router.post('/:id/unregister', requireAuth, async (req, res) => {
     const deleted = await EventRegistration.delete(eventId, req.session.userId);
     if (deleted) {
       logger.info(`[EVENTS] Désinscription : user #${req.session.userId} → event #${eventId}`);
-      req.flash('success', `Désinscription de « ${event.nom} » confirmée.`);
+      req.flash('success', `Désinscription de « ${event.name} » confirmée.`);
     } else {
       req.flash('info', 'Vous n\'étiez pas inscrit à cet événement.');
     }

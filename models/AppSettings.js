@@ -62,11 +62,11 @@ const AppSettings = {
 
     try {
       const [rows] = await db.pool.execute(
-        'SELECT `cle`, `valeur` FROM `app_settings`'
+        'SELECT `key`, `value` FROM `app_settings`'
       );
       _cache     = {};
       for (const row of rows) {
-        _cache[row.cle] = row.valeur;
+        _cache[row['key']] = row['value'];
       }
       _cacheTime = now;
       return _cache;
@@ -98,7 +98,7 @@ const AppSettings = {
    */
   async set(key, value) {
     await db.pool.execute(
-      'INSERT INTO `app_settings` (`cle`, `valeur`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `valeur` = VALUES(`valeur`)',
+      'INSERT INTO `app_settings` (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)',
       [key, value ?? null]
     );
     AppSettings.clearCache(); // Invalidation après l'écriture réussie
@@ -116,7 +116,7 @@ const AppSettings = {
       await conn.beginTransaction();
       for (const [key, value] of Object.entries(settings)) {
         await conn.execute(
-          'INSERT INTO `app_settings` (`cle`, `valeur`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `valeur` = VALUES(`valeur`)',
+          'INSERT INTO `app_settings` (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)',
           [key, value ?? null]
         );
       }

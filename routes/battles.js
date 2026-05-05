@@ -55,7 +55,7 @@ function ensureLiveEvent(event, req, res, redirectTo = '/battles') {
     return false;
   }
 
-  if (event.statut !== 'en_cours') {
+  if (event.status !== 'in_progress') {
     req.flash('error', 'Les rencontres ne sont disponibles que pour un événement en cours.');
     res.redirect('/battles');
     return false;
@@ -69,8 +69,8 @@ function formatRoomConflictMessage(actionLabel, conflict) {
     return `Impossible de ${actionLabel} : la salle est deja occupee.`;
   }
 
-  const statutLabel = conflict.conflicting_statut === 'en_cours' ? 'en cours' : 'en installation';
-  return `Impossible de ${actionLabel} : la salle ${conflict.room_nom} est occupee par la rencontre #${conflict.conflicting_battle_id} (${statutLabel}).`;
+  const statusLabel = conflict.conflicting_status === 'in_progress' ? 'en cours' : 'en installation';
+  return `Impossible de ${actionLabel} : la salle ${conflict.room_name} est occupee par la rencontre #${conflict.conflicting_battle_id} (${statusLabel}).`;
 }
 
 async function notifyPromotedBattles(event, promotedBattleIds = []) {
@@ -80,7 +80,7 @@ async function notifyPromotedBattles(event, promotedBattleIds = []) {
 
   for (const battleId of promotedBattleIds) {
     const promotedBattle = await Battle.findById(battleId);
-    if (!promotedBattle || promotedBattle.statut !== 'planifie') {
+    if (!promotedBattle || promotedBattle.status !== 'planned') {
       continue;
     }
     discord.notifyBattlePlanned({ event, battle: promotedBattle }).catch(() => {});
@@ -157,11 +157,11 @@ router.get('/events/:id', async (req, res) => {
     const [battles, rooms, stats] = await Promise.all([
       Battle.findByEvent(eventId),
       Room.findByEvent(eventId),
-      Battle.countByStatut(eventId),
+      Battle.countByStatus(eventId),
     ]);
 
     res.render('moderator/battles/dashboard', {
-      title:     `Rencontres — ${event.nom}`,
+      title:     `Rencontres — ${event.name}`,
       pageClass: 'page-moderator page-battles',
       event,
       battles,
@@ -197,25 +197,25 @@ router.get('/events/:id/announce', async (req, res) => {
     const [battles, rooms, stats, rankingBoard] = await Promise.all([
       Battle.findByEvent(eventId),
       Room.findByEvent(eventId),
-      Battle.countByStatut(eventId),
+      Battle.countByStatus(eventId),
       EventRanking.findByEvent(eventId),
     ]);
 
-    const activeStatuts = ['planifie', 'installation', 'en_cours'];
+    const activeStatuses = ['planned', 'setup', 'in_progress'];
     const globalQueue = battles
-      .filter(b => b.statut === 'file_attente')
+      .filter(b => b.status === 'queue')
       .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
     const roomBoards = rooms
-      .filter(room => Number(room.actif) === 1)
+      .filter(room => Number(room.is_active) === 1)
       .map((room) => {
       const roomBattles = battles.filter(
-        b => b.room_id === room.id && activeStatuts.includes(b.statut)
+        b => b.room_id === room.id && activeStatuses.includes(b.status)
       );
 
-      const liveBattle = roomBattles.find(b => b.statut === 'en_cours') || null;
-      const installBattle = roomBattles.find(b => b.statut === 'installation') || null;
-      const waitingBattle = roomBattles.find(b => b.statut === 'planifie') || null;
+      const liveBattle = roomBattles.find(b => b.status === 'in_progress') || null;
+      const installBattle = roomBattles.find(b => b.status === 'setup') || null;
+      const waitingBattle = roomBattles.find(b => b.status === 'planned') || null;
       const currentBattle = liveBattle || installBattle;
 
       let roomState = { key: 'libre', label: 'Libre', color: 'var(--color-success)' };
@@ -237,15 +237,15 @@ router.get('/events/:id/announce', async (req, res) => {
     });
 
     const recentResults = battles
-      .filter(b => b.statut === 'termine')
+      .filter(b => b.status === 'ended')
       .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
       .slice(0, 12);
 
     res.render('moderator/battles/announce', {
-      title:     `Ecran geant — ${event.nom}`,
+      title:     `Ecran geant — ${event.name}`,
       pageClass: 'page-moderator page-battles page-announce',
       event,
-      stats: stats || { en_cours: 0, installation: 0, planifie: 0, file_attente: 0, termine: 0 },
+      stats: stats || { in_progress: 0, setup: 0, planned: 0, queue: 0, ended: 0 },
       roomBoards: Array.isArray(roomBoards) ? roomBoards : [],
       globalQueue: Array.isArray(globalQueue) ? globalQueue : [],
       recentResults: Array.isArray(recentResults) ? recentResults : [],
@@ -280,7 +280,7 @@ router.get('/events/:id/create', async (req, res) => {
     }
 
     res.render('moderator/battles/create-step1', {
-      title:     `Nouvelle rencontre — ${event.nom}`,
+      title:     `Nouvelle rencontre — ${event.name}`,
       pageClass: 'page-moderator page-battles',
       event,
       games,
@@ -327,10 +327,10 @@ router.post(
       }
 
       // Nombre de joueurs selon le type de rencontre
-      const nbJoueurs = game.type_rencontre === '2v2' ? 4 : game.type_rencontre === 'solo' ? 1 : 2;
+      const nbJoueurs = game.match_type === '2v2' ? 4 : game.match_type === 'solo' ? 1 : 2;
 
       res.render('moderator/battles/create-step2', {
-        title:     `Nouvelle rencontre — ${event.nom}`,
+        title:     `Nouvelle rencontre — ${event.name}`,
         pageClass: 'page-moderator page-battles',
         event,
         game,
@@ -399,7 +399,7 @@ router.post(
         return res.redirect(`/battles/events/${eventId}/create`);
       }
 
-      const nbJoueurs = game.type_rencontre === '2v2' ? 4 : game.type_rencontre === 'solo' ? 1 : 2;
+      const nbJoueurs = game.match_type === '2v2' ? 4 : game.match_type === 'solo' ? 1 : 2;
 
       // Validation du nombre de joueurs
       if (tokens.length !== nbJoueurs) {
@@ -428,17 +428,17 @@ router.post(
 
         const isRegistered = await EventRegistration.isRegistered(eventId, user.id);
         if (!isRegistered) {
-          req.flash('error', `Le joueur ${user.pseudo} n'est pas inscrit à cet événement.`);
+          req.flash('error', `Le joueur ${user.username} n'est pas inscrit à cet événement.`);
           return res.redirect(`/battles/events/${eventId}/create`);
         }
 
         if (seenIds.has(user.id)) {
-          req.flash('error', `Le joueur ${user.pseudo} est déjà dans cette rencontre.`);
+          req.flash('error', `Le joueur ${user.username} est déjà dans cette rencontre.`);
           return res.redirect(`/battles/events/${eventId}/create`);
         }
 
         seenIds.add(user.id);
-        players.push({ user_id: user.id, equipe });
+        players.push({ user_id: user.id, team: equipe });
       }
 
       // Crée la rencontre (et tente d'assigner une salle automatiquement)
@@ -446,12 +446,12 @@ router.post(
 
       const createdBattle = await Battle.findById(battleId);
       discord.notifyBattleCreated({ event, battle: createdBattle }).catch(() => {});
-      if (createdBattle && createdBattle.statut === 'planifie') {
+      if (createdBattle && createdBattle.status === 'planned') {
         discord.notifyBattlePlanned({ event, battle: createdBattle }).catch(() => {});
       }
 
       logger.info(
-        `[BATTLES] Nouvelle rencontre #${battleId} créée par #${req.session.userId} — jeu: ${game.nom} — joueurs: ${players.map(p => p.user_id).join(',')}`
+        `[BATTLES] Nouvelle rencontre #${battleId} créée par #${req.session.userId} — jeu: ${game.name} — joueurs: ${players.map(p => p.user_id).join(',')}`
       );
 
       emitAnnounceUpdate(req, eventId, 'battle_created', battleId);
@@ -489,12 +489,12 @@ router.post('/:id/start', async (req, res) => {
       return;
     }
 
-    if (battle.statut !== 'installation') {
+    if (battle.status !== 'setup') {
       req.flash('error', 'Cette rencontre ne peut pas être lancée (statut incorrect).');
       return res.redirect(`/battles/events/${battle.event_id}`);
     }
 
-    const changed = await Battle.changeStatut(battleId, 'en_cours', battle.event_id);
+    const changed = await Battle.changeStatus(battleId, 'in_progress', battle.event_id);
     if (!changed) {
       const conflict = await Battle.findRoomConflict(battleId);
       req.flash('error', formatRoomConflictMessage('lancer la rencontre', conflict));
@@ -557,7 +557,7 @@ router.post(
         return;
       }
 
-      if (!['installation', 'en_cours'].includes(battle.statut)) {
+      if (!['setup', 'in_progress'].includes(battle.status)) {
         req.flash('error', 'Cette rencontre ne peut pas être terminée (statut incorrect).');
         return res.redirect(`/battles/events/${battle.event_id}`);
       }
@@ -578,7 +578,7 @@ router.post(
 
       if (resultData.autoInstalledBattleId) {
         const autoInstalledBattle = await Battle.findById(resultData.autoInstalledBattleId);
-        if (autoInstalledBattle && autoInstalledBattle.statut === 'installation') {
+        if (autoInstalledBattle && autoInstalledBattle.status === 'setup') {
           discord.notifyBattleInstallation({ event, battle: autoInstalledBattle }).catch(() => {});
         }
       }

@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
 
     // Pré-rendu Markdown pour l'extrait affiché sur la home
     latestAnnouncements.forEach(a => {
-      a.contenuHtml = renderMarkdown(a.contenu);
+      a.contentHtml = renderMarkdown(a.content);
     });
 
     // Données supplémentaires pour l'événement mis en avant
@@ -39,9 +39,9 @@ router.get('/', async (req, res) => {
       registrationCount = await EventRegistration.countByEvent(activeEvent.id);
       eventRanking = await EventRanking.findByEvent(activeEvent.id, 10);
       // Considéré "en cours" si le statut est 'en_cours' ou si la date est atteinte
-      eventIsLive       = activeEvent.statut === 'en_cours' || new Date(activeEvent.date_heure) <= new Date();
+      eventIsLive       = activeEvent.status === 'in_progress' || new Date(activeEvent.start_at) <= new Date();
       // Deadline = début de l'événement (les inscriptions ferment à l'heure de début)
-      registrationDeadlineISO = new Date(activeEvent.date_heure).toISOString();
+      registrationDeadlineISO = new Date(activeEvent.start_at).toISOString();
 
       if (req.session && req.session.userId) {
         isRegistered = await EventRegistration.isRegistered(activeEvent.id, req.session.userId);

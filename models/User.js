@@ -19,7 +19,7 @@ const User = {
    */
   async findById(id) {
     const [rows] = await db.pool.execute(
-      'SELECT id, nom, prenom, pseudo, email, is_admin, is_moderator, badge_token, discord_user_id, created_at, updated_at FROM users WHERE id = ?',
+      'SELECT id, last_name, first_name, username, email, is_admin, is_moderator, badge_token, discord_user_id, created_at, updated_at FROM users WHERE id = ?',
       [id]
     );
     return rows[0] || null;
@@ -43,13 +43,13 @@ const User = {
    * @param {Object} data - { nom, prenom, pseudo, email, password, is_admin?, is_moderator? }
    * @returns {Promise<number>} ID du nouvel utilisateur
    */
-  async create({ nom, prenom, pseudo, email, password, is_admin = false, is_moderator = false }) {
+  async create({ last_name, first_name, username, email, password, is_admin = false, is_moderator = false }) {
     const hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     const badgeToken = randomUUID();
     const [result] = await db.pool.execute(
-      `INSERT INTO users (nom, prenom, pseudo, email, password, is_admin, is_moderator, badge_token)
+      `INSERT INTO users (last_name, first_name, username, email, password, is_admin, is_moderator, badge_token)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), hashedPassword, is_admin ? 1 : 0, is_moderator ? 1 : 0, badgeToken]
+      [last_name.trim(), first_name.trim(), username.trim(), email.toLowerCase().trim(), hashedPassword, is_admin ? 1 : 0, is_moderator ? 1 : 0, badgeToken]
     );
     return result.insertId;
   },
@@ -60,14 +60,14 @@ const User = {
    * @param {Object} data - { nom, prenom, pseudo, email, discordId }
    * @returns {Promise<number>} ID du nouvel utilisateur
    */
-  async createFromDiscord({ nom, prenom, pseudo, email, discordId }) {
+  async createFromDiscord({ last_name, first_name, username, email, discordId }) {
     const randomPassword = randomBytes(32).toString('hex');
     const hashedPassword = await bcrypt.hash(randomPassword, BCRYPT_ROUNDS);
     const badgeToken = randomUUID();
     const [result] = await db.pool.execute(
-      `INSERT INTO users (nom, prenom, pseudo, email, password, is_admin, is_moderator, badge_token, discord_user_id)
+      `INSERT INTO users (last_name, first_name, username, email, password, is_admin, is_moderator, badge_token, discord_user_id)
        VALUES (?, ?, ?, ?, ?, 0, 0, ?, ?)`,
-      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), hashedPassword, badgeToken, discordId]
+      [last_name.trim(), first_name.trim(), username.trim(), email.toLowerCase().trim(), hashedPassword, badgeToken, discordId]
     );
     return result.insertId;
   },
@@ -79,7 +79,7 @@ const User = {
    */
   async findByDiscordId(discordId) {
     const [rows] = await db.pool.execute(
-      'SELECT id, nom, prenom, pseudo, email, is_admin, is_moderator, badge_token, discord_user_id, created_at FROM users WHERE discord_user_id = ?',
+      'SELECT id, last_name, first_name, username, email, is_admin, is_moderator, badge_token, discord_user_id, created_at FROM users WHERE discord_user_id = ?',
       [discordId]
     );
     return rows[0] || null;
@@ -105,15 +105,15 @@ const User = {
    * @param {Object} data - champs à mettre à jour
    * @returns {Promise<boolean>} succès
    */
-  async update(id, { nom, prenom, pseudo, email, discord_user_id }) {
+  async update(id, { last_name, first_name, username, email, discord_user_id }) {
     // Valide que discord_user_id est un Snowflake numérique ou null
     const discordId = discord_user_id && /^\d{15,20}$/.test(discord_user_id.trim())
       ? discord_user_id.trim()
       : null;
     const [result] = await db.pool.execute(
-      `UPDATE users SET nom = ?, prenom = ?, pseudo = ?, email = ?, discord_user_id = ?, updated_at = NOW()
+      `UPDATE users SET last_name = ?, first_name = ?, username = ?, email = ?, discord_user_id = ?, updated_at = NOW()
        WHERE id = ?`,
-      [nom.trim(), prenom.trim(), pseudo.trim(), email.toLowerCase().trim(), discordId, id]
+      [last_name.trim(), first_name.trim(), username.trim(), email.toLowerCase().trim(), discordId, id]
     );
     return result.affectedRows > 0;
   },
@@ -151,7 +151,7 @@ const User = {
    */
   async findAll() {
     const [rows] = await db.pool.execute(
-      'SELECT id, nom, prenom, pseudo, email, is_admin, is_moderator, badge_token, discord_user_id, created_at, updated_at FROM users ORDER BY created_at DESC'
+      'SELECT id, last_name, first_name, username, email, is_admin, is_moderator, badge_token, discord_user_id, created_at, updated_at FROM users ORDER BY created_at DESC'
     );
     return rows;
   },
@@ -227,7 +227,7 @@ const User = {
    */
   async findByBadgeToken(token) {
     const [rows] = await db.pool.execute(
-      'SELECT id, nom, prenom, pseudo, email, is_admin, is_moderator, badge_token, created_at FROM users WHERE badge_token = ?',
+      'SELECT id, last_name, first_name, username, email, is_admin, is_moderator, badge_token, created_at FROM users WHERE badge_token = ?',
       [token]
     );
     return rows[0] || null;

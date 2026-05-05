@@ -80,10 +80,10 @@ describe('Routes - Tests d\'intégration', function () {
     it('doit afficher la section événement quand un événement est planifié (statut planifie)', async function () {
       const fakeEvent = {
         id:         1,
-        nom:        'LAN Printemps 2026',
-        date_heure: new Date(Date.now() + 7 * 24 * 3600 * 1000), // dans 7 jours
-        lieu:       'Salle des fêtes',
-        statut:     'planifie',
+        last_name:        'LAN Printemps 2026',
+        start_at: new Date(Date.now() + 7 * 24 * 3600 * 1000), // dans 7 jours
+        location:       'Salle des fêtes',
+        status:     'planned',
       };
       // Appel 1 : Announcement.findLatestPublished → []
       // Appel 2 : Event.findActive → [fakeEvent]
@@ -103,10 +103,10 @@ describe('Routes - Tests d\'intégration', function () {
     it('doit afficher la section événement pour un événement en cours (statut en_cours)', async function () {
       const liveEvent = {
         id:         2,
-        nom:        'LAN Été 2026',
-        date_heure: new Date(Date.now() - 3600 * 1000), // commencé il y a 1h
-        lieu:       'Paris',
-        statut:     'en_cours',
+        last_name:        'LAN Été 2026',
+        start_at: new Date(Date.now() - 3600 * 1000), // commencé il y a 1h
+        location:       'Paris',
+        status:     'in_progress',
       };
       poolStub.execute
         .onCall(0).resolves([[]])
@@ -122,10 +122,10 @@ describe('Routes - Tests d\'intégration', function () {
     it('ne doit pas afficher de CTA invité si l\'événement mis en avant est fermé', async function () {
       const liveEvent = {
         id:         3,
-        nom:        'LAN Fermée',
-        date_heure: new Date(Date.now() - 3600 * 1000),
-        lieu:       'Lille',
-        statut:     'en_cours',
+        last_name:        'LAN Fermée',
+        start_at: new Date(Date.now() - 3600 * 1000),
+        location:       'Lille',
+        status:     'in_progress',
       };
       poolStub.execute
         .onCall(0).resolves([[]])
@@ -214,10 +214,10 @@ describe('Routes - Tests d\'intégration', function () {
     it('ne doit pas afficher de CTA invité pour un événement aux inscriptions fermées', async function () {
       const closedEvent = {
         id: 21,
-        nom: 'LAN Close List',
-        date_heure: new Date(Date.now() - 3600 * 1000),
-        lieu: 'Rennes',
-        statut: 'en_cours',
+        last_name: 'LAN Close List',
+        start_at: new Date(Date.now() - 3600 * 1000),
+        location: 'Rennes',
+        status: 'in_progress',
         registrationCount: 8,
       };
 
@@ -306,26 +306,26 @@ describe('Routes - Tests d\'intégration', function () {
 
       eventFindByIdStub.resolves({
         id: 12,
-        nom: 'LAN Analytics',
-        date_heure: '2099-06-10 14:00:00',
-        lieu: 'Nantes',
-        statut: 'planifie',
+        last_name: 'LAN Analytics',
+        start_at: '2099-06-10 14:00:00',
+        location: 'Nantes',
+        status: 'planned',
       });
       registrationCountByEventStub.resolves(18);
       rankingFindByEventStub.resolves([
-        { rang: 1, pseudo: 'Alpha', points: 9, wins: 4, battles_played: 5 },
-        { rang: 2, pseudo: 'Bravo', points: 6, wins: 3, battles_played: 4 },
+        { rang: 1, username: 'Alpha', points: 9, wins: 4, battles_played: 5 },
+        { rang: 2, username: 'Bravo', points: 6, wins: 3, battles_played: 4 },
       ]);
       battleFindByEventStub.resolves([
-        { id: 1, statut: 'en_cours', game_nom: 'Tekken 8', game_console: 'PS5', room_id: 101 },
-        { id: 2, statut: 'termine', game_nom: 'Tekken 8', game_console: 'PS5', room_id: 101 },
-        { id: 3, statut: 'planifie', game_nom: 'Mario Kart 8', game_console: 'Switch', room_id: 102 },
-        { id: 4, statut: 'file_attente', game_nom: 'Mario Kart 8', game_console: 'Switch', room_id: null },
+        { id: 1, status: 'in_progress', game_nom: 'Tekken 8', game_console: 'PS5', room_id: 101 },
+        { id: 2, status: 'ended', game_nom: 'Tekken 8', game_console: 'PS5', room_id: 101 },
+        { id: 3, status: 'planned', game_nom: 'Mario Kart 8', game_console: 'Switch', room_id: 102 },
+        { id: 4, status: 'queue', game_nom: 'Mario Kart 8', game_console: 'Switch', room_id: null },
       ]);
       roomFindByEventStub.resolves([
-        { id: 101, nom: 'Zelda', type: 'console', type_rencontre: '1v1', actif: 1 },
-        { id: 102, nom: 'Mario', type: 'console', type_rencontre: '1v1', actif: 1 },
-        { id: 103, nom: 'Sonic', type: 'simulation', type_rencontre: 'solo', actif: 0 },
+        { id: 101, last_name: 'Zelda', type: 'console', match_type: '1v1', is_active: 1 },
+        { id: 102, last_name: 'Mario', type: 'console', match_type: '1v1', is_active: 1 },
+        { id: 103, last_name: 'Sonic', type: 'simulation', match_type: 'solo', is_active: 0 },
       ]);
       registrationIsRegisteredStub.resolves(false);
 
@@ -339,9 +339,9 @@ describe('Routes - Tests d\'intégration', function () {
       const payload = res.render.firstCall.args[1];
       expect(payload.chartData).to.exist;
       expect(payload.chartData.statuses.total).to.equal(4);
-      expect(payload.chartData.statuses.segments.find(s => s.status === 'en_cours').count).to.equal(1);
+      expect(payload.chartData.statuses.segments.find(s => s.status === 'in_progress').count).to.equal(1);
       expect(payload.chartData.games.items[0]).to.include({ name: 'Mario Kart 8', total: 2 });
-      expect(payload.chartData.rankings.items[0]).to.include({ pseudo: 'Alpha', points: 9 });
+      expect(payload.chartData.rankings.items[0]).to.include({ username: 'Alpha', points: 9 });
       expect(payload.chartData.rooms.total).to.equal(3);
       expect(payload.chartData.rooms.availableNow).to.equal(0);
       expect(payload.chartData.rooms.items.find(room => room.name === 'Zelda')).to.include({ assigned: 2, active: 1, done: 1 });
@@ -446,9 +446,9 @@ describe('Routes - Tests d\'intégration', function () {
       const handler = getRouteHandler(adminRouter, 'get', '/users/:id/badge');
       const user = {
         id: 7,
-        nom: 'Dupont',
-        prenom: 'Jean',
-        pseudo: 'JD',
+        last_name: 'Dupont',
+        first_name: 'Jean',
+        username: 'JD',
         email: 'jd@test.com',
         is_admin: 0,
         is_moderator: 0,
@@ -488,9 +488,9 @@ describe('Routes - Tests d\'intégration', function () {
       const handler = getRouteHandler(adminRouter, 'get', '/users/:id/badge');
       const user = {
         id: 8,
-        nom: 'Martin',
-        prenom: 'Alice',
-        pseudo: 'Alicat',
+        last_name: 'Martin',
+        first_name: 'Alice',
+        username: 'Alicat',
         email: 'alice@test.com',
         is_admin: 0,
         is_moderator: 0,
@@ -555,7 +555,7 @@ describe('Routes - Tests d\'intégration', function () {
             '550e8400-e29b-41d4-a716-446655440000',
             '550e8400-e29b-41d4-a716-446655440001',
           ],
-          equipe: ['1', '2'],
+          team: ['1', '2'],
         },
         flash: sinon.stub(),
         session: { userId: 99 },
@@ -564,11 +564,11 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
-      eventFindByIdStub.resolves({ id: 3, statut: 'en_cours' });
-      gameFindByIdStub.resolves({ id: 1, nom: 'Street Fighter 6', type_rencontre: '1v1' });
+      eventFindByIdStub.resolves({ id: 3, status: 'in_progress' });
+      gameFindByIdStub.resolves({ id: 1, last_name: 'Street Fighter 6', match_type: '1v1' });
       userFindByBadgeTokenStub
-        .onFirstCall().resolves({ id: 10, pseudo: 'Player1' })
-        .onSecondCall().resolves({ id: 11, pseudo: 'Player2' });
+        .onFirstCall().resolves({ id: 10, username: 'Player1' })
+        .onSecondCall().resolves({ id: 11, username: 'Player2' });
       registrationIsRegisteredStub
         .onFirstCall().resolves(true)
         .onSecondCall().resolves(false);
@@ -594,7 +594,7 @@ describe('Routes - Tests d\'intégration', function () {
             '550e8400-e29b-41d4-a716-446655440002',
             '550e8400-e29b-41d4-a716-446655440003',
           ],
-          equipe: ['1', '2'],
+          team: ['1', '2'],
           notes: 'Finale',
         },
         flash: sinon.stub(),
@@ -604,14 +604,14 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
-      eventFindByIdStub.resolves({ id: 4, statut: 'en_cours' });
-      gameFindByIdStub.resolves({ id: 2, nom: 'Tekken 8', type_rencontre: '1v1' });
+      eventFindByIdStub.resolves({ id: 4, status: 'in_progress' });
+      gameFindByIdStub.resolves({ id: 2, last_name: 'Tekken 8', match_type: '1v1' });
       userFindByBadgeTokenStub
-        .onFirstCall().resolves({ id: 21, pseudo: 'Alpha' })
-        .onSecondCall().resolves({ id: 22, pseudo: 'Bravo' });
+        .onFirstCall().resolves({ id: 21, username: 'Alpha' })
+        .onSecondCall().resolves({ id: 22, username: 'Bravo' });
       registrationIsRegisteredStub.resolves(true);
       battleCreateStub.resolves(77);
-      battleFindByIdStub.resolves({ id: 77, event_id: 4, statut: 'file_attente' });
+      battleFindByIdStub.resolves({ id: 77, event_id: 4, status: 'queue' });
 
       await handler(req, res);
 
@@ -619,8 +619,8 @@ describe('Routes - Tests d\'intégration', function () {
       expect(battleCreateStub.calledOnceWithExactly(
         { event_id: 4, game_id: 2, notes: 'Finale' },
         [
-          { user_id: 21, equipe: 1 },
-          { user_id: 22, equipe: 2 },
+          { user_id: 21, team: 1 },
+          { user_id: 22, team: 2 },
         ]
       )).to.be.true;
       expect(notifyBattleCreatedStub.calledOnce).to.be.true;
@@ -639,7 +639,7 @@ describe('Routes - Tests d\'intégration', function () {
             '550e8400-e29b-41d4-a716-446655440002',
             '550e8400-e29b-41d4-a716-446655440003',
           ],
-          equipe: ['1', '2'],
+          team: ['1', '2'],
         },
         flash: sinon.stub(),
         session: { userId: 99 },
@@ -648,14 +648,14 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
-      const event = { id: 4, nom: 'LAN Test', statut: 'en_cours', discord_channel_id: '333333333333333333' };
-      const createdBattle = { id: 77, event_id: 4, statut: 'planifie', room_nom: 'Neo Tokyo' };
+      const event = { id: 4, last_name: 'LAN Test', status: 'in_progress', discord_channel_id: '333333333333333333' };
+      const createdBattle = { id: 77, event_id: 4, status: 'planned', room_nom: 'Neo Tokyo' };
 
       eventFindByIdStub.resolves(event);
-      gameFindByIdStub.resolves({ id: 2, nom: 'Tekken 8', type_rencontre: '1v1' });
+      gameFindByIdStub.resolves({ id: 2, last_name: 'Tekken 8', match_type: '1v1' });
       userFindByBadgeTokenStub
-        .onFirstCall().resolves({ id: 21, pseudo: 'Alpha' })
-        .onSecondCall().resolves({ id: 22, pseudo: 'Bravo' });
+        .onFirstCall().resolves({ id: 21, username: 'Alpha' })
+        .onSecondCall().resolves({ id: 22, username: 'Bravo' });
       registrationIsRegisteredStub.resolves(true);
       battleCreateStub.resolves(77);
       battleFindByIdStub.resolves(createdBattle);
@@ -677,7 +677,7 @@ describe('Routes - Tests d\'intégration', function () {
             '550e8400-e29b-41d4-a716-446655440002',
             '550e8400-e29b-41d4-a716-446655440003',
           ],
-          equipe: ['1', '2'],
+          team: ['1', '2'],
         },
         flash: sinon.stub(),
         session: { userId: 99 },
@@ -686,7 +686,7 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
-      eventFindByIdStub.resolves({ id: 5, statut: 'planifie' });
+      eventFindByIdStub.resolves({ id: 5, status: 'planned' });
 
       await handler(req, res);
 
@@ -719,7 +719,7 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
-      eventFindByIdStub.resolves({ id: 7, statut: 'planifie' });
+      eventFindByIdStub.resolves({ id: 7, status: 'planned' });
 
       await handler(req, res);
 
@@ -763,16 +763,16 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
-      const battle = { id: 12, event_id: 1, statut: 'en_cours' };
-      const event = { id: 1, nom: 'LAN Spring Showdown', statut: 'en_cours' };
+      const battle = { id: 12, event_id: 1, status: 'in_progress' };
+      const event = { id: 1, last_name: 'LAN Spring Showdown', status: 'in_progress' };
       const endedBattle = {
         id: 12,
         event_id: 1,
-        statut: 'termine',
+        status: 'ended',
         score: '3-0',
         players: [
-          { user_id: 10, pseudo: 'Blitz', est_gagnant: 1 },
-          { user_id: 11, pseudo: 'Orbit', est_gagnant: 1 },
+          { user_id: 10, username: 'Blitz', is_winner: 1 },
+          { user_id: 11, username: 'Orbit', is_winner: 1 },
         ],
       };
 
@@ -801,7 +801,7 @@ describe('Routes - Tests d\'intégration', function () {
     beforeEach(function () {
       eventFindByIdStub = sinon.stub(Event, 'findById');
       battleFindByEventStub = sinon.stub(Battle, 'findByEvent');
-      battleCountByStatutStub = sinon.stub(Battle, 'countByStatut');
+      battleCountByStatutStub = sinon.stub(Battle, 'countByStatus');
       roomFindByEventStub = sinon.stub(Room, 'findByEvent');
       battleReevaluateQueueStub = sinon.stub(Battle, 'reevaluateQueue');
       rankingFindByEventStub = sinon.stub(EventRanking, 'findByEvent');
@@ -822,7 +822,7 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
-      eventFindByIdStub.resolves({ id: 9, nom: 'LAN Test', statut: 'en_cours' });
+      eventFindByIdStub.resolves({ id: 9, last_name: 'LAN Test', status: 'in_progress' });
       battleFindByEventStub.resolves([]);
       roomFindByEventStub.resolves([]);
       battleCountByStatutStub.resolves(undefined);

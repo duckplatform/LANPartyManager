@@ -47,7 +47,7 @@ const EventRanking = {
            b.event_id,
            bp.user_id,
            SUM(
-             CASE g.type_rencontre
+             CASE g.match_type
                WHEN 'solo' THEN 1
                WHEN '1v1'  THEN 2
                WHEN '2v2'  THEN 3
@@ -61,14 +61,14 @@ const EventRanking = {
              JOIN battles b2 ON b2.id = bp2.battle_id
              WHERE bp2.user_id = bp.user_id
                AND b2.event_id = b.event_id
-               AND b2.statut = 'termine'
+               AND b2.status = 'ended'
            ) AS battles_played
          FROM battles b
          JOIN games g ON g.id = b.game_id
          JOIN battle_players bp ON bp.battle_id = b.id
          WHERE b.event_id = ?
-           AND b.statut = 'termine'
-           AND bp.est_gagnant = 1
+           AND b.status = 'ended'
+           AND bp.is_winner = 1
          GROUP BY b.event_id, bp.user_id`,
         [eventId]
       );
@@ -100,11 +100,11 @@ const EventRanking = {
 
     const [rows] = await db.pool.execute(
       `SELECT er.event_id, er.user_id, er.points, er.wins, er.battles_played,
-              u.pseudo, u.discord_user_id
+              u.username, u.discord_user_id
          FROM event_rankings er
          JOIN users u ON u.id = er.user_id
         WHERE er.event_id = ?
-        ORDER BY er.points DESC, er.wins DESC, u.pseudo ASC
+        ORDER BY er.points DESC, er.wins DESC, u.username ASC
         ${limitClause}`,
       params
     );

@@ -53,7 +53,7 @@ async function injectLocals(req, res, next) {
   res.locals.currentUser = req.session.userId
     ? {
         id:          req.session.userId,
-        pseudo:      req.session.pseudo,
+        username:    req.session.username,
         isAdmin:     req.session.isAdmin,
         isModerator: req.session.isModerator,
       }

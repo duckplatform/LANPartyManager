@@ -39,7 +39,7 @@ describe('User Model', function () {
 
   describe('findById()', function () {
     it('doit retourner un utilisateur si trouvé', async function () {
-      const fakeUser = { id: 1, nom: 'Dupont', prenom: 'Jean', pseudo: 'JD', email: 'jean@test.com', is_admin: 0 };
+      const fakeUser = { id: 1, last_name: 'Dupont', first_name: 'Jean', username: 'JD', email: 'jean@test.com', is_admin: 0 };
       poolStub.execute.resolves([[fakeUser]]);
 
       const result = await User.findById(1);
@@ -58,7 +58,7 @@ describe('User Model', function () {
 
   describe('findByEmail()', function () {
     it('doit retourner l\'utilisateur correspondant à l\'email', async function () {
-      const fakeUser = { id: 2, email: 'test@example.com', pseudo: 'Tester' };
+      const fakeUser = { id: 2, email: 'test@example.com', username: 'Tester' };
       poolStub.execute.resolves([[fakeUser]]);
 
       const result = await User.findByEmail('TEST@EXAMPLE.COM'); // Test normalisation
@@ -82,9 +82,9 @@ describe('User Model', function () {
       poolStub.execute.resolves([{ insertId: 42 }]);
 
       const id = await User.create({
-        nom:      'Martin',
-        prenom:   'Alice',
-        pseudo:   'Alicat',
+        last_name:      'Martin',
+        first_name:   'Alice',
+        username:   'Alicat',
         email:    'alice@test.com',
         password: 'Password1',
       });
@@ -102,7 +102,7 @@ describe('User Model', function () {
 
     it('doit mettre is_admin à 0 par défaut', async function () {
       poolStub.execute.resolves([{ insertId: 5 }]);
-      await User.create({ nom: 'X', prenom: 'Y', pseudo: 'Z', email: 'z@test.com', password: 'Pass1234' });
+      await User.create({ last_name: 'X', first_name: 'Y', username: 'Z', email: 'z@test.com', password: 'Pass1234' });
       const callArgs = poolStub.execute.firstCall.args[1];
       expect(callArgs[5]).to.equal(0); // is_admin = 0
       expect(callArgs[6]).to.equal(0); // is_moderator = 0
@@ -110,7 +110,7 @@ describe('User Model', function () {
 
     it('doit permettre de créer un admin', async function () {
       poolStub.execute.resolves([{ insertId: 10 }]);
-      await User.create({ nom: 'Admin', prenom: 'Super', pseudo: 'SA', email: 'admin@test.com', password: 'Pass1234', is_admin: true });
+      await User.create({ last_name: 'Admin', first_name: 'Super', username: 'SA', email: 'admin@test.com', password: 'Pass1234', is_admin: true });
       const callArgs = poolStub.execute.firstCall.args[1];
       expect(callArgs[5]).to.equal(1); // is_admin = 1
     });
@@ -137,13 +137,13 @@ describe('User Model', function () {
   describe('update()', function () {
     it('doit retourner true si la mise à jour réussit', async function () {
       poolStub.execute.resolves([{ affectedRows: 1 }]);
-      const result = await User.update(1, { nom: 'Nouveau', prenom: 'Test', pseudo: 'NT', email: 'nt@test.com' });
+      const result = await User.update(1, { last_name: 'Nouveau', first_name: 'Test', username: 'NT', email: 'nt@test.com' });
       expect(result).to.be.true;
     });
 
     it('doit retourner false si aucune ligne affectée', async function () {
       poolStub.execute.resolves([{ affectedRows: 0 }]);
-      const result = await User.update(999, { nom: 'X', prenom: 'Y', pseudo: 'Z', email: 'z@test.com' });
+      const result = await User.update(999, { last_name: 'X', first_name: 'Y', username: 'Z', email: 'z@test.com' });
       expect(result).to.be.false;
     });
   });
@@ -221,7 +221,7 @@ describe('User Model', function () {
 
   describe('findByDiscordId()', function () {
     it('doit retourner l\'utilisateur correspondant à l\'ID Discord', async function () {
-      const fakeUser = { id: 3, pseudo: 'DiscordUser', discord_user_id: '123456789012345678' };
+      const fakeUser = { id: 3, username: 'DiscordUser', discord_user_id: '123456789012345678' };
       poolStub.execute.resolves([[fakeUser]]);
 
       const result = await User.findByDiscordId('123456789012345678');
@@ -244,9 +244,9 @@ describe('User Model', function () {
       poolStub.execute.resolves([{ insertId: 99 }]);
 
       const id = await User.createFromDiscord({
-        nom:       'Dupont',
-        prenom:    'Jean',
-        pseudo:    'JD',
+        last_name:       'Dupont',
+        first_name:    'Jean',
+        username:    'JD',
         email:     'jean@discord.com',
         discordId: '123456789012345678',
       });

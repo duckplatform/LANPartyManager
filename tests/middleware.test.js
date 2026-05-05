@@ -139,7 +139,7 @@ describe('Middleware Auth', function () {
 
     it('doit injecter les données utilisateur si connecté', async function () {
       const req = {
-        session: { userId: 5, pseudo: 'GamerX', isAdmin: false, isModerator: false },
+        session: { userId: 5, username: 'GamerX', isAdmin: false, isModerator: false },
         flash:   sinon.stub().returns([]),
         csrfToken: sinon.stub().returns('tok'),
       };
@@ -149,7 +149,7 @@ describe('Middleware Auth', function () {
       await injectLocals(req, res, next);
       expect(res.locals.currentUser).to.deep.equal({
         id:          5,
-        pseudo:      'GamerX',
+        username:      'GamerX',
         isAdmin:     false,
         isModerator: false,
       });

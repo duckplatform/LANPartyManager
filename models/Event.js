@@ -8,8 +8,8 @@
 
 const db = require('../config/database');
 
-/** Valeurs autorisées pour le champ statut */
-const STATUTS_VALIDES = ['planifie', 'en_cours', 'termine'];
+/** Valeurs autorisées pour le champ status */
+const VALID_STATUSES = ['planned', 'in_progress', 'ended'];
 
 function buildActiveEventConflictError(conflictEvent = null) {
   const err = new Error('Un seul événement peut être en cours à la fois.');
@@ -28,9 +28,9 @@ const Event = {
   async findCurrentLive(excludeId = null) {
     if (excludeId) {
       const [rows] = await db.pool.execute(
-        `SELECT id, nom, date_heure, lieu, statut
+        `SELECT id, name, start_at, location, status
            FROM events
-          WHERE statut = 'en_cours' AND id <> ?
+          WHERE status = 'in_progress' AND id <> ?
           LIMIT 1`,
         [excludeId]
       );
@@ -38,9 +38,9 @@ const Event = {
     }
 
     const [rows] = await db.pool.execute(
-      `SELECT id, nom, date_heure, lieu, statut
+      `SELECT id, name, start_at, location, status
          FROM events
-        WHERE statut = 'en_cours'
+        WHERE status = 'in_progress'
         LIMIT 1`
     );
     return rows[0] || null;
@@ -52,9 +52,9 @@ const Event = {
    */
   async findAll() {
     const [rows] = await db.pool.execute(
-      `SELECT id, nom, date_heure, lieu, discord_channel_id, statut, created_at, updated_at
+      `SELECT id, name, start_at, location, discord_channel_id, status, created_at, updated_at
          FROM events
-         ORDER BY date_heure DESC`
+         ORDER BY start_at DESC`
     );
     return rows;
   },
@@ -83,10 +83,10 @@ const Event = {
     const [rows] = await db.pool.execute(
       `SELECT *
          FROM events
-        WHERE statut IN ('planifie', 'en_cours')
+        WHERE status IN ('planned', 'in_progress')
         ORDER BY
-          CASE statut WHEN 'en_cours' THEN 0 ELSE 1 END ASC,
-          date_heure ASC
+          CASE status WHEN 'in_progress' THEN 0 ELSE 1 END ASC,
+          start_at ASC
         LIMIT 1`
     );
     return rows[0] || null;
@@ -99,20 +99,20 @@ const Event = {
    */
   async findAllPublic() {
     const [rows] = await db.pool.execute(
-      `SELECT e.id, e.nom, e.date_heure, e.lieu, e.discord_channel_id, e.statut,
+      `SELECT e.id, e.name, e.start_at, e.location, e.discord_channel_id, e.status,
               COUNT(er.id) AS registrationCount
          FROM events e
          LEFT JOIN event_registrations er ON er.event_id = e.id
-        WHERE e.statut IN ('planifie', 'en_cours', 'termine')
+        WHERE e.status IN ('planned', 'in_progress', 'ended')
         GROUP BY e.id
         ORDER BY
-          CASE e.statut
-            WHEN 'en_cours' THEN 0
-            WHEN 'planifie' THEN 1
+          CASE e.status
+            WHEN 'in_progress' THEN 0
+            WHEN 'planned' THEN 1
             ELSE 2
           END ASC,
-          CASE WHEN e.statut = 'termine' THEN e.date_heure END DESC,
-          CASE WHEN e.statut IN ('en_cours', 'planifie') THEN e.date_heure END ASC`
+          CASE WHEN e.status = 'ended' THEN e.start_at END DESC,
+          CASE WHEN e.status IN ('in_progress', 'planned') THEN e.start_at END ASC`
     );
     return rows;
   },
@@ -122,14 +122,14 @@ const Event = {
    * @param {{ nom: string, date_heure: string, lieu: string, statut?: string, discord_channel_id?: string|null, discord_notifications_enabled?: number }} data
    * @returns {Promise<number>} ID du nouvel événement
    */
-  async create({ nom, date_heure, lieu, statut = 'planifie', discord_channel_id = null, discord_notifications_enabled = 1 }) {
-    const statutFinal = STATUTS_VALIDES.includes(statut) ? statut : 'planifie';
+  async create({ name, start_at, location, status = 'planned', discord_channel_id = null, discord_notifications_enabled = 1 }) {
+    const statusFinal = VALID_STATUSES.includes(status) ? status : 'planned';
     const discordChannelIdFinal = typeof discord_channel_id === 'string' && discord_channel_id.trim()
       ? discord_channel_id.trim()
       : null;
     const discordNotifFinal = discord_notifications_enabled === 0 || discord_notifications_enabled === '0' ? 0 : 1;
 
-    if (statutFinal === 'en_cours') {
+    if (statusFinal === 'in_progress') {
       const conflict = await Event.findCurrentLive();
       if (conflict) {
         throw buildActiveEventConflictError(conflict);
@@ -138,9 +138,9 @@ const Event = {
 
     try {
       const [result] = await db.pool.execute(
-        `INSERT INTO events (nom, date_heure, lieu, discord_channel_id, statut, discord_notifications_enabled)
+        `INSERT INTO events (name, start_at, location, discord_channel_id, status, discord_notifications_enabled)
          VALUES (?, ?, ?, ?, ?, ?)`,
-        [nom.trim(), date_heure, lieu.trim(), discordChannelIdFinal, statutFinal, discordNotifFinal]
+        [name.trim(), start_at, location.trim(), discordChannelIdFinal, statusFinal, discordNotifFinal]
       );
       return result.insertId;
     } catch (err) {
@@ -157,14 +157,14 @@ const Event = {
    * @param {{ nom: string, date_heure: string, lieu: string, statut?: string, discord_channel_id?: string|null, discord_notifications_enabled?: number }} data
    * @returns {Promise<boolean>}
    */
-  async update(id, { nom, date_heure, lieu, statut = 'planifie', discord_channel_id = null, discord_notifications_enabled = 1 }) {
-    const statutFinal = STATUTS_VALIDES.includes(statut) ? statut : 'planifie';
+  async update(id, { name, start_at, location, status = 'planned', discord_channel_id = null, discord_notifications_enabled = 1 }) {
+    const statusFinal = VALID_STATUSES.includes(status) ? status : 'planned';
     const discordChannelIdFinal = typeof discord_channel_id === 'string' && discord_channel_id.trim()
       ? discord_channel_id.trim()
       : null;
     const discordNotifFinal = discord_notifications_enabled === 0 || discord_notifications_enabled === '0' ? 0 : 1;
 
-    if (statutFinal === 'en_cours') {
+    if (statusFinal === 'in_progress') {
       const conflict = await Event.findCurrentLive(id);
       if (conflict) {
         throw buildActiveEventConflictError(conflict);
@@ -174,9 +174,9 @@ const Event = {
     try {
       const [result] = await db.pool.execute(
         `UPDATE events
-            SET nom = ?, date_heure = ?, lieu = ?, discord_channel_id = ?, statut = ?, discord_notifications_enabled = ?, updated_at = NOW()
+            SET name = ?, start_at = ?, location = ?, discord_channel_id = ?, status = ?, discord_notifications_enabled = ?, updated_at = NOW()
           WHERE id = ?`,
-        [nom.trim(), date_heure, lieu.trim(), discordChannelIdFinal, statutFinal, discordNotifFinal, id]
+        [name.trim(), start_at, location.trim(), discordChannelIdFinal, statusFinal, discordNotifFinal, id]
       );
       return result.affectedRows > 0;
     } catch (err) {
@@ -194,13 +194,13 @@ const Event = {
    */
   async findAllWithRegistrationCount() {
     const [rows] = await db.pool.execute(
-      `SELECT e.id, e.nom, e.date_heure, e.lieu, e.discord_channel_id, e.statut,
+      `SELECT e.id, e.name, e.start_at, e.location, e.discord_channel_id, e.status,
               e.created_at, e.updated_at,
               COUNT(er.id) AS registrationCount
          FROM events e
          LEFT JOIN event_registrations er ON er.event_id = e.id
          GROUP BY e.id
-         ORDER BY e.date_heure DESC`
+         ORDER BY e.start_at DESC`
     );
     return rows;
   },
@@ -230,7 +230,7 @@ const Event = {
   },
 
   /** Liste des valeurs de statut autorisées (utile pour les vues/formulaires) */
-  STATUTS_VALIDES,
+  VALID_STATUSES,
 };
 
 module.exports = Event;
