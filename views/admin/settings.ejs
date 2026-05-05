@@ -314,10 +314,16 @@
                   <i class="fas fa-key"></i> Connexion OAuth2 Discord
                 </h3>
                 <p class="form-hint" style="margin-bottom: var(--space-md);">
-                  Permet aux membres de se connecter via leur compte Discord.
-                  Nécessite une application Discord créée dans le
+                  Optionnel — permet aux membres de se connecter via leur compte Discord.
+                  Non requis pour les notifications bot. Nécessite une application Discord créée dans le
                   <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer">Developer Portal</a>.
                 </p>
+                <% if (settings && settings.discord_enabled === '1' && (!settings.discord_client_id || !settings.discord_client_secret)) { %>
+                  <div style="background: var(--color-warning-bg, #fff8e1); border: 1px solid var(--color-warning, #f0b429); border-radius: var(--radius-sm, 4px); padding: var(--space-sm); margin-bottom: var(--space-md); font-size: 0.875rem;">
+                    <i class="fas fa-exclamation-triangle" style="color: var(--color-warning, #f0b429);"></i>
+                    La connexion via Discord (OAuth2) est désactivée — renseignez le Client ID et le Client Secret pour l'activer.
+                  </div>
+                <% } %>
 
                 <!-- Client ID -->
                 <div class="form-group">

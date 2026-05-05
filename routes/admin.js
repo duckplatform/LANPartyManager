@@ -1435,25 +1435,6 @@ router.post('/settings', settingsValidation, async (req, res) => {
     // de retirer la configuration OAuth côté base.
     const discord_client_id    = (req.body.discord_client_id || '').trim() || null;
 
-    // Sécurité OAuth : impossible d'activer Discord si les identifiants OAuth
-    // ne sont pas configurés (Client ID + Client Secret).
-    if (discord_enabled === '1' && (!discord_client_id || !discord_client_secret)) {
-      return res.status(422).render('admin/settings', {
-        title:     'Paramètres de l\'application',
-        pageClass: 'page-admin',
-        settings: {
-          ...currentSettings,
-          ...req.body,
-          discord_enabled,
-          discord_client_id,
-        },
-        errors: [{
-          msg: 'Impossible d\'activer Discord OAuth2 : renseignez le Client ID et le Client Secret.'
-        }],
-        appUrl:    (process.env.APP_URL || '').replace(/\/$/, ''),
-      });
-    }
-
     // Clé publique Discord pour la vérification des interactions (slash commands)
     const discord_application_public_key = (req.body.discord_application_public_key || '').trim() || null;
 
