@@ -1,0 +1,29 @@
+[2026-05-04 19:08:17] INFO: [SERVER] LANPartyManager demarre sur le port 3000 (development)
+[2026-05-04 19:08:17] INFO: [DB] Base de donnees disponible, reprise du trafic.
+[2026-05-04 19:08:28] INFO: [AUTH] Connexion réussie pour l'utilisateur #1 (admin@lanparty.local)
+[2026-05-04 19:09:22] INFO: [ADMIN/SETTINGS] Paramètres mis à jour par l'utilisateur #1
+[2026-05-04 19:09:51] INFO: [DISCORD_INTERACTIONS] Received interaction - IP: 35.237.4.214, timestamp: 1777914591
+[2026-05-04 19:09:51] INFO: [DISCORD_INTERACTIONS] Request signature verified successfully
+[2026-05-04 19:09:51] INFO: [DISCORD_INTERACTIONS] Processing interaction - type: 2
+[2026-05-04 19:09:51] INFO: [DISCORD_INTERACTIONS] Sending response - responseType: 4
+[2026-05-04 19:09:56] INFO: [DISCORD_INTERACTIONS] Received interaction - IP: 35.237.4.214, timestamp: 1777914596
+[2026-05-04 19:09:56] INFO: [DISCORD_INTERACTIONS] Request signature verified successfully
+[2026-05-04 19:09:56] INFO: [DISCORD_INTERACTIONS] Processing interaction - type: 2
+[2026-05-04 19:09:56] INFO: [DISCORD_INTERACTIONS] Sending response - responseType: 4
+[2026-05-04 19:50:46] INFO: [AUTH] Connexion réussie pour l'utilisateur #1 (admin@lanparty.local)
+[2026-05-04 19:51:02] INFO: [BATTLES] Rencontre #6 terminée par #1 — score: null — gagnants: 10,11
+[2026-05-04 19:51:03] INFO: [DISCORD] Message envoyé sur le canal #1497631767535030272
+[2026-05-04 19:51:03] INFO: [DISCORD] Message envoyé sur le canal #1497631767535030272
+[2026-05-04 19:51:08] INFO: [BATTLES] Rencontre #8 terminée par #1 — score: null — gagnants: 12
+[2026-05-04 19:51:08] INFO: [DISCORD] Message envoyé sur le canal #1497631767535030272
+[2026-05-04 19:51:08] INFO: [DISCORD] Message envoyé sur le canal #1497631767535030272
+[2026-05-04 19:51:09] INFO: [DISCORD] Message envoyé sur le canal #1497631767535030272
+[2026-05-04 19:52:37] INFO: [BATTLES] Rencontre #4 → en_cours par #1
+[2026-05-04 19:52:37] INFO: [DISCORD] Message envoyé sur le canal #1497631767535030272
+[2026-05-04 19:52:44] INFO: [BATTLES] Rencontre #4 terminée par #1 — score: null — gagnants: 9
+[2026-05-04 19:52:44] INFO: [DISCORD] Message envoyé sur le canal #1497631767535030272
+[2026-05-04 19:52:44] INFO: [DISCORD] Message envoyé sur le canal #1497631767535030272
+[2026-05-05 02:42:48] INFO: [SERVER] LANPartyManager demarre sur le port 3000 (development)
+[2026-05-05 02:42:48] INFO: [DB] Base de donnees disponible, reprise du trafic.
+[2026-05-05 06:00:45] INFO: [SERVER] LANPartyManager demarre sur le port 3000 (development)
+[2026-05-05 06:00:45] INFO: [DB] Base de donnees disponible, reprise du trafic.

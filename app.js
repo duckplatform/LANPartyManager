@@ -118,30 +118,6 @@ const {
   getTokenFromRequest: (req) => req.body._csrf || req.headers['x-csrf-token'],
 });
 
-// Applique la vérification CSRF à toutes les routes suivantes
-app.use(csrfSynchronisedProtection);
-
-// Rend le token disponible dans les vues/formulaires (_csrf)
-app.use((req, res, next) => {
-  res.locals.csrfToken = generateCsrfToken(req, res);
-  next();
-});
-
-// Active la vérification CSRF pour les requêtes mutantes
-app.use(csrfSynchronisedProtection);
-
-// Rend le token disponible dans les vues/formulaires (champ caché _csrf)
-app.use((req, res, next) => {
-  res.locals.csrfToken = generateCsrfToken(req);
-  next();
-});
-
-app.use(csrfSynchronisedProtection);
-app.use((req, res, next) => {
-  res.locals.csrfToken = generateCsrfToken(req);
-  next();
-});
-
 // Applique la vérification CSRF sur les routes protégées par session/cookie.
 app.use(csrfSynchronisedProtection);
 
