@@ -5,10 +5,13 @@
     display: inline-flex;
     align-items: center;
     gap: .35rem;
-    padding: .25rem .65rem;
+    padding: .35rem .65rem;
     border-radius: 1rem;
+    box-sizing: border-box;
     font-size: .8rem;
     font-weight: 600;
+    line-height: 1.2;
+    min-height: 2rem;
     white-space: nowrap;
   }
   .battle-status--live      { background: #E8F5E9; color: #388E3C; }
@@ -38,6 +41,69 @@
     color: var(--color-text-muted, #888);
     text-transform: uppercase;
     letter-spacing: .05em;
+  }
+  .event-details-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+  .event-section-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+  .event-ranking-card {
+    max-width: 760px;
+  }
+  .event-battles-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 720px;
+    overflow-y: auto;
+    padding-right: .35rem;
+  }
+  .event-battle-card {
+    padding: var(--space-lg);
+    overflow: visible;
+  }
+  .event-battle-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .event-battle-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .event-battle-meta {
+    font-size: .82rem;
+    color: var(--color-text-muted);
+    line-height: 1.45;
+  }
+  .event-battle-players {
+    margin-top: .5rem;
+    font-size: .95rem;
+    color: var(--color-text-muted);
+    line-height: 1.7;
+  }
+  .event-battle-room {
+    font-size: .82rem;
+    color: var(--color-text-muted);
+    text-align: right;
+    line-height: 1.4;
+  }
+  @media (max-width: 768px) {
+    .event-battle-card {
+      padding: var(--space-md);
+    }
+    .event-battles-list {
+      max-height: none;
+      overflow: visible;
+      padding-right: 0;
+    }
   }
 </style>
 
@@ -99,10 +165,14 @@
 
         <!-- Actions -->
         <div style="display:flex; flex-direction:column; gap:.5rem; align-items:flex-end;">
-          <% if (!currentUser) { %>
+          <% if (!currentUser && event.registrationOpen) { %>
             <a href="/auth/login?redirect=/events/<%= event.id %>" class="btn btn--primary btn--sm">
               <i class="fas fa-right-to-bracket"></i> Connexion pour s'inscrire
             </a>
+          <% } else if (!currentUser) { %>
+            <span class="text-muted" style="font-size:.85rem; display:flex; align-items:center; gap:.4rem;">
+              <i class="fas fa-lock"></i> Inscriptions fermées
+            </span>
           <% } else if (isRegistered) { %>
             <div class="event-registered-badge" style="font-size:.9rem;">
               <i class="fas fa-circle-check"></i> Inscrit
@@ -126,7 +196,7 @@
                 <i class="fas fa-user-plus"></i> S'inscrire
               </button>
             </form>
-          <% } else if (!isDone) { %>
+          <% } else { %>
             <span class="text-muted" style="font-size:.85rem; display:flex; align-items:center; gap:.4rem;">
               <i class="fas fa-lock"></i> Inscriptions fermées
             </span>
@@ -186,10 +256,10 @@
     <% } %>
   </div>
 
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: var(--space-lg);">
+  <div class="event-details-grid">
 
     <!-- Classement -->
-    <div>
+    <div class="event-section-card event-ranking-card">
       <h2 style="font-size:1.1rem; margin-bottom: var(--space-md); display:flex; align-items:center; gap:.5rem;">
         <i class="fas fa-ranking-star"></i> Classement
       </h2>
@@ -256,7 +326,7 @@
     </div>
 
     <!-- Rencontres -->
-    <div>
+    <div class="event-section-card">
       <h2 style="font-size:1.1rem; margin-bottom: var(--space-md); display:flex; align-items:center; gap:.5rem;">
         <i class="fas fa-gamepad"></i> Rencontres
       </h2>
@@ -267,7 +337,7 @@
           <p style="margin:0;">Aucune rencontre créée pour le moment.</p>
         </div>
       <% } else { %>
-        <div style="display:flex; flex-direction:column; gap:.5rem; max-height:600px; overflow-y:auto;">
+        <div class="event-battles-list">
           <% battles.forEach(function(battle) {
             let statusClass = 'battle-status--queue';
             let statusIcon  = 'fas fa-clock';
@@ -279,14 +349,14 @@
             const winners = (battle.players || []).filter(p => p.est_gagnant);
             const allPlayers = battle.players || [];
           %>
-            <div class="card" style="padding: var(--space-sm) var(--space-md);">
-              <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:.5rem; flex-wrap:wrap;">
-                <div style="flex:1; min-width:0;">
+            <div class="card event-battle-card">
+              <div class="event-battle-header">
+                <div class="event-battle-body">
                   <div style="display:flex; align-items:center; gap:.5rem; margin-bottom:.25rem; flex-wrap:wrap;">
                     <span class="battle-status-badge <%= statusClass %>">
                       <i class="<%= statusIcon %>"></i> <%= statusLabel %>
                     </span>
-                    <span style="font-size:.8rem; color:var(--color-text-muted);">
+                    <span class="event-battle-meta">
                       #<%= battle.id %> · <%= battle.game_nom %>
                       <% if (battle.type_rencontre) { %> · <%= battle.type_rencontre %><% } %>
                     </span>
@@ -294,7 +364,7 @@
 
                   <!-- Joueurs -->
                   <% if (allPlayers.length > 0) { %>
-                    <div style="font-size:.85rem; color:var(--color-text-muted);">
+                    <div class="event-battle-players">
                       <% allPlayers.forEach(function(p, pi) { %>
                         <span style="color: <%= p.est_gagnant ? '#388E3C' : 'inherit' %>; font-weight: <%= p.est_gagnant ? 600 : 'normal' %>;">
                           <%= p.est_gagnant ? '🏆 ' : '' %><%= p.pseudo %>
@@ -313,7 +383,7 @@
 
                 <!-- Salle -->
                 <% if (battle.room_nom) { %>
-                  <div style="font-size:.75rem; color:var(--color-text-muted); text-align:right; white-space:nowrap;">
+                  <div class="event-battle-room">
                     <i class="fas fa-door-open"></i> <%= battle.room_nom %>
                   </div>
                 <% } %>
