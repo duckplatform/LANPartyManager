@@ -43,8 +43,8 @@ describe('AppSettings Model', function () {
 
     it('doit retourner les paramètres sous forme d\'objet {cle: valeur}', async function () {
       poolStub.execute.resolves([[
-        { cle: 'discord_enabled',   valeur: '1' },
-        { cle: 'discord_bot_token', valeur: 'MTxxxxxx' },
+        { key: 'discord_enabled',   value: '1' },
+        { key: 'discord_bot_token', value: 'MTxxxxxx' },
       ]]);
       const settings = await AppSettings.getAll();
       expect(settings).to.deep.equal({
@@ -55,7 +55,7 @@ describe('AppSettings Model', function () {
 
     it('doit mettre en cache les paramètres (2e appel sans requête BDD)', async function () {
       poolStub.execute.resolves([[
-        { cle: 'discord_enabled', valeur: '0' },
+        { key: 'discord_enabled', value: '0' },
       ]]);
       await AppSettings.getAll();
       await AppSettings.getAll();
@@ -77,7 +77,7 @@ describe('AppSettings Model', function () {
 
     it('doit retourner la valeur d\'une clé existante', async function () {
       poolStub.execute.resolves([[
-        { cle: 'discord_enabled', valeur: '1' },
+        { key: 'discord_enabled', value: '1' },
       ]]);
       const value = await AppSettings.get('discord_enabled');
       expect(value).to.equal('1');
@@ -91,7 +91,7 @@ describe('AppSettings Model', function () {
 
     it('doit retourner null si la valeur en BDD est NULL', async function () {
       poolStub.execute.resolves([[
-        { cle: 'discord_bot_token', valeur: null },
+        { key: 'discord_bot_token', value: null },
       ]]);
       const value = await AppSettings.get('discord_bot_token');
       expect(value).to.be.null;
@@ -124,11 +124,11 @@ describe('AppSettings Model', function () {
 
     it('doit invalider le cache après la mise à jour', async function () {
       // 1er appel getAll() → remplit le cache
-      poolStub.execute.onFirstCall().resolves([[{ cle: 'discord_enabled', valeur: '0' }]]);
+      poolStub.execute.onFirstCall().resolves([[{ key: 'discord_enabled', value: '0' }]]);
       // Appel set() → INSERT (cache invalidé APRÈS)
       poolStub.execute.onSecondCall().resolves([{ affectedRows: 1 }]);
       // 3e appel getAll() → relit depuis la BDD car cache invalidé
-      poolStub.execute.onThirdCall().resolves([[{ cle: 'discord_enabled', valeur: '1' }]]);
+      poolStub.execute.onThirdCall().resolves([[{ key: 'discord_enabled', value: '1' }]]);
 
       await AppSettings.getAll();   // charge le cache
       await AppSettings.set('discord_enabled', '1'); // écriture BDD puis invalidation
@@ -173,7 +173,7 @@ describe('AppSettings Model', function () {
   describe('clearCache()', function () {
 
     it('doit forcer une nouvelle lecture BDD après invalidation', async function () {
-      poolStub.execute.resolves([[{ cle: 'discord_enabled', valeur: '0' }]]);
+      poolStub.execute.resolves([[{ key: 'discord_enabled', value: '0' }]]);
       await AppSettings.getAll(); // charge le cache
       AppSettings.clearCache();   // invalide
       await AppSettings.getAll(); // doit relire

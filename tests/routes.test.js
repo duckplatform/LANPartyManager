@@ -837,7 +837,7 @@ describe('Routes - Tests d\'intégration', function () {
 
       const payload = res.render.firstCall.args[1];
       expect(payload).to.include.keys('event', 'stats', 'roomBoards', 'globalQueue', 'recentResults', 'rankingBoard', 'now');
-      expect(payload.stats).to.deep.equal({ en_cours: 0, installation: 0, planifie: 0, file_attente: 0, termine: 0 });
+      expect(payload.stats).to.deep.equal({ in_progress: 0, setup: 0, planned: 0, queue: 0, ended: 0 });
       expect(payload.roomBoards).to.deep.equal([]);
       expect(payload.globalQueue).to.deep.equal([]);
       expect(payload.recentResults).to.deep.equal([]);
