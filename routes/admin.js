@@ -1362,6 +1362,23 @@ const settingsValidation = [
 ];
 
 /**
+ * Résout la valeur finale d'un champ sensible (token, secret…).
+ * - Si une nouvelle valeur est saisie, elle est utilisée.
+ * - Si la case "clear" est cochée et le champ est vide, on met null.
+ * - Sinon on conserve la valeur existante en base.
+ *
+ * @param {string}      inputValue   - Valeur saisie dans le formulaire (trimée)
+ * @param {boolean}     clearFlag    - True si l'admin a coché la case "Réinitialiser"
+ * @param {string|null} currentValue - Valeur actuellement stockée en base
+ * @returns {string|null}
+ */
+function resolveSecretFieldValue(inputValue, clearFlag, currentValue) {
+  if (inputValue) return inputValue;
+  if (clearFlag)  return null;
+  return currentValue || null;
+}
+
+/**
  * POST /admin/settings
  * Enregistre les paramètres de l'application.
  * Les champs laissés vides conservent leur valeur actuelle (sauf si
@@ -1398,34 +1415,25 @@ router.post('/settings', settingsValidation, async (req, res) => {
     // discord_enabled : checkbox → '1' si cochée, '0' sinon
     const discord_enabled = req.body.discord_enabled === '1' ? '1' : '0';
 
-    // Champs sensibles Discord : un champ vide signifie une suppression explicite
-    // de la valeur stockée (mise a NULL en base).
-    const discord_bot_token = (req.body.discord_bot_token || '').trim() || null;
-    const discord_client_secret = (req.body.discord_client_secret || '').trim() || null;
+    // Champs sensibles Discord : si le champ est laissé vide, on conserve la
+    // valeur existante en base. Pour effacer explicitement la valeur, l'admin
+    // doit cocher la case "Réinitialiser" correspondante.
+    const discord_bot_token = resolveSecretFieldValue(
+      (req.body.discord_bot_token || '').trim(),
+      req.body.clear_discord_bot_token === '1',
+      currentSettings.discord_bot_token
+    );
+
+    const discord_client_secret = resolveSecretFieldValue(
+      (req.body.discord_client_secret || '').trim(),
+      req.body.clear_discord_client_secret === '1',
+      currentSettings.discord_client_secret
+    );
 
     const discord_channel_news = (req.body.discord_channel_news || '').trim() || null;
     // Contrairement au token/secret, un Client ID vide signifie une volonté explicite
     // de retirer la configuration OAuth côté base.
     const discord_client_id    = (req.body.discord_client_id || '').trim() || null;
-
-    // Sécurité OAuth : impossible d'activer Discord si les identifiants OAuth
-    // ne sont pas configurés (Client ID + Client Secret).
-    if (discord_enabled === '1' && (!discord_client_id || !discord_client_secret)) {
-      return res.status(422).render('admin/settings', {
-        title:     'Paramètres de l\'application',
-        pageClass: 'page-admin',
-        settings: {
-          ...currentSettings,
-          ...req.body,
-          discord_enabled,
-          discord_client_id,
-        },
-        errors: [{
-          msg: 'Impossible d\'activer Discord OAuth2 : renseignez le Client ID et le Client Secret.'
-        }],
-        appUrl:    (process.env.APP_URL || '').replace(/\/$/, ''),
-      });
-    }
 
     // Clé publique Discord pour la vérification des interactions (slash commands)
     const discord_application_public_key = (req.body.discord_application_public_key || '').trim() || null;

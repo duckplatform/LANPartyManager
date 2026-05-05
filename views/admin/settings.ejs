@@ -265,7 +265,7 @@
                   />
                   <span class="form-hint">
                     Token du bot Discord utilisé pour envoyer des notifications.
-                    Laissez vide pour supprimer la valeur actuelle.
+                    Laissez vide pour conserver la valeur actuelle.
                     <% if (settings && settings.discord_bot_token) { %>
                       <span style="color: var(--color-success);">
                         <i class="fas fa-check-circle"></i> Token configuré.
@@ -276,6 +276,12 @@
                       </span>
                     <% } %>
                   </span>
+                  <% if (settings && settings.discord_bot_token) { %>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: var(--space-xs); font-size: 0.85rem; cursor: pointer; color: var(--color-danger);">
+                      <input type="checkbox" name="clear_discord_bot_token" id="clear_discord_bot_token" value="1" />
+                      Réinitialiser le token (effacer la valeur actuelle)
+                    </label>
+                  <% } %>
                 </div>
 
                 <!-- Canal actualités -->
@@ -308,10 +314,16 @@
                   <i class="fas fa-key"></i> Connexion OAuth2 Discord
                 </h3>
                 <p class="form-hint" style="margin-bottom: var(--space-md);">
-                  Permet aux membres de se connecter via leur compte Discord.
-                  Nécessite une application Discord créée dans le
+                  Optionnel — permet aux membres de se connecter via leur compte Discord.
+                  Non requis pour les notifications bot. Nécessite une application Discord créée dans le
                   <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer">Developer Portal</a>.
                 </p>
+                <% if (settings && settings.discord_enabled === '1' && (!settings.discord_client_id || !settings.discord_client_secret)) { %>
+                  <div style="background: var(--color-warning-bg, #fff8e1); border: 1px solid var(--color-warning, #f0b429); border-radius: var(--radius-sm, 4px); padding: var(--space-sm); margin-bottom: var(--space-md); font-size: 0.875rem;">
+                    <i class="fas fa-exclamation-triangle" style="color: var(--color-warning, #f0b429);"></i>
+                    La connexion via Discord (OAuth2) est désactivée — renseignez le Client ID et le Client Secret pour l'activer.
+                  </div>
+                <% } %>
 
                 <!-- Client ID -->
                 <div class="form-group">
@@ -353,10 +365,11 @@
                     placeholder="<%= (settings && settings.discord_client_secret) ? '••••••••••••••••••••••••••••••••' : 'Entrez le Client Secret…' %>"
                     maxlength="100"
                     autocomplete="off"
+                    data-configured="<%= (settings && settings.discord_client_secret) ? 'true' : 'false' %>"
                   />
                   <span class="form-hint">
                     Secret de l'application Discord (OAuth2 → Client Information → Client Secret).
-                    Laissez vide pour supprimer la valeur actuelle.
+                    Laissez vide pour conserver la valeur actuelle.
                     <% if (settings && settings.discord_client_secret) { %>
                       <span style="color: var(--color-success);">
                         <i class="fas fa-check-circle"></i> Secret configuré.
@@ -367,6 +380,12 @@
                       </span>
                     <% } %>
                   </span>
+                  <% if (settings && settings.discord_client_secret) { %>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: var(--space-xs); font-size: 0.85rem; cursor: pointer; color: var(--color-danger);">
+                      <input type="checkbox" name="clear_discord_client_secret" id="clear_discord_client_secret" value="1" />
+                      Réinitialiser le secret (effacer la valeur actuelle)
+                    </label>
+                  <% } %>
                 </div>
 
                 <hr style="border-color: var(--color-border); margin: var(--space-md) 0;" />
@@ -532,11 +551,13 @@
           settingsForm.addEventListener('submit', function (event) {
             const wantsDiscordEnabled = discordEnabledInput.checked;
             const hasClientId = clientIdInput.value.trim().length > 0;
-            const hasClientSecret = clientSecretInput.value.trim().length > 0;
+            // Champ vide = conserver la valeur en base si elle est déjà configurée
+            const secretAlreadyConfigured = clientSecretInput.dataset.configured === 'true';
+            const hasClientSecret = clientSecretInput.value.trim().length > 0 || secretAlreadyConfigured;
 
             if (wantsDiscordEnabled && (!hasClientId || !hasClientSecret)) {
               event.preventDefault();
-              alert('Pour activer Discord OAuth2, renseignez le Client ID et le Client Secret.');
+              alert('Pour activer la connexion Discord (OAuth2), renseignez le Client ID et le Client Secret.');
               (hasClientId ? clientSecretInput : clientIdInput).focus();
             }
           });
