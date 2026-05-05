@@ -261,7 +261,7 @@ async function notifyEventCreated(event) {
   if (isEventNotificationsDisabled(event)) return;
 
   const channelId = await resolveBattleChannel(event);
-  const eventUrl = config.appUrl ? `${config.appUrl}/` : null;
+  const eventUrl = config.appUrl ? `${config.appUrl}/events/${event.id}` : null;
 
   const embed = {
     title:       `📅 Nouvel événement : ${event.nom}`,
@@ -298,7 +298,7 @@ async function notifyEventStarted(event) {
   if (isEventNotificationsDisabled(event)) return;
 
   const channelId = await resolveBattleChannel(event);
-  const eventUrl = config.appUrl ? `${config.appUrl}/` : null;
+  const eventUrl = config.appUrl ? `${config.appUrl}/events/${event.id}` : null;
 
   const embed = {
     title:       `🟢 C'est parti ! ${event.nom}`,
@@ -367,7 +367,65 @@ async function notifyEventEnded(event, rankings = []) {
   );
 }
 
-// ─── Notifications actualités ──────────────────────────────────────────────
+// ─── Notifications inscriptions ────────────────────────────────────────────
+
+/**
+ * Notifie l'inscription d'un utilisateur à un événement.
+ * @param {{ event: Object, user: Object, registrationCount?: number }} payload
+ * @returns {Promise<void>}
+ */
+async function notifyUserRegistered({ event, user, registrationCount = 0 }) {
+  const config = await getConfig();
+  if (!config.discordEnabled) return;
+  if (isEventNotificationsDisabled(event)) return;
+
+  const channelId = await resolveBattleChannel(event);
+  const eventUrl = config.appUrl ? `${config.appUrl}/events/${event.id}` : null;
+
+  const embed = {
+    title:       `✅ Nouvelle inscription — ${event.nom}`,
+    description: `**${user.pseudo}** vient de s'inscrire à l'événement !`,
+    color:       0x57F287, // Vert Discord
+    fields: [
+      { name: '👤 Participant', value: user.pseudo,                           inline: true },
+      { name: '👥 Inscrits',   value: `${registrationCount} participant(s)`, inline: true },
+      { name: '📍 Lieu',       value: event.lieu,                            inline: true },
+      { name: '🕐 Date',       value: formatDate(event.date_heure),          inline: true },
+    ],
+    footer: { text: 'LANPartyManager' },
+    timestamp: new Date().toISOString(),
+  };
+
+  if (eventUrl) {
+    embed.url = eventUrl;
+  }
+
+  await sendEmbed(channelId, embed);
+}
+
+/**
+ * Notifie l'inscription d'un utilisateur à un événement (fire-and-forget).
+ * Charge l'utilisateur et le décompte depuis la base de données, puis envoie
+ * la notification sans bloquer le flux de la requête HTTP.
+ * Les erreurs sont absorbées et journalisées.
+ *
+ * @param {number} eventId  — ID de l'événement
+ * @param {number} userId   — ID de l'utilisateur qui vient de s'inscrire
+ * @param {Object} event    — Objet événement déjà chargé (évite une requête BDD)
+ */
+function notifyUserRegisteredAsync(eventId, userId, event) {
+  const User              = require('../models/User');
+  const EventRegistration = require('../models/EventRegistration');
+
+  User.findById(userId).then(async user => {
+    if (!user) return;
+    const count = await EventRegistration.countByEvent(eventId);
+    await notifyUserRegistered({ event, user, registrationCount: count });
+  }).catch(err => {
+    logger.error(`[DISCORD] Erreur notification inscription user #${userId} → event #${eventId} :`, err);
+  });
+}
+
 
 /**
  * Notifie la publication d'une nouvelle actualité.
@@ -635,6 +693,8 @@ module.exports = {
   notifyEventCreated,
   notifyEventStarted,
   notifyEventEnded,
+  notifyUserRegistered,
+  notifyUserRegisteredAsync,
   notifyNewsPublished,
   notifyBattleCreated,
   notifyBattlePlanned,

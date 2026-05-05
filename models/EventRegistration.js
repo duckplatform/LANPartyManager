@@ -133,7 +133,12 @@ const EventRegistration = {
       'SELECT COUNT(*) AS total FROM event_registrations WHERE event_id = ?',
       [eventId]
     );
-    return rows[0].total;
+    // Defensive fallback: some drivers/proxies can return an empty rowset
+    // on transient failures; keep the app operational by returning 0.
+    if (!Array.isArray(rows) || !rows[0] || typeof rows[0].total === 'undefined') {
+      return 0;
+    }
+    return Number(rows[0].total) || 0;
   },
 
   /**

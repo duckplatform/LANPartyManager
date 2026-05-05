@@ -11,6 +11,7 @@ const QRCode    = require('qrcode');
 const User              = require('../models/User');
 const Event             = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
+const discord           = require('../services/discord');
 const logger    = require('../config/logger');
 const { requireAuth } = require('../middleware/auth');
 
@@ -219,6 +220,9 @@ router.post('/events/:id/register', requireAuth, async (req, res) => {
     await EventRegistration.create(eventId, req.session.userId);
     logger.info(`[PROFILE] Utilisateur #${req.session.userId} s'est inscrit à l'événement #${eventId}`);
     req.flash('success', `Vous êtes inscrit à l'événement "${event.nom}" !`);
+
+    // Notification Discord (fire-and-forget)
+    discord.notifyUserRegisteredAsync(eventId, req.session.userId, event);
   } catch (err) {
     logger.error(`[PROFILE] Erreur inscription événement #${eventId} :`, err);
     req.flash('error', 'Erreur lors de l\'inscription à l\'événement.');

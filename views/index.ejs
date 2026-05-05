@@ -101,20 +101,24 @@
             </div>
           <% } else { %>
             <p class="event-registrations-closed">
-              <i class="fas fa-lock"></i> Les inscriptions sont closes.
+              <i class="fas fa-lock"></i> Inscriptions fermées
             </p>
           <% } %>
         </div>
 
         <!-- Actions -->
         <div class="event-highlight-actions">
-          <% if (!currentUser) { %>
-            <a href="/auth/register" class="btn btn--primary">
-              <i class="fas fa-user-plus"></i> Créer un compte pour s'inscrire
+          <% if (!currentUser && registrationOpen) { %>
+            <a href="/auth/login?redirect=/events/<%= activeEvent.id %>" class="btn btn--primary">
+              <i class="fas fa-right-to-bracket"></i> Se connecter pour s'inscrire
             </a>
+          <% } else if (!currentUser) { %>
+            <p class="text-muted">
+              <i class="fas fa-lock"></i> Inscriptions fermées
+            </p>
           <% } else if (isRegistered) { %>
             <div class="event-registered-badge">
-              <i class="fas fa-circle-check"></i> Vous êtes inscrit !
+              <i class="fas fa-circle-check"></i> Inscription confirmée
             </div>
             <% if (registrationOpen) { %>
               <form action="/profile/events/<%= activeEvent.id %>/unregister" method="POST">
@@ -129,12 +133,12 @@
             <form action="/profile/events/<%= activeEvent.id %>/register" method="POST">
               <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
               <button type="submit" class="btn btn--primary">
-                <i class="fas fa-user-plus"></i> S'inscrire à l'événement
+                <i class="fas fa-user-plus"></i> S'inscrire
               </button>
             </form>
           <% } else { %>
             <p class="text-muted">
-              <i class="fas fa-lock"></i> Inscriptions closes.
+              <i class="fas fa-lock"></i> Inscriptions fermées
             </p>
           <% } %>
         </div>
@@ -157,7 +161,7 @@
   function tick() {
     const diff = deadline - Date.now();
     if (diff <= 0) {
-      el.innerHTML = '<span class="event-registrations-closed"><i class="fas fa-lock"></i> Inscriptions closes</span>';
+      el.innerHTML = '<span class="event-registrations-closed"><i class="fas fa-lock"></i> Inscriptions fermées</span>';
       return;
     }
     const days    = Math.floor(diff / 86400000);

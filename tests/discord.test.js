@@ -90,7 +90,7 @@ describe('Discord Service', function () {
       expect(lieuField.value).to.equal('Centre culturel');
     });
 
-    it('doit inclure l\'URL de l\'application dans l\'embed', async function () {
+    it('doit inclure l\'URL de l\'événement dans l\'embed', async function () {
       const event = {
         id:         3,
         nom:        'LAN Test',
@@ -102,7 +102,7 @@ describe('Discord Service', function () {
       await discord.notifyEventCreated(event);
 
       const embed = postCalls[0].options.body.embeds[0];
-      expect(embed.url).to.equal('https://lan.example.com/');
+      expect(embed.url).to.equal('https://lan.example.com/events/3');
     });
 
   });
@@ -497,6 +497,107 @@ describe('Discord Service', function () {
       };
       await discord.notifyBattleCreated({ event, battle });
       expect(postCalls).to.have.length(0);
+    });
+
+  });
+
+  // ── notifyUserRegistered ───────────────────────────────────────────────
+
+  describe('notifyUserRegistered()', function () {
+
+    const eventFixture = {
+      id:         10,
+      nom:        'LAN Printemps 2026',
+      date_heure: new Date('2026-04-10T18:00:00Z'),
+      lieu:       'Salle des fêtes',
+      statut:     'planifie',
+    };
+
+    const userFixture = {
+      id:     42,
+      pseudo: 'GamerXYZ',
+      nom:    'Dupont',
+      prenom: 'Jean',
+    };
+
+    it('doit appeler REST.post avec un embed vert contenant le pseudo', async function () {
+      await discord.notifyUserRegistered({
+        event:             eventFixture,
+        user:              userFixture,
+        registrationCount: 5,
+      });
+
+      expect(postCalls).to.have.length(1);
+      const embed = postCalls[0].options.body.embeds[0];
+      expect(embed.color).to.equal(0x57F287);
+      expect(embed.title).to.include(eventFixture.nom);
+      expect(embed.description).to.include('GamerXYZ');
+    });
+
+    it('doit inclure le participant et le nombre d\'inscrits dans les champs', async function () {
+      await discord.notifyUserRegistered({
+        event:             eventFixture,
+        user:              userFixture,
+        registrationCount: 12,
+      });
+
+      const embed = postCalls[0].options.body.embeds[0];
+      const participantField = embed.fields.find(f => f.name === '👤 Participant');
+      const inscritField     = embed.fields.find(f => f.name === '👥 Inscrits');
+      expect(participantField).to.exist;
+      expect(participantField.value).to.equal('GamerXYZ');
+      expect(inscritField).to.exist;
+      expect(inscritField.value).to.include('12');
+    });
+
+    it('doit envoyer sur le canal de l\'événement', async function () {
+      await discord.notifyUserRegistered({
+        event: { ...eventFixture, discord_channel_id: '333333333333333333' },
+        user:  userFixture,
+        registrationCount: 1,
+      });
+
+      expect(postCalls[0].route).to.include('333333333333333333');
+    });
+
+    it('doit fallback sur DISCORD_CHANNEL_EVENTS si le canal de l\'événement est absent', async function () {
+      await discord.notifyUserRegistered({
+        event: { ...eventFixture, discord_channel_id: '' },
+        user:  userFixture,
+        registrationCount: 1,
+      });
+
+      expect(postCalls[0].route).to.include('111111111111111111');
+    });
+
+    it('doit inclure l\'URL de la page de l\'événement dans l\'embed', async function () {
+      await discord.notifyUserRegistered({
+        event:             eventFixture,
+        user:              userFixture,
+        registrationCount: 3,
+      });
+
+      const embed = postCalls[0].options.body.embeds[0];
+      expect(embed.url).to.equal(`https://lan.example.com/events/${eventFixture.id}`);
+    });
+
+    it('ne doit pas envoyer si discord_notifications_enabled = 0', async function () {
+      await discord.notifyUserRegistered({
+        event: { ...eventFixture, discord_notifications_enabled: 0 },
+        user:  userFixture,
+        registrationCount: 1,
+      });
+
+      expect(postCalls).to.have.length(0);
+    });
+
+    it('ne doit pas lancer d\'erreur si registrationCount est absent', async function () {
+      await discord.notifyUserRegistered({ event: eventFixture, user: userFixture });
+
+      expect(postCalls).to.have.length(1);
+      const embed = postCalls[0].options.body.embeds[0];
+      const inscritField = embed.fields.find(f => f.name === '👥 Inscrits');
+      expect(inscritField.value).to.include('0');
     });
 
   });
