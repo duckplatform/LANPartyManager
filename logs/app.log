@@ -27,3 +27,91 @@
 [2026-05-05 02:42:48] INFO: [DB] Base de donnees disponible, reprise du trafic.
 [2026-05-05 06:00:45] INFO: [SERVER] LANPartyManager demarre sur le port 3000 (development)
 [2026-05-05 06:00:45] INFO: [DB] Base de donnees disponible, reprise du trafic.
+[2026-05-05 07:19:12] INFO: [SERVER] LANPartyManager demarre sur le port 3000 (development)
+[2026-05-05 07:19:12] INFO: [DB] Base de donnees disponible, reprise du trafic.
+[2026-05-05 07:19:12] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] ERROR: Error: bad public key size
+    at nacl.sign.detached.verify (/home/runner/work/LANPartyManager/LANPartyManager/node_modules/tweetnacl/nacl-fast.js:2301:11)
+    at Object.verifySignature (/home/runner/work/LANPartyManager/LANPartyManager/services/discordCommands.js:125:40)
+    at Context.<anonymous> (/home/runner/work/LANPartyManager/LANPartyManager/tests/discord_commands.test.js:51:30)
+    at callFn (/home/runner/work/LANPartyManager/LANPartyManager/node_modules/mocha/lib/runnable.js:360:23)
+    at Test.run (/home/runner/work/LANPartyManager/LANPartyManager/node_modules/mocha/lib/runnable.js:348:7)
+    at Runner.runTest (/home/runner/work/LANPartyManager/LANPartyManager/node_modules/mocha/lib/runner.js:809:10)
+    at /home/runner/work/LANPartyManager/LANPartyManager/node_modules/mocha/lib/runner.js:959:12
+    at next (/home/runner/work/LANPartyManager/LANPartyManager/node_modules/mocha/lib/runner.js:724:14)
+    at /home/runner/work/LANPartyManager/LANPartyManager/node_modules/mocha/lib/runner.js:734:7
+    at next (/home/runner/work/LANPartyManager/LANPartyManager/node_modules/mocha/lib/runner.js:595:14)
+    at Immediate._onImmediate (/home/runner/work/LANPartyManager/LANPartyManager/node_modules/mocha/lib/runner.js:702:5)
+    at process.processImmediate (node:internal/timers:483:21)
+[2026-05-05 07:19:13] WARN: [DISCORD_INTERACTIONS] FAILED - Signature doesn't match
+[2026-05-05 07:19:13] WARN: [DISCORD_INTERACTIONS] FAILED - Signature doesn't match
+[2026-05-05 07:19:13] WARN: [DISCORD_COMMANDS] Type d'interaction non géré : 999
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #111111111111111111
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #111111111111111111
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #111111111111111111
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #111111111111111111
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #111111111111111111
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #333333333333333333
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #111111111111111111
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #111111111111111111
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #333333333333333333
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #222222222222222222
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #222222222222222222
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #222222222222222222
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #222222222222222222
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #222222222222222222
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #333333333333333333
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #111111111111111111
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #333333333333333333
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #333333333333333333
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #333333333333333333
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #333333333333333333
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] WARN: [DISCORD] Token bot non configuré — notification ignorée.
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] WARN: [DISCORD] ID de canal non configuré — notification ignorée.
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] ERROR: Error: Discord API error
+    at fakeRest.post (/home/runner/work/LANPartyManager/LANPartyManager/tests/discord.test.js:413:43)
+    at sendEmbed (/home/runner/work/LANPartyManager/LANPartyManager/services/discord.js:215:16)
+    at async Object.notifyEventCreated (/home/runner/work/LANPartyManager/LANPartyManager/services/discord.js:274:3)
+    at async Context.<anonymous> (/home/runner/work/LANPartyManager/LANPartyManager/tests/discord.test.js:417:7)
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #111111111111111111
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [DISCORD] Message envoyé sur le canal #111111111111111111
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] WARN: [APP_SETTINGS] Impossible de lire app_settings (BDD indisponible ?) :
+[2026-05-05 07:19:13] INFO: [ADMIN] Utilisateur #1 consulte le badge du membre #7
+[2026-05-05 07:19:13] INFO: [ADMIN] Utilisateur #1 consulte le badge du membre #8
+[2026-05-05 07:19:13] INFO: [BATTLES] Nouvelle rencontre #77 créée par #99 — jeu: Tekken 8 — joueurs: 21,22
+[2026-05-05 07:19:13] INFO: [BATTLES] Nouvelle rencontre #77 créée par #99 — jeu: Tekken 8 — joueurs: 21,22
+[2026-05-05 07:19:13] INFO: [BATTLES] Rencontre #12 terminée par #99 — score: 3-0 — gagnants: 10,11
+[2026-05-05 07:19:13] WARN: [AUTH DISCORD] Discord non configuré ou désactivé — OAuth Discord indisponible.
+[2026-05-05 07:19:13] INFO: [AUTH DISCORD] Initiation OAuth - redirectUri=https://lanparty.example.com/auth/discord/callback, clientId=test-client-id
+[2026-05-05 07:19:13] WARN: [AUTH DISCORD] Erreur OAuth Discord renvoyée par le serveur: access_denied
+[2026-05-05 07:19:13] WARN: [AUTH DISCORD] State OAuth invalide (possible tentative CSRF).
