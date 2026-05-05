@@ -265,7 +265,7 @@
                   />
                   <span class="form-hint">
                     Token du bot Discord utilisé pour envoyer des notifications.
-                    Laissez vide pour supprimer la valeur actuelle.
+                    Laissez vide pour conserver la valeur actuelle.
                     <% if (settings && settings.discord_bot_token) { %>
                       <span style="color: var(--color-success);">
                         <i class="fas fa-check-circle"></i> Token configuré.
@@ -276,6 +276,12 @@
                       </span>
                     <% } %>
                   </span>
+                  <% if (settings && settings.discord_bot_token) { %>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: var(--space-xs); font-size: 0.85rem; cursor: pointer; color: var(--color-danger);">
+                      <input type="checkbox" name="clear_discord_bot_token" id="clear_discord_bot_token" value="1" />
+                      Réinitialiser le token (effacer la valeur actuelle)
+                    </label>
+                  <% } %>
                 </div>
 
                 <!-- Canal actualités -->
@@ -356,7 +362,7 @@
                   />
                   <span class="form-hint">
                     Secret de l'application Discord (OAuth2 → Client Information → Client Secret).
-                    Laissez vide pour supprimer la valeur actuelle.
+                    Laissez vide pour conserver la valeur actuelle.
                     <% if (settings && settings.discord_client_secret) { %>
                       <span style="color: var(--color-success);">
                         <i class="fas fa-check-circle"></i> Secret configuré.
@@ -367,6 +373,12 @@
                       </span>
                     <% } %>
                   </span>
+                  <% if (settings && settings.discord_client_secret) { %>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: var(--space-xs); font-size: 0.85rem; cursor: pointer; color: var(--color-danger);">
+                      <input type="checkbox" name="clear_discord_client_secret" id="clear_discord_client_secret" value="1" />
+                      Réinitialiser le secret (effacer la valeur actuelle)
+                    </label>
+                  <% } %>
                 </div>
 
                 <hr style="border-color: var(--color-border); margin: var(--space-md) 0;" />
