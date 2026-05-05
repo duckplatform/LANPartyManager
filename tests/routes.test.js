@@ -265,6 +265,22 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.status).to.equal(200);
       expect(res.text).to.include('invalide');
     });
+
+    it('doit rejeter une requête POST avec _csrf sous forme de tableau (protection confusion de type)', async function () {
+      // Un attaquant peut tenter d'envoyer _csrf[]=val1&_csrf[]=val2 pour créer un tableau.
+      // Le middleware CSRF doit ignorer les tableaux et invalider la requête.
+      const loginPage = await request(app).get('/auth/login');
+      const cookie    = loginPage.headers['set-cookie'];
+
+      const res = await request(app)
+        .post('/auth/login')
+        .set('Cookie', cookie)
+        .set('Content-Type', 'application/x-www-form-urlencoded')
+        .send('_csrf[]=tampered1&_csrf[]=tampered2&email=test@test.com&password=test');
+
+      // La requête doit être rejetée (400 CSRF invalide ou redirection)
+      expect([302, 400, 403]).to.include(res.status);
+    });
   });
 
   // ── POST /auth/register - validation ──────────────────────────────────

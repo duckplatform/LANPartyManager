@@ -373,9 +373,12 @@ async function notifyNewsPublished(announcement) {
   const newsUrl = appUrl ? `${appUrl}/news/${announcement.id}` : null;
 
   // Nettoie le contenu Markdown pour le résumé Discord (max 300 caractères) :
-  //   1. Convertit les liens [texte](url) en conservant uniquement le texte
-  //   2. Supprime les symboles Markdown restants
-  let description = (announcement.contenu || '')
+  //   1. Tronque à MAX_CONTENT_LEN avant tout traitement regex pour prévenir le ReDoS
+  //      sur des données utilisateur non contrôlées (contenu de l'annonce)
+  //   2. Convertit les liens [texte](url) en conservant uniquement le texte
+  //   3. Supprime les symboles Markdown restants
+  const MAX_CONTENT_LEN = 10000;
+  let description = (announcement.contenu || '').slice(0, MAX_CONTENT_LEN)
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // [texte](url) → texte
     .replace(/[#*_~`>!]/g, '')               // titres, gras, italic, barré, code, blockquote, images
     .replace(/\s+/g, ' ')                    // normalise les espaces multiples

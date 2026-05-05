@@ -97,6 +97,25 @@ describe('Discord Commandes Slash', function () {
       expect(discordCommands.verifySignature(body, signature.toString('hex'), timestamp, pubKeyHex)).to.be.false;
     });
 
+    // ── Protection contre la confusion de type (type confusion through parameter tampering) ──
+
+    it('doit retourner false si signature est un tableau (confusion de type)', function () {
+      // En Node.js HTTP, un en-tête envoyé plusieurs fois peut théoriquement devenir un tableau.
+      // La protection doit garantir que typeof signature !== 'string' → false.
+      const body = Buffer.from('{"type":1}');
+      expect(discordCommands.verifySignature(body, ['sig1', 'sig2'], '1234', 'a'.repeat(64))).to.be.false;
+    });
+
+    it('doit retourner false si timestamp est un tableau (confusion de type)', function () {
+      const body = Buffer.from('{"type":1}');
+      expect(discordCommands.verifySignature(body, 'a'.repeat(128), ['ts1', 'ts2'], 'b'.repeat(64))).to.be.false;
+    });
+
+    it('doit retourner false si rawBody est une chaîne (pas un Buffer)', function () {
+      // express.raw() fournit un Buffer ; un string ne doit pas passer la vérification de type.
+      expect(discordCommands.verifySignature('{"type":1}', 'a'.repeat(128), '1234', 'b'.repeat(64))).to.be.false;
+    });
+
   });
 
   // ── handleInteraction — PING ───────────────────────────────────────────────

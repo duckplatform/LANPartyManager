@@ -114,11 +114,26 @@ const {
   generateToken: generateCsrfToken,
   csrfSynchronisedProtection,
 } = csrfSync({
-  // Lit le token depuis le corps de la requête ou les headers
-  getTokenFromRequest: (req) => req.body._csrf || req.headers['x-csrf-token'],
+  // Lit le token depuis le corps de la requête ou les headers.
+  // Protection contre la confusion de type : req.body._csrf peut être un tableau
+  // si l'attaquant envoie _csrf[]=val1&_csrf[]=val2 (extended: true).
+  // On s'assure explicitement que le token est bien une chaîne de caractères.
+  getTokenFromRequest: (req) => {
+    const fromBody   = req.body && typeof req.body._csrf === 'string'
+      ? req.body._csrf
+      : undefined;
+    const fromHeader = typeof req.headers['x-csrf-token'] === 'string'
+      ? req.headers['x-csrf-token']
+      : undefined;
+    return fromBody || fromHeader;
+  },
 });
 
-// Applique la vérification CSRF sur les routes protégées par session/cookie.
+// Applique la vérification CSRF sur toutes les routes protégées par session/cookie.
+// csrf-sync valide uniquement les méthodes non-sûres (POST/PUT/PATCH/DELETE).
+// Les requêtes GET/HEAD/OPTIONS sont automatiquement exemptées.
+// L'endpoint /discord/interactions est monté avant ce middleware et utilise
+// la vérification de signature Ed25519 à la place du CSRF.
 app.use(csrfSynchronisedProtection);
 
 // Rend csrfToken() disponible dans les routes via req.csrfToken()
@@ -130,12 +145,6 @@ app.use((req, res, next) => {
 // ─── Rate limiting global ──────────────────────────────────────────────────
 
 app.use(globalLimiter);
-
-// ─── Protection CSRF globale ───────────────────────────────────────────────
-// csrf-sync valide uniquement les méthodes non-sûres (POST/PUT/PATCH/DELETE)
-// Les requêtes GET/HEAD/OPTIONS sont automatiquement exemptées
-
-app.use(csrfSynchronisedProtection);
 
 // ─── Injection des variables locales dans les vues ────────────────────────
 
