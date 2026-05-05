@@ -34,8 +34,8 @@ const DISCORD_SCOPES      = 'identify email';
  * @returns {string}
  */
 function getDiscordRedirectUri() {
-  // Fallback sur https://scaling-space-goldfish-54vqj6w7vj2747-3000.app.github.dev pour le dev local
-  const appUrl = (process.env.APP_URL || 'https://scaling-space-goldfish-54vqj6w7vj2747-3000.app.github.dev').replace(/\/$/, '');
+  // Fallback générique localhost pour le dev local
+  const appUrl = (process.env.APP_URL || 'http://localhost:3000').replace(/\/$/, '');
   return appUrl ? `${appUrl}/auth/discord/callback` : '';
 }
 

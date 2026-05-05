@@ -60,7 +60,7 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.text).to.include('LANPartyManager');
     });
 
-    it('doit retourner 503 si la base de donnees est indisponible', async function () {
+    it('doit retourner 503 si la base de données est indisponible', async function () {
       app.locals.databaseReady = false;
 
       const res = await request(app).get('/');
@@ -359,7 +359,7 @@ describe('Routes - Tests d\'intégration', function () {
         user,
         qrDataUrl: 'data:image/png;base64,abc',
         backUrl: '/admin',
-        backLabel: 'Retour a l\'administration',
+        backLabel: 'Retour à l\'administration',
       });
     });
 
@@ -424,7 +424,7 @@ describe('Routes - Tests d\'intégration', function () {
       sinon.restore();
     });
 
-    it('doit refuser un joueur non inscrit a l\'evenement', async function () {
+    it('doit refuser un joueur non inscrit à l\'événement', async function () {
       const handler = getRouteHandler(battlesRouter, 'post', '/events/:id/store', 2);
       const req = {
         params: { id: '3' },
@@ -459,7 +459,7 @@ describe('Routes - Tests d\'intégration', function () {
       expect(registrationIsRegisteredStub.firstCall.args).to.deep.equal([3, 10]);
       expect(registrationIsRegisteredStub.secondCall.args).to.deep.equal([3, 11]);
       expect(battleCreateStub.notCalled).to.be.true;
-      expect(req.flash.calledOnceWithExactly('error', "Le joueur Player2 n'est pas inscrit a cet evenement.")).to.be.true;
+      expect(req.flash.calledOnceWithExactly('error', "Le joueur Player2 n'est pas inscrit à cet événement.")).to.be.true;
       expect(res.redirect.calledOnceWithExactly('/battles/events/3/create')).to.be.true;
     });
 
