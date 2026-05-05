@@ -428,7 +428,7 @@ router.post(
 
         const isRegistered = await EventRegistration.isRegistered(eventId, user.id);
         if (!isRegistered) {
-          req.flash('error', `Le joueur ${user.pseudo} n'est pas inscrit a cet evenement.`);
+          req.flash('error', `Le joueur ${user.pseudo} n'est pas inscrit à cet événement.`);
           return res.redirect(`/battles/events/${eventId}/create`);
         }
 

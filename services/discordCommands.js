@@ -388,7 +388,7 @@ async function handleStatistiques(discordUserId) {
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
       embeds: [embed],
-      flags:  64, // EPHEMERAL — visible uniquement par l'auteur
+      flags:  EPHEMERAL_FLAG, // EPHEMERAL — visible uniquement par l'auteur
     },
   };
 }
@@ -508,7 +508,7 @@ async function handleInteraction(interaction) {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
               content: `❓ Commande inconnue : /${commandName}`,
-              flags:   64,
+              flags:   EPHEMERAL_FLAG,
             },
           };
       }
@@ -518,7 +518,7 @@ async function handleInteraction(interaction) {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
           content: '❌ Une erreur interne est survenue. Veuillez réessayer plus tard.',
-          flags:   64,
+          flags:   EPHEMERAL_FLAG,
         },
       };
     }
@@ -530,7 +530,7 @@ async function handleInteraction(interaction) {
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
       content: '❌ Type d\'interaction non supporté.',
-      flags:   64,
+      flags:   EPHEMERAL_FLAG,
     },
   };
 }

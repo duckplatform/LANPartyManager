@@ -236,7 +236,7 @@ async function refreshDatabaseState() {
     await testConnection();
 
     if (!app.locals.databaseReady) {
-      logger.info('[DB] Base de donnees disponible, reprise du trafic.');
+      logger.info('[DB] Base de données disponible, reprise du trafic.');
     }
 
     app.locals.databaseReady = true;
@@ -244,7 +244,7 @@ async function refreshDatabaseState() {
   } catch (err) {
     app.locals.databaseReady = false;
     app.locals.databaseError = err;
-    logger.error(`[DB] Base de donnees indisponible : ${err.message}`);
+    logger.error(`[DB] Base de données indisponible : ${err.message}`);
     scheduleDatabaseRetry();
   }
 }
@@ -301,7 +301,7 @@ async function startServer() {
     await listenAsync();
     void refreshDatabaseState();
   } catch (err) {
-    logger.error(`[SERVER] Impossible de demarrer : ${err.message}`);
+    logger.error(`[SERVER] Impossible de démarrer : ${err.message}`);
     process.exit(1);
   }
 }

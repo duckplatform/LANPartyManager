@@ -113,7 +113,7 @@ router.get('/users/:id/badge', async (req, res) => {
       user,
       qrDataUrl,
       backUrl:   '/admin',
-      backLabel: 'Retour a l\'administration',
+      backLabel: 'Retour à l\'administration',
     });
   } catch (err) {
     logger.error(`[ADMIN] Erreur chargement badge utilisateur #${targetId} :`, err);
