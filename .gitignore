@@ -1,0 +1,28 @@
+# Dépendances Node.js
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Variables d'environnement
+.env
+.env.*
+
+# Fichiers de build / artefacts
+dist/
+build/
+
+# Éditeurs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Couverture de tests
+coverage/
+.nyc_output/

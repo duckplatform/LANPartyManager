@@ -57,8 +57,13 @@ router.post(
   // express.raw() capture le corps en Buffer (nécessaire pour la vérification Ed25519)
   express.raw({ type: 'application/json' }),
   async (req, res) => {
-    const signature = req.headers['x-signature-ed25519'];
-    const timestamp = req.headers['x-signature-timestamp'];
+    // Extraction explicite en string pour éviter la confusion de type :
+    // req.headers retourne string | string[] | undefined selon les implémentations.
+    // Si un attaquant envoie le même en-tête plusieurs fois, on rejette la valeur.
+    const sigHeader = req.headers['x-signature-ed25519'];
+    const tsHeader  = req.headers['x-signature-timestamp'];
+    const signature = typeof sigHeader === 'string' ? sigHeader : '';
+    const timestamp = typeof tsHeader  === 'string' ? tsHeader  : '';
     const rawBody   = req.body; // Buffer grâce à express.raw()
 
     logger.info(`[DISCORD_INTERACTIONS] Received interaction - IP: ${req.ip}, timestamp: ${timestamp}`);

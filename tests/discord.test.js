@@ -279,6 +279,25 @@ describe('Discord Service', function () {
       expect(embed.description).to.include('Pas de résumé disponible');
     });
 
+    it('doit tronquer le contenu dépassant MAX_CONTENT_LEN avant le traitement regex (protection ReDoS)', async function () {
+      // Un contenu de 15 000 caractères dépassant la limite de 10 000
+      // ne doit pas entraîner de temps d'exécution anormal (ReDoS).
+      // Le résumé final est borné à 300 caractères (+ éllipse) comme d'habitude.
+      const announcement = {
+        id:      99,
+        titre:   'Article très long',
+        contenu: 'B'.repeat(15000),
+      };
+
+      await discord.notifyNewsPublished(announcement);
+
+      const embed = postCalls[0].options.body.embeds[0];
+      const summary = embed.description.split('\n\n')[0];
+      // Résumé tronqué à 297 + '…'
+      expect(summary.length).to.equal(298);
+      expect(summary.endsWith('…')).to.be.true;
+    });
+
   });
 
   // ── Notifications rencontres ───────────────────────────────────────────
