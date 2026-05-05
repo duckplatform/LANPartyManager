@@ -334,7 +334,7 @@
         <div style="display:flex; flex-direction:column; gap:.5rem; align-items:flex-end;">
           <% if (!currentUser && event.registrationOpen) { %>
             <a href="/auth/login?redirect=/events/<%= event.id %>" class="btn btn--primary btn--sm">
-              <i class="fas fa-right-to-bracket"></i> Connexion pour s'inscrire
+              <i class="fas fa-right-to-bracket"></i> Se connecter pour s'inscrire
             </a>
           <% } else if (!currentUser) { %>
             <span class="text-muted" style="font-size:.85rem; display:flex; align-items:center; gap:.4rem;">
@@ -342,7 +342,7 @@
             </span>
           <% } else if (isRegistered) { %>
             <div class="event-registered-badge" style="font-size:.9rem;">
-              <i class="fas fa-circle-check"></i> Inscrit
+              <i class="fas fa-circle-check"></i> Inscription confirmée
             </div>
             <% if (event.registrationOpen) { %>
               <form action="/events/<%= event.id %>/unregister" method="POST" style="display:inline;">
@@ -705,7 +705,7 @@
       const diff = deadline - Date.now();
       if (diff <= 0) {
         el.closest('.event-countdown-wrap').innerHTML =
-          '<p style="font-size:.85rem;"><i class="fas fa-lock"></i> Inscriptions closes</p>';
+          '<p style="font-size:.85rem;"><i class="fas fa-lock"></i> Inscriptions fermées</p>';
         return;
       }
       nums[0].textContent = Math.floor(diff / 86400000);

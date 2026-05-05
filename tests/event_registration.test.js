@@ -152,6 +152,12 @@ describe('EventRegistration Model', function () {
       const count = await EventRegistration.countByEvent(10);
       expect(count).to.equal(12);
     });
+
+    it('doit retourner 0 si la réponse SQL est vide', async function () {
+      poolStub.execute.resolves([[]]);
+      const count = await EventRegistration.countByEvent(10);
+      expect(count).to.equal(0);
+    });
   });
 
   // ── isRegistrationOpen ────────────────────────────────────────────────────

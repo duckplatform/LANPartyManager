@@ -4,6 +4,18 @@
   .ranking-row-hover:hover {
     background-color: rgba(0,0,0,0.02);
   }
+  .ranking-row--gold {
+    background: linear-gradient(90deg, rgba(255,215,0,0.08) 0%, transparent 100%);
+  }
+  .ranking-row--silver {
+    background: linear-gradient(90deg, rgba(192,192,192,0.08) 0%, transparent 100%);
+  }
+  .ranking-row--bronze {
+    background: linear-gradient(90deg, rgba(205,127,50,0.08) 0%, transparent 100%);
+  }
+  .ranking-medal--gold { color: #FFD700; }
+  .ranking-medal--silver { color: #C0C0C0; }
+  .ranking-medal--bronze { color: #CD7F32; }
 </style>
 
 <div class="container" style="padding-top: var(--space-xl); padding-bottom: 8rem; min-height: 80vh; display: flex; flex-direction: column;">
@@ -102,7 +114,7 @@
             </div>
           <% } else if (!event.registrationOpen && !isLive) { %>
             <p class="event-registrations-closed" style="margin-top:var(--space-sm);font-size:.85rem;">
-              <i class="fas fa-lock"></i> Inscriptions closes
+              <i class="fas fa-lock"></i> Inscriptions fermées
             </p>
           <% } %>
 
@@ -119,28 +131,24 @@
                 <table style="width:100%; border-collapse:collapse; font-size:0.95rem;">
                   <% event.rankingTop.slice(0, 5).forEach(function(entry, idx) {
                     let medalIcon = '';
-                    let medalColor = '';
+                    let medalClass = '';
+                    let rowClass = '';
                     if (idx === 0) {
                       medalIcon = '🥇';
-                      medalColor = '#FFD700';
+                      medalClass = 'ranking-medal--gold';
+                      rowClass = 'ranking-row--gold';
                     } else if (idx === 1) {
                       medalIcon = '🥈';
-                      medalColor = '#C0C0C0';
+                      medalClass = 'ranking-medal--silver';
+                      rowClass = 'ranking-row--silver';
                     } else if (idx === 2) {
                       medalIcon = '🥉';
-                      medalColor = '#CD7F32';
+                      medalClass = 'ranking-medal--bronze';
+                      rowClass = 'ranking-row--bronze';
                     }
                   %>
-                    <tr class="ranking-row-hover" style="border-top: 1px solid rgba(0,0,0,0.05); transition: background-color 0.2s ease; <%
-                      if (idx === 0) { %>
-                        background: linear-gradient(90deg, rgba(255,215,0,0.08) 0%, transparent 100%);
-                      <% } else if (idx === 1) { %>
-                        background: linear-gradient(90deg, rgba(192,192,192,0.08) 0%, transparent 100%);
-                      <% } else if (idx === 2) { %>
-                        background: linear-gradient(90deg, rgba(205,127,50,0.08) 0%, transparent 100%);
-                      <% } %>
-                    ">>
-                      <td style="padding: var(--space-sm) var(--space-md); text-align:center; font-weight:bold; width:50px; color:<%= medalColor %>; font-size:1.2rem;">
+                    <tr class="ranking-row-hover <%= rowClass %>" style="border-top: 1px solid rgba(0,0,0,0.05); transition: background-color 0.2s ease;">
+                      <td class="<%= medalClass %>" style="padding: var(--space-sm) var(--space-md); text-align:center; font-weight:bold; width:50px; font-size:1.2rem;">
                         <% if (medalIcon) { %>
                           <%= medalIcon %>
                         <% } else { %>
@@ -175,13 +183,17 @@
 
         <!-- Actions -->
         <div class="event-card-actions">
-          <% if (!currentUser) { %>
+          <% if (!currentUser && event.registrationOpen) { %>
             <a href="/auth/login?redirect=/events" class="btn btn--primary btn--sm">
-              <i class="fas fa-right-to-bracket"></i> Connexion pour s'inscrire
+              <i class="fas fa-right-to-bracket"></i> Se connecter pour s'inscrire
             </a>
+          <% } else if (!currentUser) { %>
+            <span class="text-muted" style="font-size:.85rem; display:flex; align-items:center; gap:.4rem;">
+              <i class="fas fa-lock"></i> Inscriptions fermées
+            </span>
           <% } else if (event.isRegistered) { %>
             <div class="event-registered-badge" style="font-size:.9rem;">
-              <i class="fas fa-circle-check"></i> Inscrit
+              <i class="fas fa-circle-check"></i> Inscription confirmée
             </div>
             <% if (event.registrationOpen && !isLive) { %>
               <form action="/events/<%= event.id %>/unregister" method="POST" style="display:inline;">
@@ -217,7 +229,7 @@
 </div>
 
 <template id="event-registrations-closed-template">
-  <p class="event-registrations-closed" style="font-size:.85rem;"><i class="fas fa-lock"></i> Inscriptions closes</p>
+  <p class="event-registrations-closed" style="font-size:.85rem;"><i class="fas fa-lock"></i> Inscriptions fermées</p>
 </template>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -247,7 +259,7 @@
           const msg = document.createElement('p');
           msg.className = 'event-registrations-closed';
           msg.style.fontSize = '.85rem';
-          msg.innerHTML = '<i class="fas fa-lock"></i> Inscriptions closes';
+          msg.innerHTML = '<i class="fas fa-lock"></i> Inscriptions fermées';
           parent.appendChild(msg);
         }
         return;

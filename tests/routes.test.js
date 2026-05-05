@@ -119,6 +119,26 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.text).to.include('LAN Été 2026');
     });
 
+    it('ne doit pas afficher de CTA invité si l\'événement mis en avant est fermé', async function () {
+      const liveEvent = {
+        id:         3,
+        nom:        'LAN Fermée',
+        date_heure: new Date(Date.now() - 3600 * 1000),
+        lieu:       'Lille',
+        statut:     'en_cours',
+      };
+      poolStub.execute
+        .onCall(0).resolves([[]])
+        .onCall(1).resolves([[liveEvent]])
+        .onCall(2).resolves([[{ total: 12 }]])
+        .onCall(3).resolves([[]]);
+
+      const res = await request(app).get('/');
+
+      expect(res.status).to.equal(200);
+      expect(res.text).to.not.include('Créer un compte pour s\'inscrire');
+    });
+
     it('ne doit pas afficher la section événement quand aucun événement n\'existe', async function () {
       // Tous les appels retournent une liste vide (comportement par défaut)
       const res = await request(app).get('/');
@@ -187,6 +207,29 @@ describe('Routes - Tests d\'intégration', function () {
       expect(res.status).to.equal(200);
       expect(res.headers['content-type']).to.match(/text\/html/);
       expect(res.text).to.include('Actualités');
+    });
+  });
+
+  describe('GET /events', function () {
+    it('ne doit pas afficher de CTA invité pour un événement aux inscriptions fermées', async function () {
+      const closedEvent = {
+        id: 21,
+        nom: 'LAN Close List',
+        date_heure: new Date(Date.now() - 3600 * 1000),
+        lieu: 'Rennes',
+        statut: 'en_cours',
+        registrationCount: 8,
+      };
+
+      poolStub.execute
+        .onCall(0).resolves([[closedEvent]])
+        .onCall(1).resolves([[]]);
+
+      const res = await request(app).get('/events');
+
+      expect(res.status).to.equal(200);
+      expect(res.text).to.not.include('Connexion pour s\'inscrire');
+      expect(res.text).to.include('Inscriptions fermées');
     });
   });
 
