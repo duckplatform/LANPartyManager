@@ -21,6 +21,7 @@ dbModule.testConnection = async () => {};
 const app = require('../app');
 const adminRouter = require('../routes/admin');
 const battlesRouter = require('../routes/battles');
+const eventsRouter = require('../routes/events');
 const Battle = require('../models/Battle');
 const Event = require('../models/Event');
 const EventRegistration = require('../models/EventRegistration');
@@ -224,6 +225,83 @@ describe('Routes - Tests d\'intégration', function () {
     it('doit retourner 404 pour un ID non numérique', async function () {
       const res = await request(app).get('/news/abc');
       expect(res.status).to.equal(404);
+    });
+  });
+
+  describe('GET /events/:id (handler)', function () {
+    let eventFindByIdStub;
+    let rankingFindByEventStub;
+    let registrationCountByEventStub;
+    let registrationIsRegisteredStub;
+    let battleFindByEventStub;
+    let roomFindByEventStub;
+
+    beforeEach(function () {
+      eventFindByIdStub = sinon.stub(Event, 'findById');
+      rankingFindByEventStub = sinon.stub(EventRanking, 'findByEvent');
+      registrationCountByEventStub = sinon.stub(EventRegistration, 'countByEvent');
+      registrationIsRegisteredStub = sinon.stub(EventRegistration, 'isRegistered');
+      battleFindByEventStub = sinon.stub(Battle, 'findByEvent');
+      roomFindByEventStub = sinon.stub(Room, 'findByEvent');
+    });
+
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('doit fournir les agrégats de graphiques à la vue détail événement', async function () {
+      const handler = getRouteHandler(eventsRouter, 'get', '/:id');
+      const req = {
+        params: { id: '12' },
+        session: { userId: 99 },
+        flash: sinon.stub(),
+      };
+      const res = {
+        render: sinon.stub(),
+        redirect: sinon.stub(),
+      };
+
+      eventFindByIdStub.resolves({
+        id: 12,
+        nom: 'LAN Analytics',
+        date_heure: '2099-06-10 14:00:00',
+        lieu: 'Nantes',
+        statut: 'planifie',
+      });
+      registrationCountByEventStub.resolves(18);
+      rankingFindByEventStub.resolves([
+        { rang: 1, pseudo: 'Alpha', points: 9, wins: 4, battles_played: 5 },
+        { rang: 2, pseudo: 'Bravo', points: 6, wins: 3, battles_played: 4 },
+      ]);
+      battleFindByEventStub.resolves([
+        { id: 1, statut: 'en_cours', game_nom: 'Tekken 8', game_console: 'PS5', room_id: 101 },
+        { id: 2, statut: 'termine', game_nom: 'Tekken 8', game_console: 'PS5', room_id: 101 },
+        { id: 3, statut: 'planifie', game_nom: 'Mario Kart 8', game_console: 'Switch', room_id: 102 },
+        { id: 4, statut: 'file_attente', game_nom: 'Mario Kart 8', game_console: 'Switch', room_id: null },
+      ]);
+      roomFindByEventStub.resolves([
+        { id: 101, nom: 'Zelda', type: 'console', type_rencontre: '1v1', actif: 1 },
+        { id: 102, nom: 'Mario', type: 'console', type_rencontre: '1v1', actif: 1 },
+        { id: 103, nom: 'Sonic', type: 'simulation', type_rencontre: 'solo', actif: 0 },
+      ]);
+      registrationIsRegisteredStub.resolves(false);
+
+      await handler(req, res);
+
+      expect(roomFindByEventStub.calledOnceWithExactly(12)).to.be.true;
+      expect(res.redirect.notCalled).to.be.true;
+      expect(res.render.calledOnce).to.be.true;
+      expect(res.render.firstCall.args[0]).to.equal('events/show');
+
+      const payload = res.render.firstCall.args[1];
+      expect(payload.chartData).to.exist;
+      expect(payload.chartData.statuses.total).to.equal(4);
+      expect(payload.chartData.statuses.segments.find(s => s.status === 'en_cours').count).to.equal(1);
+      expect(payload.chartData.games.items[0]).to.include({ name: 'Mario Kart 8', total: 2 });
+      expect(payload.chartData.rankings.items[0]).to.include({ pseudo: 'Alpha', points: 9 });
+      expect(payload.chartData.rooms.total).to.equal(3);
+      expect(payload.chartData.rooms.availableNow).to.equal(0);
+      expect(payload.chartData.rooms.items.find(room => room.name === 'Zelda')).to.include({ assigned: 2, active: 1, done: 1 });
     });
   });
 

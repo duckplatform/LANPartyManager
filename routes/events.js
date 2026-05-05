@@ -12,9 +12,151 @@ const Event             = require('../models/Event');
 const EventRanking      = require('../models/EventRanking');
 const EventRegistration = require('../models/EventRegistration');
 const Battle            = require('../models/Battle');
+const Room              = require('../models/Room');
 const discord           = require('../services/discord');
 const logger            = require('../config/logger');
 const { requireAuth }   = require('../middleware/auth');
+
+const BATTLE_STATUS_META = {
+  en_cours: { label: 'En cours', color: '#388E3C' },
+  installation: { label: 'Installation', color: '#7B1FA2' },
+  planifie: { label: 'Planifié', color: '#1976D2' },
+  file_attente: { label: 'File d\'attente', color: '#F57F17' },
+  termine: { label: 'Terminé', color: '#757575' },
+};
+
+function buildStatusChart(battles) {
+  const order = ['en_cours', 'installation', 'planifie', 'file_attente', 'termine'];
+  const counts = battles.reduce((acc, battle) => {
+    acc[battle.statut] = (acc[battle.statut] || 0) + 1;
+    return acc;
+  }, {});
+
+  const total = battles.length;
+  const segments = order.map((status) => {
+    const count = counts[status] || 0;
+    return {
+      status,
+      label: BATTLE_STATUS_META[status].label,
+      color: BATTLE_STATUS_META[status].color,
+      count,
+      percent: total > 0 ? Math.round((count / total) * 100) : 0,
+    };
+  });
+
+  let cursor = 0;
+  const gradientParts = segments
+    .filter(segment => segment.count > 0)
+    .map((segment) => {
+      const start = cursor;
+      cursor += (segment.count / total) * 100;
+      return `${segment.color} ${start.toFixed(2)}% ${cursor.toFixed(2)}%`;
+    });
+
+  return {
+    total,
+    segments,
+    gradient: gradientParts.length > 0
+      ? `conic-gradient(${gradientParts.join(', ')})`
+      : 'conic-gradient(#E5E7EB 0 100%)',
+  };
+}
+
+function buildGameChart(battles) {
+  const gameMap = new Map();
+
+  battles.forEach((battle) => {
+    const key = `${battle.game_nom}__${battle.game_console || ''}`;
+    if (!gameMap.has(key)) {
+      gameMap.set(key, {
+        name: battle.game_nom,
+        console: battle.game_console || '',
+        total: 0,
+        done: 0,
+        active: 0,
+      });
+    }
+
+    const entry = gameMap.get(key);
+    entry.total += 1;
+    if (battle.statut === 'termine') entry.done += 1;
+    if (['en_cours', 'installation'].includes(battle.statut)) entry.active += 1;
+  });
+
+  const items = Array.from(gameMap.values())
+    .sort((a, b) => b.total - a.total || a.name.localeCompare(b.name, 'fr'));
+  const max = items.reduce((highest, item) => Math.max(highest, item.total), 0);
+
+  return {
+    max,
+    items: items.map(item => ({
+      ...item,
+      width: max > 0 ? Math.max((item.total / max) * 100, 8) : 0,
+    })),
+  };
+}
+
+function buildRankingChart(rankings) {
+  const items = rankings.slice(0, 5);
+  const max = items.reduce((highest, item) => Math.max(highest, item.points), 0);
+
+  return {
+    max,
+    items: items.map((item) => ({
+      rang: item.rang,
+      pseudo: item.pseudo,
+      points: item.points,
+      wins: item.wins,
+      battles_played: item.battles_played,
+      width: max > 0 ? Math.max((item.points / max) * 100, 12) : 0,
+    })),
+  };
+}
+
+function buildRoomChart(rooms, battles) {
+  const roomMap = new Map(rooms.map(room => [room.id, {
+    id: room.id,
+    name: room.nom,
+    type: room.type,
+    matchType: room.type_rencontre,
+    actif: room.actif === 1,
+    assigned: 0,
+    active: 0,
+    done: 0,
+  }]));
+
+  battles.forEach((battle) => {
+    if (!battle.room_id || !roomMap.has(battle.room_id)) return;
+    const room = roomMap.get(battle.room_id);
+    room.assigned += 1;
+    if (['planifie', 'installation', 'en_cours'].includes(battle.statut)) room.active += 1;
+    if (battle.statut === 'termine') room.done += 1;
+  });
+
+  const items = Array.from(roomMap.values())
+    .sort((a, b) => b.assigned - a.assigned || a.name.localeCompare(b.name, 'fr'));
+  const max = items.reduce((highest, item) => Math.max(highest, item.assigned), 0);
+
+  return {
+    max,
+    total: rooms.length,
+    activeNow: items.filter(item => item.active > 0).length,
+    availableNow: items.filter(item => item.actif && item.active === 0).length,
+    items: items.map(item => ({
+      ...item,
+      width: max > 0 ? Math.max((item.assigned / max) * 100, item.assigned > 0 ? 10 : 0) : 0,
+    })),
+  };
+}
+
+function buildEventCharts({ battles, rankings, rooms }) {
+  return {
+    statuses: buildStatusChart(battles),
+    games: buildGameChart(battles),
+    rankings: buildRankingChart(rankings),
+    rooms: buildRoomChart(rooms, battles),
+  };
+}
 
 // ─── GET /events ───────────────────────────────────────────────────────────
 // Liste publique de tous les événements planifiés et en cours
@@ -77,10 +219,11 @@ router.get('/:id', async (req, res) => {
     event.registrationOpen = EventRegistration.isRegistrationOpen(event);
 
     // Chargement parallèle des données de l'événement
-    const [registrationCount, rankings, battles] = await Promise.all([
+    const [registrationCount, rankings, battles, rooms] = await Promise.all([
       EventRegistration.countByEvent(eventId),
       EventRanking.findByEvent(eventId),
       Battle.findByEvent(eventId),
+      Room.findByEvent(eventId),
     ]);
 
     // Vérifier si l'utilisateur connecté est inscrit
@@ -96,6 +239,8 @@ router.get('/:id', async (req, res) => {
       registrationCount,
       rankings,
       battles,
+      rooms,
+      chartData: buildEventCharts({ battles, rankings, rooms }),
       isRegistered,
     });
   } catch (err) {
