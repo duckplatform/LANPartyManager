@@ -54,7 +54,7 @@ describe('Discord Service', function () {
     it('doit appeler REST.post avec un embed et le canal événements', async function () {
       const event = {
         id:         1,
-        last_name:        'LAN Printemps 2026',
+        name:             'LAN Printemps 2026',
         start_at: new Date('2026-04-10T18:00:00Z'),
         location:       'Salle des fêtes',
         status:     'planned',
@@ -74,7 +74,7 @@ describe('Discord Service', function () {
     it('doit inclure le lieu et la date dans les champs de l\'embed', async function () {
       const event = {
         id:         2,
-        last_name:        'LAN Été 2026',
+        name:             'LAN Été 2026',
         start_at: new Date('2026-07-15T14:00:00Z'),
         location:       'Centre culturel',
         status:     'planned',
@@ -93,7 +93,7 @@ describe('Discord Service', function () {
     it('doit inclure l\'URL de l\'événement dans l\'embed', async function () {
       const event = {
         id:         3,
-        last_name:        'LAN Test',
+        name:             'LAN Test',
         start_at: new Date(),
         location:       'Paris',
         status:     'planned',
@@ -114,7 +114,7 @@ describe('Discord Service', function () {
     it('doit appeler REST.post avec un embed vert (en cours)', async function () {
       const event = {
         id:         1,
-        last_name:        'LAN Printemps 2026',
+        name:             'LAN Printemps 2026',
         start_at: new Date('2026-04-10T18:00:00Z'),
         location:       'Salle des fêtes',
         status:     'in_progress',
@@ -131,7 +131,7 @@ describe('Discord Service', function () {
 
     it('doit envoyer sur le canal événements', async function () {
       await discord.notifyEventStarted({
-        id: 1, last_name: 'LAN Test', start_at: new Date(), location: 'Paris',
+        id: 1, name: 'LAN Test', start_at: new Date(), location: 'Paris',
       });
 
       expect(postCalls[0].route).to.include('111111111111111111');
@@ -140,7 +140,7 @@ describe('Discord Service', function () {
     it('doit prioriser le canal Discord dédié de l\'événement', async function () {
       await discord.notifyEventStarted({
         id: 1,
-        last_name: 'LAN Test',
+        name: 'LAN Test',
         start_at: new Date(),
         location: 'Paris',
         discord_channel_id: '333333333333333333',
@@ -158,7 +158,7 @@ describe('Discord Service', function () {
     it('doit appeler REST.post avec un embed rouge (terminé)', async function () {
       const event = {
         id:         1,
-        last_name:        'LAN Printemps 2026',
+        name:             'LAN Printemps 2026',
         start_at: new Date('2026-04-10T18:00:00Z'),
         location:       'Salle des fêtes',
         status:     'ended',
@@ -174,7 +174,7 @@ describe('Discord Service', function () {
 
     it('doit envoyer sur le canal événements', async function () {
       await discord.notifyEventEnded({
-        id: 1, last_name: 'LAN Test', start_at: new Date(), location: 'Paris',
+        id: 1, name: 'LAN Test', start_at: new Date(), location: 'Paris',
       });
 
       expect(postCalls[0].route).to.include('111111111111111111');
@@ -183,7 +183,7 @@ describe('Discord Service', function () {
     it('doit prioriser le canal Discord dédié de l\'événement', async function () {
       await discord.notifyEventEnded({
         id: 1,
-        last_name: 'LAN Test',
+        name: 'LAN Test',
         start_at: new Date(),
         location: 'Paris',
         discord_channel_id: '333333333333333333',
@@ -320,7 +320,7 @@ describe('Discord Service', function () {
     };
 
     it('doit envoyer les notifications battle sur le canal Discord de l\'événement', async function () {
-      const event = { id: 9, last_name: 'LAN Test', discord_channel_id: '333333333333333333' };
+      const event = { id: 9, name: 'LAN Test', discord_channel_id: '333333333333333333' };
 
       await discord.notifyBattleCreated({ event, battle: battleFixture });
 
@@ -330,7 +330,7 @@ describe('Discord Service', function () {
     });
 
     it('doit fallback sur DISCORD_CHANNEL_EVENTS si le canal de l\'événement est absent', async function () {
-      const event = { id: 9, last_name: 'LAN Test', discord_channel_id: '' };
+      const event = { id: 9, name: 'LAN Test', discord_channel_id: '' };
 
       await discord.notifyBattleStarted({ event, battle: battleFixture });
 
@@ -339,7 +339,7 @@ describe('Discord Service', function () {
     });
 
     it('doit inclure les participants dans les notifications de rencontre', async function () {
-      const event = { id: 9, last_name: 'LAN Test', discord_channel_id: '333333333333333333' };
+      const event = { id: 9, name: 'LAN Test', discord_channel_id: '333333333333333333' };
 
       await discord.notifyBattleInstallation({ event, battle: battleFixture });
 
@@ -351,7 +351,7 @@ describe('Discord Service', function () {
     });
 
     it('doit notifier la transition file_attente vers planifie', async function () {
-      const event = { id: 9, last_name: 'LAN Test', discord_channel_id: '333333333333333333' };
+      const event = { id: 9, name: 'LAN Test', discord_channel_id: '333333333333333333' };
       const plannedBattle = { ...battleFixture, status: 'planned' };
 
       await discord.notifyBattlePlanned({ event, battle: plannedBattle });
@@ -362,7 +362,7 @@ describe('Discord Service', function () {
     });
 
     it('doit inclure score et gagnants sur la notification de fin', async function () {
-      const event = { id: 9, last_name: 'LAN Test', discord_channel_id: '333333333333333333' };
+      const event = { id: 9, name: 'LAN Test', discord_channel_id: '333333333333333333' };
 
       await discord.notifyBattleEnded({ event, battle: battleFixture });
 
@@ -374,7 +374,7 @@ describe('Discord Service', function () {
     });
 
     it('doit reconnaitre un gagnant quand est_gagnant remonte en Buffer MySQL', async function () {
-      const event = { id: 9, last_name: 'LAN Test', discord_channel_id: '333333333333333333' };
+      const event = { id: 9, name: 'LAN Test', discord_channel_id: '333333333333333333' };
       const mysqlTypedBattle = {
         ...battleFixture,
         players: [
@@ -404,7 +404,7 @@ describe('Discord Service', function () {
 
       // Ne doit pas rejeter
       await discord.notifyEventCreated({
-        id: 99, last_name: 'Test', start_at: new Date(), location: 'Paris', status: 'planned',
+        id: 99, name: 'Test', start_at: new Date(), location: 'Paris', status: 'planned',
       });
 
       expect(postCalls).to.have.length(0);
@@ -415,7 +415,7 @@ describe('Discord Service', function () {
 
       // Le client est injecté mais le canal est vide
       await discord.notifyEventCreated({
-        id: 99, last_name: 'Test', start_at: new Date(), location: 'Paris', status: 'planned',
+        id: 99, name: 'Test', start_at: new Date(), location: 'Paris', status: 'planned',
       });
 
       // Aucun appel réseau
@@ -434,7 +434,7 @@ describe('Discord Service', function () {
 
       // Ne doit pas rejeter
       await discord.notifyEventCreated({
-        id: 1, last_name: 'LAN Test', start_at: new Date(), location: 'Paris', status: 'planned',
+        id: 1, name: 'LAN Test', start_at: new Date(), location: 'Paris', status: 'planned',
       });
     });
 
@@ -446,7 +446,7 @@ describe('Discord Service', function () {
 
     it('ne doit pas envoyer de notification si discord_notifications_enabled = 0', async function () {
       const event = {
-        id: 1, last_name: 'LAN Test', start_at: new Date(), location: 'Paris', status: 'planned',
+        id: 1, name: 'LAN Test', start_at: new Date(), location: 'Paris', status: 'planned',
         discord_channel_id: '111111111111111111',
         discord_notifications_enabled: 0,
       };
@@ -456,7 +456,7 @@ describe('Discord Service', function () {
 
     it('ne doit pas envoyer de notification si discord_notifications_enabled = false', async function () {
       const event = {
-        id: 2, last_name: 'LAN Test', start_at: new Date(), location: 'Paris',
+        id: 2, name: 'LAN Test', start_at: new Date(), location: 'Paris',
         discord_channel_id: '111111111111111111',
         discord_notifications_enabled: false,
       };
@@ -466,7 +466,7 @@ describe('Discord Service', function () {
 
     it('doit envoyer si discord_notifications_enabled = 1', async function () {
       const event = {
-        id: 3, last_name: 'LAN Test', start_at: new Date(), location: 'Paris',
+        id: 3, name: 'LAN Test', start_at: new Date(), location: 'Paris',
         discord_channel_id: '111111111111111111',
         discord_notifications_enabled: 1,
       };
@@ -476,7 +476,7 @@ describe('Discord Service', function () {
 
     it('doit envoyer si discord_notifications_enabled est absent (par défaut activé)', async function () {
       const event = {
-        id: 4, last_name: 'LAN Test', start_at: new Date(), location: 'Paris',
+        id: 4, name: 'LAN Test', start_at: new Date(), location: 'Paris',
         discord_channel_id: '111111111111111111',
         // discord_notifications_enabled absent
       };
@@ -486,7 +486,7 @@ describe('Discord Service', function () {
 
     it('ne doit pas envoyer la notification battle si discord_notifications_enabled = 0', async function () {
       const event = {
-        id: 5, last_name: 'LAN Test',
+        id: 5, name: 'LAN Test',
         discord_channel_id: '111111111111111111',
         discord_notifications_enabled: 0,
       };
@@ -507,7 +507,7 @@ describe('Discord Service', function () {
 
     const eventFixture = {
       id:         10,
-      last_name:        'LAN Printemps 2026',
+      name:             'LAN Printemps 2026',
       start_at: new Date('2026-04-10T18:00:00Z'),
       location:       'Salle des fêtes',
       status:     'planned',
@@ -530,7 +530,7 @@ describe('Discord Service', function () {
       expect(postCalls).to.have.length(1);
       const embed = postCalls[0].options.body.embeds[0];
       expect(embed.color).to.equal(0x57F287);
-      expect(embed.title).to.include(eventFixture.nom);
+      expect(embed.title).to.include(eventFixture.name);
       expect(embed.description).to.include('GamerXYZ');
     });
 

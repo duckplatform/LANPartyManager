@@ -15,25 +15,25 @@
         <% } %>
       </div>
 
-      <nav class="footer-nav" aria-label="Navigation pied de page">
-        <h3 class="footer-nav-title">Navigation</h3>
+      <nav class="footer-nav" aria-label="<%= t('nav.footer_nav_label') %>">
+        <h3 class="footer-nav-title"><%= t('footer.navigation') %></h3>
         <ul>
-          <li><a href="/">Accueil</a></li>
-          <li><a href="/news">Actualités</a></li>
+          <li><a href="/"><%= t('nav.home') %></a></li>
+          <li><a href="/news"><%= t('nav.news') %></a></li>
           <% if (currentUser) { %>
-            <li><a href="/profile">Mon profil</a></li>
+            <li><a href="/profile"><%= t('nav.profile') %></a></li>
             <% if (currentUser.isAdmin) { %>
-              <li><a href="/admin">Administration</a></li>
+              <li><a href="/admin"><%= t('nav.admin') %></a></li>
             <% } %>
           <% } else { %>
-            <li><a href="/auth/login">Connexion</a></li>
-            <li><a href="/auth/register">Inscription</a></li>
+            <li><a href="/auth/login"><%= t('nav.login') %></a></li>
+            <li><a href="/auth/register"><%= t('nav.register') %></a></li>
           <% } %>
         </ul>
       </nav>
 
       <div class="footer-social">
-        <h3 class="footer-nav-title">Communauté</h3>
+        <h3 class="footer-nav-title"><%= t('footer.community') %></h3>
         <div class="social-links">
           <% if (appSettings.community_link_discord) { %>
             <a href="<%= appSettings.community_link_discord %>" class="social-link" aria-label="Discord" target="_blank" rel="noopener noreferrer"><i class="fab fa-discord"></i></a>

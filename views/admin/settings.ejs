@@ -218,6 +218,77 @@
               </div>
             </div>
 
+            <!-- Section Langue et localisation -->
+            <div class="card" style="margin-bottom: var(--space-lg);">
+              <div class="card-header">
+                <h2><i class="fas fa-language"></i> Langue et localisation</h2>
+              </div>
+              <div class="card-body">
+
+                <!-- Langue de l'interface -->
+                <div class="form-group">
+                  <label class="form-label" for="language">
+                    <i class="fas fa-globe"></i> Langue de l'interface
+                  </label>
+                  <select id="language" name="language" class="form-input">
+                    <option value="fr" <%= (!settings || !settings.language || settings.language === 'fr') ? 'selected' : '' %>>
+                      🇫🇷 Français
+                    </option>
+                    <option value="en" <%= (settings && settings.language === 'en') ? 'selected' : '' %>>
+                      🇬🇧 English
+                    </option>
+                  </select>
+                  <span class="form-hint">
+                    Langue de l'interface utilisée dans les vues publiques et les menus de navigation.
+                    Les textes administrateur restent en français.
+                  </span>
+                </div>
+
+                <!-- Locale BCP 47 pour les dates -->
+                <div class="form-group">
+                  <label class="form-label" for="locale">
+                    <i class="fas fa-calendar-days"></i> Format régional (locale)
+                  </label>
+                  <input
+                    type="text"
+                    id="locale"
+                    name="locale"
+                    class="form-input"
+                    placeholder="Ex. : fr-FR, en-US, de-DE, es-ES"
+                    value="<%= (settings && settings.locale) ? settings.locale : 'fr-FR' %>"
+                    maxlength="20"
+                    pattern="[a-zA-Z]{2,3}(-[a-zA-Z]{2,4})?"
+                  />
+                  <span class="form-hint">
+                    Code de locale <strong>BCP 47</strong> utilisé pour le formatage des dates et heures dans
+                    toutes les pages (ex. : <code>fr-FR</code>, <code>en-US</code>, <code>de-DE</code>).
+                    <% if (settings && settings.locale) { %>
+                      <br>Aperçu date : <strong id="localePreview">…</strong>
+                      <script>
+                        (function() {
+                          const input   = document.getElementById('locale');
+                          const preview = document.getElementById('localePreview');
+                          function updatePreview() {
+                            try {
+                              preview.textContent = new Date().toLocaleDateString(
+                                input.value.trim() || 'fr-FR',
+                                { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
+                              );
+                            } catch(e) {
+                              preview.textContent = '(locale invalide)';
+                            }
+                          }
+                          input.addEventListener('input', updatePreview);
+                          updatePreview();
+                        })();
+                      </script>
+                    <% } %>
+                  </span>
+                </div>
+
+              </div>
+            </div>
+
             <!-- Section Discord -->
             <div class="card" style="margin-bottom: var(--space-lg);">
               <div class="card-header">

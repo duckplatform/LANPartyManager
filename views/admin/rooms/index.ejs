@@ -36,7 +36,7 @@
           <option value="">— Sélectionner un événement —</option>
           <% events.forEach(function(e) { %>
             <option value="<%= e.id %>" <%= eventId === e.id ? 'selected' : '' %>>
-              <%= e.nom %> (<%= e.statut %>)
+              <%= e.name %> (<%= e.status %>)
             </option>
           <% }); %>
         </select>
@@ -51,9 +51,9 @@
     <!-- Résumé de l'événement sélectionné -->
     <div class="card" style="margin-bottom: var(--space-md); border-left: 4px solid var(--color-primary);">
       <div class="card-body" style="padding: var(--space-sm) var(--space-md);">
-        <strong><i class="fas fa-calendar-check"></i> <%= selectedEvent.nom %></strong>
-        &nbsp;—&nbsp;<%= new Date(selectedEvent.date_heure).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' }) %>
-        &nbsp;—&nbsp;<%= selectedEvent.lieu %>
+        <strong><i class="fas fa-calendar-check"></i> <%= selectedEvent.name %></strong>
+        &nbsp;—&nbsp;<%= new Date(selectedEvent.start_at).toLocaleDateString(locale, { day:'numeric', month:'long', year:'numeric' }) %>
+        &nbsp;—&nbsp;<%= selectedEvent.location %>
       </div>
     </div>
 
@@ -85,22 +85,22 @@
                 </tr>
               <% } else { %>
                 <% rooms.forEach(function(room) { %>
-                  <tr class="<%= !room.actif ? 'row-inactive' : '' %>">
-                    <td><strong><%= room.nom %></strong></td>
+                  <tr class="<%= !room.is_active ? 'row-inactive' : '' %>">
+                    <td><strong><%= room.name %></strong></td>
                     <td>
                       <i class="fas <%= room.type === 'simulation' ? 'fa-steering-wheel' : 'fa-tv' %>"></i>
                       <%= room.type === 'simulation' ? 'Simulation' : 'Console' %>
                     </td>
                     <td>
-                      <span class="badge badge--<%= room.type_rencontre === '2v2' ? 'info' : room.type_rencontre === 'solo' ? 'warning' : 'primary' %>">
-                        <%= room.type_rencontre %>
+                      <span class="badge badge--<%= room.match_type === '2v2' ? 'info' : room.match_type === 'solo' ? 'warning' : 'primary' %>">
+                        <%= room.match_type %>
                       </span>
                     </td>
                     <td>
-                      <% if (!room.actif) { %>
+                      <% if (!room.is_active) { %>
                         <%/* Salle inactive → toujours "Hors service" */%>
                         <span class="badge badge--muted"><i class="fas fa-times-circle"></i> Hors service</span>
-                      <% } else if (room.battles_actives > 0) { %>
+                      <% } else if (room.active_battles > 0) { %>
                         <%/* Salle active avec battle en cours ou planifiée → Occupée */%>
                         <span class="badge badge--warning"><i class="fas fa-lock"></i> Occupée</span>
                       <% } else { %>
@@ -109,7 +109,7 @@
                       <% } %>
                     </td>
                     <td>
-                      <% if (room.actif) { %>
+                      <% if (room.is_active) { %>
                         <span class="badge badge--success"><i class="fas fa-circle"></i> Active</span>
                       <% } else { %>
                         <span class="badge badge--muted"><i class="fas fa-circle"></i> Inactive</span>
@@ -121,14 +121,14 @@
                       </a>
                       <form action="/admin/rooms/<%= room.id %>/toggle" method="POST" class="form-inline">
                         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
-                        <button type="submit" class="btn btn--<%= room.actif ? 'warning' : 'success' %> btn--xs"
-                                title="<%= room.actif ? 'Désactiver' : 'Activer' %>">
-                          <i class="fas fa-<%= room.actif ? 'ban' : 'check' %>"></i>
+                        <button type="submit" class="btn btn--<%= room.is_active ? 'warning' : 'success' %> btn--xs"
+                                title="<%= room.is_active ? 'Désactiver' : 'Activer' %>">
+                          <i class="fas fa-<%= room.is_active ? 'ban' : 'check' %>"></i>
                         </button>
                       </form>
                       <form action="/admin/rooms/<%= room.id %>?_method=DELETE" method="POST"
                             class="form-inline"
-                            onsubmit="return confirm('Supprimer la salle <%= room.nom %> ?')">
+                            onsubmit="return confirm('Supprimer la salle <%= room.name %> ?')">
                         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                         <button type="submit" class="btn btn--danger btn--xs" title="Supprimer">
                           <i class="fas fa-trash"></i>

@@ -49,7 +49,7 @@ describe('EventRegistration Model', function () {
   describe('findByUser()', function () {
     it('doit retourner toutes les inscriptions d\'un utilisateur', async function () {
       const fakeRows = [
-        { id: 1, event_id: 10, user_id: 5, last_name: 'LAN Spring', start_at: new Date(), location: 'Paris', status: 'planned', created_at: new Date() },
+        { id: 1, event_id: 10, user_id: 5, name: 'LAN Spring', start_at: new Date(), location: 'Paris', status: 'planned', created_at: new Date() },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -59,7 +59,7 @@ describe('EventRegistration Model', function () {
       expect(args[0]).to.equal(5);
       // Vérifie que la requête sélectionne statut et non actif
       const query = poolStub.execute.firstCall.args[0];
-      expect(query).to.include('e.statut');
+      expect(query).to.include('e.status');
     });
   });
 
@@ -100,7 +100,7 @@ describe('EventRegistration Model', function () {
     it('doit retourner l\'inscription d\'un utilisateur pour un événement', async function () {
       const fakeReg = {
         id: 1, event_id: 10, user_id: 5,
-        last_name: 'LAN Spring', start_at: new Date(), location: 'Paris', status: 'planned',
+        name: 'LAN Spring', start_at: new Date(), location: 'Paris', status: 'planned',
       };
       poolStub.execute.resolves([[fakeReg]]);
 

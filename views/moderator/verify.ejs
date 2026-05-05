@@ -92,8 +92,8 @@
         <!-- Infos membre -->
         <div class="verify-section">
           <h3 class="verify-section-title"><i class="fas fa-user"></i> Membre</h3>
-          <p class="verify-player-pseudo"><%= member.pseudo %></p>
-          <p class="verify-detail"><%= member.prenom %> <%= member.nom %></p>
+          <p class="verify-player-pseudo"><%= member.username %></p>
+          <p class="verify-detail"><%= member.first_name %> <%= member.last_name %></p>
           <p class="verify-detail"><a href="mailto:<%= member.email %>" class="link-muted"><%= member.email %></a></p>
           <div style="margin-top: var(--space-xs);">
             <% if (member.is_admin) { %>
@@ -112,16 +112,16 @@
           <!-- Statut inscription à l'événement -->
           <div class="verify-section">
             <h3 class="verify-section-title"><i class="fas fa-calendar-star"></i> Événement contrôlé</h3>
-            <p class="verify-event-name"><%= event.nom %></p>
+            <p class="verify-event-name"><%= event.name %></p>
             <p class="verify-detail">
               <i class="fas fa-calendar-alt"></i>
-              <%= new Date(event.date_heure).toLocaleDateString('fr-FR', {
+              <%= new Date(event.start_at).toLocaleDateString(locale, {
                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
               }) %>
               à
-              <%= new Date(event.date_heure).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) %>
+              <%= new Date(event.start_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) %>
             </p>
-            <p class="verify-detail"><i class="fas fa-location-dot"></i> <%= event.lieu %></p>
+            <p class="verify-detail"><i class="fas fa-location-dot"></i> <%= event.location %></p>
 
             <div style="margin-top: var(--space-md); padding: var(--space-md); border-radius: var(--radius-md);
                         background: color-mix(in srgb, <%= cardColor %> 10%, transparent);

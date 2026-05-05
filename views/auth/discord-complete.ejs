@@ -7,8 +7,8 @@
       <div class="auth-icon auth-icon--discord">
         <i class="fab fa-discord"></i>
       </div>
-      <h1 class="auth-title">Finaliser l'inscription</h1>
-      <p class="auth-subtitle">Votre compte Discord est connecté. Complétez vos informations pour rejoindre la communauté.</p>
+      <h1 class="auth-title"><%= t('auth.complete_discord_signup') %></h1>
+      <p class="auth-subtitle"><%= t('auth.discord_connected_complete_profile') %></p>
     </div>
 
     <!-- Erreurs de validation -->
@@ -26,15 +26,15 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label for="nom" class="form-label">
-            <i class="fas fa-id-card"></i> Nom
+          <label for="last_name" class="form-label">
+            <i class="fas fa-id-card"></i> <%= t('auth.last_name') %>
           </label>
           <input
             type="text"
-            id="nom"
-            name="nom"
+            id="last_name"
+            name="last_name"
             class="form-input"
-            value="<%= old.nom || '' %>"
+            value="<%= old.last_name || '' %>"
             placeholder="Dupont"
             required
             autocomplete="family-name"
@@ -43,15 +43,15 @@
         </div>
 
         <div class="form-group">
-          <label for="prenom" class="form-label">
-            <i class="fas fa-id-card"></i> Prénom
+          <label for="first_name" class="form-label">
+            <i class="fas fa-id-card"></i> <%= t('auth.first_name') %>
           </label>
           <input
             type="text"
-            id="prenom"
-            name="prenom"
+            id="first_name"
+            name="first_name"
             class="form-input"
-            value="<%= old.prenom || '' %>"
+            value="<%= old.first_name || '' %>"
             placeholder="Jean"
             required
             autocomplete="given-name"
@@ -61,15 +61,15 @@
       </div>
 
       <div class="form-group">
-        <label for="pseudo" class="form-label">
-          <i class="fas fa-gamepad"></i> Pseudo (surnom en jeu)
+        <label for="username" class="form-label">
+          <i class="fas fa-gamepad"></i> <%= t('auth.username_label') %>
         </label>
         <input
           type="text"
-          id="pseudo"
-          name="pseudo"
+          id="username"
+          name="username"
           class="form-input"
-          value="<%= old.pseudo || '' %>"
+          value="<%= old.username || '' %>"
           placeholder="ProGamer42"
           required
           minlength="2"
@@ -77,17 +77,17 @@
           autocomplete="nickname"
         />
         <small class="form-hint">
-          <% if (old.pseudo) { %>
-            <i class="fab fa-discord"></i> Pré-rempli depuis votre pseudo Discord — vous pouvez le modifier.
+          <% if (old.username) { %>
+            <i class="fab fa-discord"></i> <%= t('auth.prefilled_from_discord') %>
           <% } else { %>
-            2 à 50 caractères, lettres, chiffres, tirets et espaces.
+            <%= t('auth.username_hint') %>
           <% } %>
         </small>
       </div>
 
       <div class="form-group">
         <label for="email" class="form-label">
-          <i class="fas fa-envelope"></i> Adresse e-mail
+          <i class="fas fa-envelope"></i> <%= t('auth.email') %>
         </label>
         <input
           type="email"
@@ -99,17 +99,17 @@
           required
           autocomplete="email"
         />
-        <small class="form-hint">Utilisée uniquement pour vous contacter, non visible publiquement.</small>
+        <small class="form-hint"><%= t('auth.email_privacy_hint') %></small>
       </div>
 
       <button type="submit" class="btn btn--discord btn--full">
-        <i class="fab fa-discord"></i> Créer mon compte
+        <i class="fab fa-discord"></i> <%= t('auth.create_my_account') %>
       </button>
     </form>
 
     <!-- Lien retour -->
     <div class="auth-switch">
-      <p>Annuler ? <a href="/auth/register" class="link-accent">Retour à l'inscription</a></p>
+      <p><%= t('common.cancel') %> ? <a href="/auth/register" class="link-accent"><%= t('auth.back_to_register') %></a></p>
     </div>
   </div>
 </div>

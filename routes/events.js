@@ -104,7 +104,7 @@ function buildRankingChart(rankings) {
     max,
     items: items.map((item) => ({
       rang: item.rang,
-      pseudo: item.username,
+      username: item.username,
       points: item.points,
       wins: item.wins,
       battles_played: item.battles_played,

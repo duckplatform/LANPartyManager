@@ -24,10 +24,10 @@
     <div class="hero-actions">
       <% if (!currentUser) { %>
         <a href="/auth/register" class="btn btn--primary btn--lg">
-          <i class="fas fa-user-plus"></i> Nous rejoindre
+          <i class="fas fa-user-plus"></i> <%= t('auth.join_us') %>
         </a>
         <a href="/auth/login" class="btn btn--ghost btn--lg">
-          <i class="fas fa-right-to-bracket"></i> Connexion
+          <i class="fas fa-right-to-bracket"></i> <%= t('auth.login') %>
         </a>
       <% } else { %>
         <a href="/profile" class="btn btn--primary btn--lg">
@@ -61,21 +61,21 @@
       <div class="event-highlight-body">
         <div class="event-highlight-info">
           <h2 class="event-highlight-title">
-            <i class="fas fa-gamepad"></i> <%= activeEvent.nom %>
+            <i class="fas fa-gamepad"></i> <%= activeEvent.name %>
           </h2>
           <div class="event-highlight-meta">
             <span>
               <i class="fas fa-calendar-alt"></i>
-              <%= new Date(activeEvent.date_heure).toLocaleDateString('fr-FR', {
+              <%= new Date(activeEvent.start_at).toLocaleDateString(locale, {
                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
               }) %>
               à
-              <%= new Date(activeEvent.date_heure).toLocaleTimeString('fr-FR', {
+              <%= new Date(activeEvent.start_at).toLocaleTimeString(locale, {
                 hour: '2-digit', minute: '2-digit'
               }) %>
             </span>
             <span>
-              <i class="fas fa-location-dot"></i> <%= activeEvent.lieu %>
+              <i class="fas fa-location-dot"></i> <%= activeEvent.location %>
             </span>
             <span>
               <i class="fas fa-users"></i> <%= registrationCount %> inscrit<%= registrationCount !== 1 ? 's' : '' %>
@@ -86,7 +86,7 @@
           <% if (registrationOpen) { %>
             <div class="event-countdown-wrap">
               <p class="event-countdown-label">
-                <i class="fas fa-hourglass-half"></i> Inscriptions ouvertes — fermeture dans :
+                <i class="fas fa-hourglass-half"></i> <%= t('event.registrations_open_until') %>
               </p>
               <div class="event-countdown" id="eventCountdown"
                    data-deadline="<%= registrationDeadlineISO %>">
@@ -101,7 +101,7 @@
             </div>
           <% } else { %>
             <p class="event-registrations-closed">
-              <i class="fas fa-lock"></i> Inscriptions fermées
+              <i class="fas fa-lock"></i> <%= t('event.registrations_closed') %>
             </p>
           <% } %>
         </div>
@@ -110,22 +110,22 @@
         <div class="event-highlight-actions">
           <% if (!currentUser && registrationOpen) { %>
             <a href="/auth/login?redirect=/events/<%= activeEvent.id %>" class="btn btn--primary">
-              <i class="fas fa-right-to-bracket"></i> Se connecter pour s'inscrire
+              <i class="fas fa-right-to-bracket"></i> <%= t('event.login_to_register') %>
             </a>
           <% } else if (!currentUser) { %>
             <p class="text-muted">
-              <i class="fas fa-lock"></i> Inscriptions fermées
+              <i class="fas fa-lock"></i> <%= t('event.registrations_closed') %>
             </p>
           <% } else if (isRegistered) { %>
             <div class="event-registered-badge">
-              <i class="fas fa-circle-check"></i> Inscription confirmée
+              <i class="fas fa-circle-check"></i> <%= t('event.registration_confirmed') %>
             </div>
             <% if (registrationOpen) { %>
               <form action="/profile/events/<%= activeEvent.id %>/unregister" method="POST">
                 <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                 <button type="submit" class="btn btn--ghost btn--sm"
-                        onclick="return confirm('Annuler votre inscription ?')">
-                  <i class="fas fa-user-minus"></i> Se désinscrire
+                        onclick="return confirm('<%= t('event.confirm_unregister') %>')">
+                  <i class="fas fa-user-minus"></i> <%= t('event.unregister') %>
                 </button>
               </form>
             <% } %>
@@ -133,12 +133,12 @@
             <form action="/profile/events/<%= activeEvent.id %>/register" method="POST">
               <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
               <button type="submit" class="btn btn--primary">
-                <i class="fas fa-user-plus"></i> S'inscrire
+                <i class="fas fa-user-plus"></i> <%= t('event.register') %>
               </button>
             </form>
           <% } else { %>
             <p class="text-muted">
-              <i class="fas fa-lock"></i> Inscriptions fermées
+              <i class="fas fa-lock"></i> <%= t('event.registrations_closed') %>
             </p>
           <% } %>
         </div>
@@ -161,7 +161,7 @@
   function tick() {
     const diff = deadline - Date.now();
     if (diff <= 0) {
-      el.innerHTML = '<span class="event-registrations-closed"><i class="fas fa-lock"></i> Inscriptions fermées</span>';
+      el.innerHTML = '<span class="event-registrations-closed"><i class="fas fa-lock"></i> <%= t('event.registrations_closed') %></span>';
       return;
     }
     const days    = Math.floor(diff / 86400000);
@@ -251,7 +251,7 @@
                   </div>
                 </td>
                 <td class="ranking-cell ranking-cell-player">
-                  <span class="player-name"><%= entry.pseudo %></span>
+                  <span class="player-name"><%= entry.username %></span>
                 </td>
                 <td class="ranking-cell ranking-cell-points">
                   <span class="badge badge-points"><%= entry.points %> pts</span>
@@ -478,7 +478,7 @@
           <div class="news-card-meta">
             <span class="news-card-date">
               <i class="fas fa-calendar-alt"></i>
-              <%= new Date(a.created_at).toLocaleDateString('fr-FR', {
+              <%= new Date(a.created_at).toLocaleDateString(locale, {
                 day:   'numeric',
                 month: 'long',
                 year:  'numeric'
@@ -486,10 +486,10 @@
             </span>
           </div>
           <h3 class="news-home-card-title">
-            <a href="/news/<%= a.id %>"><%= a.titre %></a>
+            <a href="/news/<%= a.id %>"><%= a.title %></a>
           </h3>
           <div class="news-home-card-excerpt markdown-body">
-            <%- a.contenuHtml %>
+            <%- a.contentHtml %>
           </div>
           <a href="/news/<%= a.id %>" class="btn btn--ghost btn--sm news-read-more">
             Lire la suite <i class="fas fa-arrow-right"></i>

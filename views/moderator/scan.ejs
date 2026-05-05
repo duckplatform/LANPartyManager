@@ -49,18 +49,18 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-qrcode"></i> Contrôle — <%= event.nom %>
+        <i class="fas fa-qrcode"></i> Contrôle — <%= event.name %>
       </h1>
       <p class="admin-subtitle">
         <i class="fas fa-calendar-alt"></i>
-        <%= new Date(event.date_heure).toLocaleDateString('fr-FR', {
+        <%= new Date(event.start_at).toLocaleDateString(locale, {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
         }) %>
         à
-        <%= new Date(event.date_heure).toLocaleTimeString('fr-FR', {
+        <%= new Date(event.start_at).toLocaleTimeString(locale, {
           hour: '2-digit', minute: '2-digit'
         }) %>
-        &nbsp;—&nbsp;<i class="fas fa-location-dot"></i> <%= event.lieu %>
+        &nbsp;—&nbsp;<i class="fas fa-location-dot"></i> <%= event.location %>
       </p>
     </div>
     <div class="admin-header-actions">
@@ -153,13 +153,13 @@
                 <tr>
                   <td>
                     <span class="user-pseudo">
-                      <i class="fas fa-circle-user"></i> <%= r.pseudo %>
+                      <i class="fas fa-circle-user"></i> <%= r.username %>
                     </span>
                   </td>
-                  <td><%= r.prenom %> <%= r.nom %></td>
+                  <td><%= r.first_name %> <%= r.last_name %></td>
                   <td><a href="mailto:<%= r.email %>" class="link-muted"><%= r.email %></a></td>
                   <td class="td-date">
-                    <%= new Date(r.created_at).toLocaleDateString('fr-FR') %>
+                    <%= new Date(r.created_at).toLocaleDateString(locale) %>
                   </td>
                 </tr>
               <% }); %>

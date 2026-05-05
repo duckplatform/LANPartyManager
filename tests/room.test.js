@@ -33,8 +33,8 @@ describe('Room Model', function () {
   describe('findByEvent()', function () {
     it('doit retourner les salles d\'un événement', async function () {
       const fakeRows = [
-        { id: 1, last_name: 'Zelda',  type: 'console', match_type: '1v1', is_active: 1, event_id: 1, battles_actives: 0 },
-        { id: 2, last_name: 'Mario',  type: 'console', match_type: '2v2', is_active: 1, event_id: 1, battles_actives: 1 },
+        { id: 1, name: 'Zelda',  type: 'console', match_type: '1v1', is_active: 1, event_id: 1, battles_actives: 0 },
+        { id: 2, name: 'Mario',  type: 'console', match_type: '2v2', is_active: 1, event_id: 1, battles_actives: 1 },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -51,7 +51,7 @@ describe('Room Model', function () {
 
   describe('findById()', function () {
     it('doit retourner une salle si trouvée', async function () {
-      const fakeRoom = { id: 1, last_name: 'Zelda', type: 'console', match_type: '1v1', is_active: 1, event_id: 1 };
+      const fakeRoom = { id: 1, name: 'Zelda', type: 'console', match_type: '1v1', is_active: 1, event_id: 1 };
       poolStub.execute.resolves([[fakeRoom]]);
 
       const result = await Room.findById(1);
@@ -70,7 +70,7 @@ describe('Room Model', function () {
   describe('findAvailable()', function () {
     it('doit retourner les salles disponibles', async function () {
       const fakeRows = [
-        { id: 1, last_name: 'Zelda', type: 'console', match_type: '1v1', is_active: 1 },
+        { id: 1, name: 'Zelda', type: 'console', match_type: '1v1', is_active: 1 },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -103,7 +103,7 @@ describe('Room Model', function () {
     });
 
     it('doit sauter les noms déjà utilisés', async function () {
-      const usedNames = Room.ROOM_NAMES.slice(0, 3).map(nom => ({ nom }));
+      const usedNames = Room.ROOM_NAMES.slice(0, 3).map(name => ({ name }));
       poolStub.execute.resolves([usedNames]);
       const name = await Room.generateName(1);
       expect(name).to.equal(Room.ROOM_NAMES[3]); // 4ème nom
@@ -118,7 +118,7 @@ describe('Room Model', function () {
       poolStub.execute.resolves([{ insertId: 5 }]);
 
       const id = await Room.create({
-        last_name:            'Sonic',
+        name:           'Sonic',
         type:           'console',
         match_type: '1v1',
         is_active:          1,
@@ -131,21 +131,21 @@ describe('Room Model', function () {
 
     it('doit utiliser "console" par défaut si type absent', async function () {
       poolStub.execute.resolves([{ insertId: 1 }]);
-      await Room.create({ last_name: 'Kirby', match_type: '1v1', is_active: 1, event_id: 1 });
+      await Room.create({ name: 'Kirby', match_type: '1v1', is_active: 1, event_id: 1 });
       const args = poolStub.execute.firstCall.args[1];
       expect(args[1]).to.equal('console'); // type
     });
 
     it('doit rejeter un type invalide et utiliser "console"', async function () {
       poolStub.execute.resolves([{ insertId: 1 }]);
-      await Room.create({ last_name: 'Kirby', type: 'arcade', match_type: '1v1', is_active: 1, event_id: 1 });
+      await Room.create({ name: 'Kirby', type: 'arcade', match_type: '1v1', is_active: 1, event_id: 1 });
       const args = poolStub.execute.firstCall.args[1];
       expect(args[1]).to.equal('console');
     });
 
     it('doit trim le nom', async function () {
       poolStub.execute.resolves([{ insertId: 1 }]);
-      await Room.create({ last_name: '  Kirby  ', type: 'console', match_type: '1v1', is_active: 1, event_id: 1 });
+      await Room.create({ name: '  Kirby  ', type: 'console', match_type: '1v1', is_active: 1, event_id: 1 });
       const args = poolStub.execute.firstCall.args[1];
       expect(args[0]).to.equal('Kirby');
     });
@@ -156,13 +156,13 @@ describe('Room Model', function () {
   describe('update()', function () {
     it('doit retourner true si mise à jour réussie', async function () {
       poolStub.execute.resolves([{ affectedRows: 1 }]);
-      const result = await Room.update(1, { last_name: 'Sonic', type: 'console', match_type: '1v1', is_active: 1 });
+      const result = await Room.update(1, { name: 'Sonic', type: 'console', match_type: '1v1', is_active: 1 });
       expect(result).to.be.true;
     });
 
     it('doit retourner false si salle introuvable', async function () {
       poolStub.execute.resolves([{ affectedRows: 0 }]);
-      const result = await Room.update(999, { last_name: 'X', type: 'console', match_type: '1v1', is_active: 1 });
+      const result = await Room.update(999, { name: 'X', type: 'console', match_type: '1v1', is_active: 1 });
       expect(result).to.be.false;
     });
   });

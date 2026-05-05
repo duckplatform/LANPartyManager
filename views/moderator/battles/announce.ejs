@@ -1,27 +1,27 @@
 <%- include('../../partials/head') %>
 
 <%
-  const safeEvent = (typeof event !== 'undefined' && event) ? event : { id: '', nom: 'Evenement' };
+  const safeEvent = (typeof event !== 'undefined' && event) ? event : { id: '', name: 'Evenement' };
   const safeNow = (typeof now !== 'undefined' && now) ? now : new Date();
 
   const safeBattles = (typeof battles !== 'undefined' && Array.isArray(battles)) ? battles : [];
   const safeStatsInput = (typeof stats !== 'undefined' && stats) ? stats : null;
   const safeStats = safeStatsInput || {
-    en_cours: safeBattles.filter(b => b && b.statut === 'en_cours').length,
-    installation: safeBattles.filter(b => b && b.statut === 'installation').length,
-    planifie: safeBattles.filter(b => b && b.statut === 'planifie').length,
-    file_attente: safeBattles.filter(b => b && b.statut === 'file_attente').length,
-    termine: safeBattles.filter(b => b && b.statut === 'termine').length,
+    in_progress: safeBattles.filter(b => b && b.status === 'in_progress').length,
+    setup: safeBattles.filter(b => b && b.status === 'setup').length,
+    planned: safeBattles.filter(b => b && b.status === 'planned').length,
+    queue: safeBattles.filter(b => b && b.status === 'queue').length,
+    ended: safeBattles.filter(b => b && b.status === 'ended').length,
   };
 
   const safeRoomBoardsRaw = (typeof roomBoards !== 'undefined' && Array.isArray(roomBoards)) ? roomBoards : [];
-  const safeRoomBoards = safeRoomBoardsRaw.filter((room) => Number(room.actif) === 1 || typeof room.actif === 'undefined');
+  const safeRoomBoards = safeRoomBoardsRaw.filter((room) => Number(room.is_active) === 1 || typeof room.is_active === 'undefined');
   const safeGlobalQueue = (typeof globalQueue !== 'undefined' && Array.isArray(globalQueue))
     ? globalQueue
-    : safeBattles.filter(b => b && b.statut === 'file_attente');
+    : safeBattles.filter(b => b && b.status === 'queue');
   const safeRecentResults = (typeof recentResults !== 'undefined' && Array.isArray(recentResults))
     ? recentResults
-    : safeBattles.filter(b => b && b.statut === 'termine').slice(0, 12);
+    : safeBattles.filter(b => b && b.status === 'ended').slice(0, 12);
   const safeRankingBoard = (typeof rankingBoard !== 'undefined' && Array.isArray(rankingBoard))
     ? rankingBoard
     : [];
@@ -31,7 +31,7 @@
 
   const playerTokens = (battle) => {
     const players = battle && Array.isArray(battle.players) ? battle.players : [];
-    return players.map((p) => (p && p.pseudo) ? p.pseudo : '?');
+    return players.map((p) => (p && p.username) ? p.username : '?');
   };
 
   const isWinningPlayer = (value) => {
@@ -88,17 +88,17 @@
     ? safeRoomBoards
     : (() => {
       const activeBattles = safeBattles.filter(
-        b => b && ['planifie', 'installation', 'en_cours'].includes(b.statut)
+        b => b && ['planned', 'setup', 'in_progress'].includes(b.status)
       );
 
       const roomMap = new Map();
       activeBattles.forEach((battle, idx) => {
-        const roomKey = battle.room_nom || `inconnue-${idx}`;
+        const roomKey = battle.room_name || `inconnue-${idx}`;
         if (!roomMap.has(roomKey)) {
           roomMap.set(roomKey, {
-            nom: battle.room_nom || 'Salle non attribuee',
+            name: battle.room_name || 'Salle non attribuee',
             type: battle.room_type || 'N/A',
-            type_rencontre: battle.type_rencontre || 'N/A',
+            match_type: battle.match_type || 'N/A',
             state: { key: 'libre', label: 'Libre', color: 'var(--color-success)' },
             currentBattle: null,
             nextBattle: null,
@@ -109,9 +109,9 @@
       });
 
       return Array.from(roomMap.values()).map((room) => {
-        const liveBattle = room._battles.find(b => b.statut === 'en_cours') || null;
-        const installBattle = room._battles.find(b => b.statut === 'installation') || null;
-        const waitingBattle = room._battles.find(b => b.statut === 'planifie') || null;
+        const liveBattle = room._battles.find(b => b.status === 'in_progress') || null;
+        const installBattle = room._battles.find(b => b.status === 'setup') || null;
+        const waitingBattle = room._battles.find(b => b.status === 'planned') || null;
         const currentBattle = liveBattle || installBattle;
 
         let roomState = { key: 'libre', label: 'Libre', color: 'var(--color-success)' };
@@ -120,13 +120,13 @@
         } else if (installBattle) {
           roomState = { key: 'pret', label: 'Pret', color: 'var(--color-neon)' };
         } else if (waitingBattle) {
-          roomState = { key: 'planifie', label: 'Planifiee', color: 'var(--color-warning)' };
+          roomState = { key: 'planned', label: 'Planifiee', color: 'var(--color-warning)' };
         }
 
         return {
-          nom: room.nom,
+          name: room.name,
           type: room.type,
-          type_rencontre: room.type_rencontre,
+          match_type: room.match_type,
           state: roomState,
           currentBattle,
           nextBattle: waitingBattle || null,
@@ -222,7 +222,7 @@
   .room-state { font-size: .96rem; font-weight: 800; text-transform: uppercase; }
   .room-state--en_jeu { color: var(--color-success); }
   .room-state--pret { color: var(--color-neon); }
-  .room-state--planifie { color: var(--color-warning); }
+  .room-state--planned { color: var(--color-warning); }
   .room-state--libre { color: var(--color-success); }
   .room-state--unknown { color: var(--color-text-muted); }
   .room-block { margin-top: .6rem; }
@@ -503,10 +503,10 @@
 <div class="container admin-container">
   <div class="wall-header">
     <div>
-      <h1 class="wall-title"><i class="fas fa-tv"></i> Ecran Geant — <%= safeEvent.nom %></h1>
+      <h1 class="wall-title"><i class="fas fa-tv"></i> Ecran Geant — <%= safeEvent.name %></h1>
       <div class="wall-meta">
         Projection dynamique des salles, rencontres et file d'attente.
-        Derniere mise a jour: <%= safeNow.toLocaleTimeString('fr-FR') %>
+        Derniere mise a jour: <%= safeNow.toLocaleTimeString(locale) %>
       </div>
     </div>
     <div class="wall-actions no-print">
@@ -516,11 +516,11 @@
   </div>
 
   <div class="wall-kpis">
-    <div class="wall-kpi"><strong><%= safeStats.en_cours || 0 %></strong><span>En jeu</span></div>
-    <div class="wall-kpi"><strong><%= safeStats.installation || 0 %></strong><span>Installation</span></div>
-    <div class="wall-kpi"><strong><%= safeStats.planifie || 0 %></strong><span>Planifiees</span></div>
-    <div class="wall-kpi"><strong><%= safeStats.file_attente || 0 %></strong><span>File globale</span></div>
-    <div class="wall-kpi"><strong><%= safeStats.termine || 0 %></strong><span>Resultats</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.in_progress || 0 %></strong><span>En jeu</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.setup || 0 %></strong><span>Installation</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.planned || 0 %></strong><span>Planifiees</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.queue || 0 %></strong><span>File globale</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.ended || 0 %></strong><span>Resultats</span></div>
   </div>
 
   <div class="wall-grid" style="margin-top: .85rem;">
@@ -531,12 +531,12 @@
           <% computedRoomBoards.forEach(function(room) {
                const roomState = room && room.state ? room.state : { key: 'unknown', label: 'Inconnu' };
                const roomStateKey = roomState && roomState.key ? roomState.key : 'unknown';
-               const roomType = room && room.type_rencontre ? room.type_rencontre : 'N/A';
+               const roomType = room && room.match_type ? room.match_type : 'N/A';
                const roomHardware = room && room.type ? room.type : 'N/A';
           %>
             <article class="room-card">
               <div class="room-head">
-                <div class="room-name"><%= room && room.nom ? room.nom : 'Salle' %></div>
+                <div class="room-name"><%= room && room.name ? room.name : 'Salle' %></div>
                 <div class="room-state room-state--<%= roomStateKey %>"><%= roomState.label %></div>
               </div>
               <div class="match-sub"><%= roomType %> • <%= roomHardware %></div>
@@ -544,16 +544,16 @@
               <div class="room-block">
                 <div class="room-label">Partie en cours</div>
                 <% if (room.currentBattle) { %>
-                  <div class="match-line"><%= room.currentBattle.game_nom %> — <%= room.currentBattle.game_console %></div>
+                  <div class="match-line"><%= room.currentBattle.game_name %> — <%= room.currentBattle.game_console %></div>
                   <div class="match-sub">
-                    Statut: <%= room.currentBattle.statut === 'installation' ? 'Installation' : room.currentBattle.statut === 'en_cours' ? 'En cours' : room.currentBattle.statut %>
+                    Statut: <%= room.currentBattle.status === 'setup' ? 'Installation' : room.currentBattle.status === 'in_progress' ? 'En cours' : room.currentBattle.status %>
                   </div>
                   <div class="player-strip">
                     <% const currentPlayers = playerTokens(room.currentBattle); %>
                     <% currentPlayers.forEach(function(player, index) { %>
                       <span class="player-tag"><%= player %></span>
                       <% if (index < currentPlayers.length - 1) { %>
-                        <span class="player-vs"><%= room.currentBattle.type_rencontre === '2v2' ? '|' : 'VS' %></span>
+                        <span class="player-vs"><%= room.currentBattle.match_type === '2v2' ? '|' : 'VS' %></span>
                       <% } %>
                     <% }); %>
                   </div>
@@ -565,16 +565,16 @@
               <div class="room-block">
                 <div class="room-label">Partie suivante</div>
                 <% if (room.nextBattle) { %>
-                  <div class="match-line"><%= room.nextBattle.game_nom %> — <%= room.nextBattle.game_console %></div>
+                  <div class="match-line"><%= room.nextBattle.game_name %> — <%= room.nextBattle.game_console %></div>
                   <div class="match-sub">
-                    Statut: <%= room.nextBattle.statut === 'planifie' ? 'Planifiee' : room.nextBattle.statut %>
+                    Statut: <%= room.nextBattle.status === 'planned' ? 'Planifiee' : room.nextBattle.status %>
                   </div>
                   <div class="player-strip">
                     <% const nextPlayers = playerTokens(room.nextBattle); %>
                     <% nextPlayers.forEach(function(player, index) { %>
                       <span class="player-tag"><%= player %></span>
                       <% if (index < nextPlayers.length - 1) { %>
-                        <span class="player-vs"><%= room.nextBattle.type_rencontre === '2v2' ? '|' : 'VS' %></span>
+                        <span class="player-vs"><%= room.nextBattle.match_type === '2v2' ? '|' : 'VS' %></span>
                       <% } %>
                     <% }); %>
                   </div>
@@ -602,14 +602,14 @@
             <div class="queue-list">
               <% displayedQueue.forEach(function(b, idx) { %>
                 <div class="queue-item">
-                  <div class="match-line">#<%= idx + 1 %> • <%= b.game_nom %></div>
-                  <div class="match-sub"><%= b.game_console %> • <%= b.type_rencontre %></div>
+                  <div class="match-line">#<%= idx + 1 %> • <%= b.game_name %></div>
+                  <div class="match-sub"><%= b.game_console %> • <%= b.match_type %></div>
                   <div class="player-strip">
                     <% const queuePlayers = playerTokens(b); %>
                     <% queuePlayers.forEach(function(player, index) { %>
                       <span class="player-tag"><%= player %></span>
                       <% if (index < queuePlayers.length - 1) { %>
-                        <span class="player-vs"><%= b.type_rencontre === '2v2' ? '|' : 'VS' %></span>
+                        <span class="player-vs"><%= b.match_type === '2v2' ? '|' : 'VS' %></span>
                       <% } %>
                     <% }); %>
                   </div>
@@ -635,14 +635,14 @@
                   <% const resultPlayersRaw = Array.isArray(b.players) ? b.players : []; %>
                   <% const resultPlayers = resultPlayersRaw.map(function(p){
                        return {
-                         pseudo: (p && p.pseudo) ? p.pseudo : '?',
-                         winner: p ? isWinningPlayer(p.est_gagnant) : false,
+                         username: (p && p.username) ? p.username : '?',
+                         winner: p ? isWinningPlayer(p.is_winner) : false,
                        };
                      }); %>
                   <% const winners = resultPlayers.filter(function(p){ return p.winner; }); %>
                   <div class="result-item<%= winners.length > 0 ? ' result-item--has-winner' : '' %>">
-                    <div class="match-line"><%= b.game_nom %> — <%= b.game_console %></div>
-                    <div class="match-sub">Salle: <%= b.room_nom || 'N/A' %> • Score: <%= b.score || 'N/A' %></div>
+                    <div class="match-line"><%= b.game_name %> — <%= b.game_console %></div>
+                    <div class="match-sub">Salle: <%= b.room_name || 'N/A' %> • Score: <%= b.score || 'N/A' %></div>
                     <div class="result-meta">
                       <div class="result-meta-item">
                         <span class="result-meta-label"><i class="fas fa-hourglass-end"></i> Durée:</span>
@@ -657,10 +657,10 @@
                       <% resultPlayers.forEach(function(player, index) { %>
                         <span class="player-tag<%= player.winner ? ' player-tag--winner' : '' %>">
                           <% if (player.winner) { %><i class="fas fa-trophy player-tag__winner-icon"></i><% } %>
-                          <%= player.pseudo %>
+                          <%= player.username %>
                         </span>
                         <% if (index < resultPlayers.length - 1) { %>
-                          <span class="player-vs"><%= b.type_rencontre === '2v2' ? '|' : 'VS' %></span>
+                          <span class="player-vs"><%= b.match_type === '2v2' ? '|' : 'VS' %></span>
                         <% } %>
                       <% }); %>
                     </div>
@@ -694,7 +694,7 @@
                   <% safeRankingBoard.forEach(function(entry) { %>
                     <tr class="ranking-row--podium-<%= entry.rang <= 3 ? entry.rang : 0 %>">
                       <td class="ranking-col-rank"><%= entry.rang %></td>
-                      <td class="ranking-col-player"><%= entry.pseudo %></td>
+                      <td class="ranking-col-player"><%= entry.username %></td>
                       <td class="ranking-col-points"><%= entry.points %></td>
                       <td class="ranking-col-wins"><%= entry.wins %></td>
                       <td class="ranking-col-battles"><%= entry.battles_played %></td>

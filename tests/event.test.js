@@ -42,7 +42,7 @@ describe('Event Model', function () {
       expect(result).to.deep.equal(fakeRows);
       expect(poolStub.execute.calledOnce).to.be.true;
       const query = poolStub.execute.firstCall.args[0];
-      expect(query).to.include('statut');
+      expect(query).to.include('status');
     });
   });
 
@@ -112,7 +112,7 @@ describe('Event Model', function () {
       expect(query).to.include('INSERT INTO events');
     });
 
-    it('doit utiliser "planifie" par défaut si statut absent', async function () {
+    it('doit utiliser "planned" par défaut si status absent', async function () {
       poolStub.execute.resolves([{ insertId: 5 }]);
 
       await Event.create({
@@ -125,7 +125,7 @@ describe('Event Model', function () {
       expect(args[4]).to.equal('planned');
     });
 
-    it('doit rejeter un statut invalide et utiliser "planifie"', async function () {
+    it('doit rejeter un status invalide et utiliser "planned"', async function () {
       poolStub.execute.resolves([{ insertId: 7 }]);
 
       await Event.create({
@@ -216,7 +216,7 @@ describe('Event Model', function () {
       const query = poolStub.execute.firstCall.args[0];
       expect(query).to.include('UPDATE events');
       expect(query).to.include('discord_channel_id');
-      expect(query).to.include('statut');
+      expect(query).to.include('status');
     });
 
     it('doit retourner false si aucune ligne affectée', async function () {

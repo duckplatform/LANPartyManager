@@ -281,7 +281,8 @@ INSERT IGNORE INTO `app_settings` (`key`, `value`) VALUES
   ('community_link_twitch',    NULL),
   ('community_link_youtube',   NULL),
   ('community_link_website',   NULL),
-  ('language',                 'fr');
+  ('language',                 'fr'),
+  ('locale',                   'fr-FR');
 
 SET FOREIGN_KEY_CHECKS = 1;
 

@@ -79,11 +79,11 @@ describe('Routes - Tests d\'intégration', function () {
 
     it('doit afficher la section événement quand un événement est planifié (statut planifie)', async function () {
       const fakeEvent = {
-        id:         1,
-        last_name:        'LAN Printemps 2026',
+        id:       1,
+        name:     'LAN Printemps 2026',
         start_at: new Date(Date.now() + 7 * 24 * 3600 * 1000), // dans 7 jours
-        location:       'Salle des fêtes',
-        status:     'planned',
+        location: 'Salle des fêtes',
+        status:   'planned',
       };
       // Appel 1 : Announcement.findLatestPublished → []
       // Appel 2 : Event.findActive → [fakeEvent]
@@ -102,11 +102,11 @@ describe('Routes - Tests d\'intégration', function () {
 
     it('doit afficher la section événement pour un événement en cours (statut en_cours)', async function () {
       const liveEvent = {
-        id:         2,
-        last_name:        'LAN Été 2026',
+        id:       2,
+        name:     'LAN Été 2026',
         start_at: new Date(Date.now() - 3600 * 1000), // commencé il y a 1h
-        location:       'Paris',
-        status:     'in_progress',
+        location: 'Paris',
+        status:   'in_progress',
       };
       poolStub.execute
         .onCall(0).resolves([[]])
@@ -121,11 +121,11 @@ describe('Routes - Tests d\'intégration', function () {
 
     it('ne doit pas afficher de CTA invité si l\'événement mis en avant est fermé', async function () {
       const liveEvent = {
-        id:         3,
-        last_name:        'LAN Fermée',
+        id:       3,
+        name:     'LAN Fermée',
         start_at: new Date(Date.now() - 3600 * 1000),
-        location:       'Lille',
-        status:     'in_progress',
+        location: 'Lille',
+        status:   'in_progress',
       };
       poolStub.execute
         .onCall(0).resolves([[]])
@@ -214,7 +214,7 @@ describe('Routes - Tests d\'intégration', function () {
     it('ne doit pas afficher de CTA invité pour un événement aux inscriptions fermées', async function () {
       const closedEvent = {
         id: 21,
-        last_name: 'LAN Close List',
+        name: 'LAN Close List',
         start_at: new Date(Date.now() - 3600 * 1000),
         location: 'Rennes',
         status: 'in_progress',
@@ -306,7 +306,7 @@ describe('Routes - Tests d\'intégration', function () {
 
       eventFindByIdStub.resolves({
         id: 12,
-        last_name: 'LAN Analytics',
+        name: 'LAN Analytics',
         start_at: '2099-06-10 14:00:00',
         location: 'Nantes',
         status: 'planned',
@@ -317,15 +317,15 @@ describe('Routes - Tests d\'intégration', function () {
         { rang: 2, username: 'Bravo', points: 6, wins: 3, battles_played: 4 },
       ]);
       battleFindByEventStub.resolves([
-        { id: 1, status: 'in_progress', game_nom: 'Tekken 8', game_console: 'PS5', room_id: 101 },
-        { id: 2, status: 'ended', game_nom: 'Tekken 8', game_console: 'PS5', room_id: 101 },
-        { id: 3, status: 'planned', game_nom: 'Mario Kart 8', game_console: 'Switch', room_id: 102 },
-        { id: 4, status: 'queue', game_nom: 'Mario Kart 8', game_console: 'Switch', room_id: null },
+        { id: 1, status: 'in_progress', game_name: 'Tekken 8', game_console: 'PS5', room_id: 101 },
+        { id: 2, status: 'ended', game_name: 'Tekken 8', game_console: 'PS5', room_id: 101 },
+        { id: 3, status: 'planned', game_name: 'Mario Kart 8', game_console: 'Switch', room_id: 102 },
+        { id: 4, status: 'queue', game_name: 'Mario Kart 8', game_console: 'Switch', room_id: null },
       ]);
       roomFindByEventStub.resolves([
-        { id: 101, last_name: 'Zelda', type: 'console', match_type: '1v1', is_active: 1 },
-        { id: 102, last_name: 'Mario', type: 'console', match_type: '1v1', is_active: 1 },
-        { id: 103, last_name: 'Sonic', type: 'simulation', match_type: 'solo', is_active: 0 },
+        { id: 101, name: 'Zelda', type: 'console', match_type: '1v1', is_active: 1 },
+        { id: 102, name: 'Mario', type: 'console', match_type: '1v1', is_active: 1 },
+        { id: 103, name: 'Sonic', type: 'simulation', match_type: 'solo', is_active: 0 },
       ]);
       registrationIsRegisteredStub.resolves(false);
 
@@ -418,7 +418,7 @@ describe('Routes - Tests d\'intégration', function () {
         .set('Cookie', cookie)
         .send(
           `_csrf=${encodeURIComponent(csrfToken)}` +
-          '&nom=Test&prenom=User&pseudo=TU&email=test@test.com' +
+          '&last_name=Test&first_name=User&username=TU&email=test@test.com' +
           '&password=court&password_confirm=court'
         );
 
@@ -565,7 +565,7 @@ describe('Routes - Tests d\'intégration', function () {
       };
 
       eventFindByIdStub.resolves({ id: 3, status: 'in_progress' });
-      gameFindByIdStub.resolves({ id: 1, last_name: 'Street Fighter 6', match_type: '1v1' });
+      gameFindByIdStub.resolves({ id: 1, name: 'Street Fighter 6', match_type: '1v1' });
       userFindByBadgeTokenStub
         .onFirstCall().resolves({ id: 10, username: 'Player1' })
         .onSecondCall().resolves({ id: 11, username: 'Player2' });
@@ -605,7 +605,7 @@ describe('Routes - Tests d\'intégration', function () {
       };
 
       eventFindByIdStub.resolves({ id: 4, status: 'in_progress' });
-      gameFindByIdStub.resolves({ id: 2, last_name: 'Tekken 8', match_type: '1v1' });
+      gameFindByIdStub.resolves({ id: 2, name: 'Tekken 8', match_type: '1v1' });
       userFindByBadgeTokenStub
         .onFirstCall().resolves({ id: 21, username: 'Alpha' })
         .onSecondCall().resolves({ id: 22, username: 'Bravo' });
@@ -648,8 +648,8 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
-      const event = { id: 4, last_name: 'LAN Test', status: 'in_progress', discord_channel_id: '333333333333333333' };
-      const createdBattle = { id: 77, event_id: 4, status: 'planned', room_nom: 'Neo Tokyo' };
+      const event = { id: 4, name: 'LAN Test', status: 'in_progress', discord_channel_id: '333333333333333333' };
+      const createdBattle = { id: 77, event_id: 4, status: 'planned', room_name: 'Neo Tokyo' };
 
       eventFindByIdStub.resolves(event);
       gameFindByIdStub.resolves({ id: 2, last_name: 'Tekken 8', match_type: '1v1' });
@@ -764,7 +764,7 @@ describe('Routes - Tests d\'intégration', function () {
       };
 
       const battle = { id: 12, event_id: 1, status: 'in_progress' };
-      const event = { id: 1, last_name: 'LAN Spring Showdown', status: 'in_progress' };
+      const event = { id: 1, name: 'LAN Spring Showdown', status: 'in_progress' };
       const endedBattle = {
         id: 12,
         event_id: 1,
@@ -822,7 +822,7 @@ describe('Routes - Tests d\'intégration', function () {
         redirect: sinon.stub(),
       };
 
-      eventFindByIdStub.resolves({ id: 9, last_name: 'LAN Test', status: 'in_progress' });
+      eventFindByIdStub.resolves({ id: 9, name: 'LAN Test', status: 'in_progress' });
       battleFindByEventStub.resolves([]);
       roomFindByEventStub.resolves([]);
       battleCountByStatutStub.resolves(undefined);
@@ -923,7 +923,7 @@ describe('Routes - Tests d\'intégration', function () {
         .set('Cookie', cookie)
         .send(
           `_csrf=${encodeURIComponent(csrfToken)}` +
-          '&nom=Test&prenom=User&pseudo=TU&email=test@test.com'
+          '&last_name=Test&first_name=User&username=TU&email=test@test.com'
         );
 
       expect(res.status).to.equal(302);

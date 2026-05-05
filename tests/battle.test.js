@@ -383,7 +383,7 @@ describe('Battle Model', function () {
       expect(reevaluateStub.calledOnceWithExactly(1)).to.be.true;
 
       const installQuery = poolStub.execute.getCall(4).args[0];
-      expect(installQuery).to.include("statut = 'setup'");
+      expect(installQuery).to.include("status = 'setup'");
 
       reevaluateStub.restore();
     });
@@ -425,11 +425,11 @@ describe('Battle Model', function () {
       poolStub.execute.resolves([fakeRows]);
 
       const result = await Battle.countByStatus(1);
-      expect(result.file_attente).to.equal(2);
-      expect(result.planifie).to.equal(1);
-      expect(result.en_cours).to.equal(3);
-      expect(result.installation).to.equal(0);  // non présent → défaut 0
-      expect(result.termine).to.equal(0);
+      expect(result.queue).to.equal(2);
+      expect(result.planned).to.equal(1);
+      expect(result.in_progress).to.equal(3);
+      expect(result.setup).to.equal(0);  // non présent → défaut 0
+      expect(result.ended).to.equal(0);
     });
   });
 

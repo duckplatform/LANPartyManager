@@ -45,22 +45,22 @@
             <% } else { %>
               <% events.forEach(function(event) { %>
                 <tr>
-                  <td><strong><%= event.nom %></strong></td>
+                  <td><strong><%= event.name %></strong></td>
                   <td class="td-date">
-                    <%= new Date(event.date_heure).toLocaleDateString('fr-FR', {
+                    <%= new Date(event.start_at).toLocaleDateString(locale, {
                       day: 'numeric', month: 'long', year: 'numeric'
                     }) %>
                   </td>
-                  <td><%= event.lieu %></td>
+                  <td><%= event.location %></td>
                   <td>
-                    <% const statutColors = { planifie: 'info', en_cours: 'success', termine: 'muted' }; %>
-                    <span class="badge badge--<%= statutColors[event.statut] || 'muted' %>">
-                      <%= event.statut.replace('_', ' ') %>
+                    <% const statusColors = { planned: 'info', in_progress: 'success', ended: 'muted' }; %>
+                    <span class="badge badge--<%= statusColors[event.status] || 'muted' %>">
+                      <%= event.status.replace('_', ' ') %>
                     </span>
                   </td>
                   <td><%= event.registrationCount || 0 %></td>
                   <td class="td-actions">
-                    <% if (event.statut === 'en_cours') { %>
+                    <% if (event.status === 'in_progress') { %>
                       <a href="/battles/events/<%= event.id %>" class="btn btn--primary btn--sm">
                         <i class="fas fa-swords"></i> Rencontres
                       </a>

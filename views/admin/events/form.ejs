@@ -47,16 +47,16 @@
 
         <!-- Nom -->
         <div class="form-group">
-          <label class="form-label" for="nom">
+          <label class="form-label" for="name">
             <i class="fas fa-tag"></i> Nom de l'événement <span class="required">*</span>
           </label>
           <input
             type="text"
-            id="nom"
-            name="nom"
+            id="name"
+            name="name"
             class="form-input"
             placeholder="Ex. : LAN Party Printemps 2025"
-            value="<%= (event && event.nom) ? event.nom : '' %>"
+            value="<%= (event && event.name) ? event.name : '' %>"
             maxlength="255"
             required
             autocomplete="off"
@@ -65,13 +65,13 @@
 
         <!-- Date/heure -->
         <div class="form-group">
-          <label class="form-label" for="date_heure">
+          <label class="form-label" for="start_at">
             <i class="fas fa-calendar-alt"></i> Date et heure <span class="required">*</span>
           </label>
           <input
             type="datetime-local"
-            id="date_heure"
-            name="date_heure"
+            id="start_at"
+            name="start_at"
             class="form-input"
             value="<%= dateHeureLocal || '' %>"
             required
@@ -80,16 +80,16 @@
 
         <!-- Lieu -->
         <div class="form-group">
-          <label class="form-label" for="lieu">
+          <label class="form-label" for="location">
             <i class="fas fa-location-dot"></i> Lieu <span class="required">*</span>
           </label>
           <input
             type="text"
-            id="lieu"
-            name="lieu"
+            id="location"
+            name="location"
             class="form-input"
             placeholder="Ex. : Salle des fêtes, 12 rue de la Paix"
-            value="<%= (event && event.lieu) ? event.lieu : '' %>"
+            value="<%= (event && event.location) ? event.location : '' %>"
             maxlength="255"
             required
             autocomplete="off"
@@ -163,17 +163,17 @@
           </div>
           <div class="card-body">
             <div class="form-group">
-              <label class="form-label" for="statut">
+              <label class="form-label" for="status">
                 <i class="fas fa-toggle-on"></i> État de l'événement
               </label>
-              <select id="statut" name="statut" class="form-input" required>
-                <option value="planifie"  <%= (!event || event.statut === 'planifie')  ? 'selected' : '' %>>
+              <select id="status" name="status" class="form-input" required>
+                <option value="planned"  <%= (!event || event.status === 'planned')  ? 'selected' : '' %>>
                   📅 Planifié — inscriptions ouvertes
                 </option>
-                <option value="en_cours" <%= (event && event.statut === 'en_cours') ? 'selected' : '' %>>
+                <option value="in_progress" <%= (event && event.status === 'in_progress') ? 'selected' : '' %>>
                   ▶ En cours — inscriptions fermées
                 </option>
-                <option value="termine"  <%= (event && event.statut === 'termine')  ? 'selected' : '' %>>
+                <option value="ended"  <%= (event && event.status === 'ended')  ? 'selected' : '' %>>
                   ✅ Terminé — événement archivé
                 </option>
               </select>

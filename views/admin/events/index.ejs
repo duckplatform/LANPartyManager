@@ -55,20 +55,20 @@
               <% events.forEach(function(ev) { %>
                 <tr>
                   <td class="td-id">#<%= ev.id %></td>
-                  <td><strong><%= ev.nom %></strong></td>
+                  <td><strong><%= ev.name %></strong></td>
                   <td class="td-date">
-                    <%= new Date(ev.date_heure).toLocaleDateString('fr-FR', {
+                    <%= new Date(ev.start_at).toLocaleDateString(locale, {
                       day: '2-digit', month: '2-digit', year: 'numeric'
                     }) %>
-                    <%= new Date(ev.date_heure).toLocaleTimeString('fr-FR', {
+                    <%= new Date(ev.start_at).toLocaleTimeString(locale, {
                       hour: '2-digit', minute: '2-digit'
                     }) %>
                   </td>
-                  <td><%= ev.lieu %></td>
+                  <td><%= ev.location %></td>
                   <td>
-                    <% if (ev.statut === 'planifie') { %>
+                    <% if (ev.status === 'planned') { %>
                       <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> Planifié</span>
-                    <% } else if (ev.statut === 'en_cours') { %>
+                    <% } else if (ev.status === 'in_progress') { %>
                       <span class="badge badge--member"><i class="fas fa-circle-play"></i> En cours</span>
                     <% } else { %>
                       <span class="badge badge--draft"><i class="fas fa-circle-check"></i> Terminé</span>
@@ -93,7 +93,7 @@
                       <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                       <button type="submit"
                               class="btn btn--xs btn--danger"
-                              onclick="return confirm('Supprimer définitivement l\'événement «\u00A0<%= ev.nom %>\u00A0» et toutes ses inscriptions ?')">
+                              onclick="return confirm('Supprimer définitivement l\'événement «\u00A0<%= ev.name %>\u00A0» et toutes ses inscriptions ?')">
                         <i class="fas fa-trash"></i> Supprimer
                       </button>
                     </form>

@@ -7,8 +7,8 @@
       <div class="auth-icon">
         <i class="fas fa-right-to-bracket"></i>
       </div>
-      <h1 class="auth-title">Connexion</h1>
-      <p class="auth-subtitle">Accédez à votre espace membre</p>
+      <h1 class="auth-title"><%= t('auth.login') %></h1>
+      <p class="auth-subtitle"><%= t('auth.subtitle_login') %></p>
     </div>
 
     <!-- Erreurs de validation -->
@@ -26,7 +26,7 @@
 
       <div class="form-group">
         <label for="email" class="form-label">
-          <i class="fas fa-envelope"></i> Adresse e-mail
+          <i class="fas fa-envelope"></i> <%= t('auth.email') %>
         </label>
         <input
           type="email"
@@ -42,7 +42,7 @@
 
       <div class="form-group">
         <label for="password" class="form-label">
-          <i class="fas fa-lock"></i> Mot de passe
+          <i class="fas fa-lock"></i> <%= t('auth.password') %>
         </label>
         <div class="input-password-wrap">
           <input
@@ -54,32 +54,32 @@
             required
             autocomplete="current-password"
           />
-          <button type="button" class="password-toggle" aria-label="Afficher/masquer le mot de passe">
+          <button type="button" class="password-toggle" aria-label="<%= t('auth.toggle_password_visibility') %>">
             <i class="fas fa-eye"></i>
           </button>
         </div>
       </div>
 
       <button type="submit" class="btn btn--primary btn--full">
-        <i class="fas fa-right-to-bracket"></i> Se connecter
+        <i class="fas fa-right-to-bracket"></i> <%= t('auth.sign_in') %>
       </button>
     </form>
 
     <% if (discordEnabled) { %>
       <!-- Séparateur -->
       <div class="auth-divider">
-        <span>ou</span>
+        <span><%= t('auth.or') %></span>
       </div>
 
       <!-- Connexion via Discord -->
       <a href="/auth/discord" class="btn btn--discord btn--full">
-        <i class="fab fa-discord"></i> Se connecter avec Discord
+        <i class="fab fa-discord"></i> <%= t('auth.login_with_discord') %>
       </a>
     <% } %>
 
     <!-- Lien vers l'inscription -->
     <div class="auth-switch">
-      <p>Pas encore de compte ? <a href="/auth/register" class="link-accent">Créer un compte</a></p>
+      <p><%= t('auth.no_account') %> <a href="/auth/register" class="link-accent"><%= t('auth.create_account') %></a></p>
     </div>
   </div>
 </div>

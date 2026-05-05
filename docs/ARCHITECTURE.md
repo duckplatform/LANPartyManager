@@ -151,9 +151,9 @@ Le seed est idempotent : il ajoute uniquement des enregistrements de demonstrati
 | Colonne | Type | Description |
 |---------|------|-------------|
 | id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
-| nom | VARCHAR(100) | Nom de famille |
-| prenom | VARCHAR(100) | Prénom |
-| pseudo | VARCHAR(50) | Surnom en jeu (unique dans l'interface) |
+| last_name | VARCHAR(100) | Nom de famille |
+| first_name | VARCHAR(100) | Prénom |
+| username | VARCHAR(50) | Surnom en jeu (unique dans l'interface) |
 | email | VARCHAR(255) UNIQUE | Adresse e-mail (login) |
 | password | VARCHAR(255) NULL | Mot de passe haché (bcrypt 12 rounds). Pour Discord OAuth, un hash aléatoire non divulgué est stocké |
 | is_admin | TINYINT(1) DEFAULT 0 | 1 = admin, 0 = membre |
@@ -167,9 +167,9 @@ Le seed est idempotent : il ajoute uniquement des enregistrements de demonstrati
 | Colonne | Type | Description |
 |---------|------|-------------|
 | id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
-| titre | VARCHAR(255) | Titre de l'annonce |
-| contenu | LONGTEXT | Contenu en syntaxe Markdown |
-| statut | ENUM('publie','brouillon') | Statut de publication |
+| title | VARCHAR(255) | Titre de l'annonce |
+| content | LONGTEXT | Contenu en syntaxe Markdown |
+| status | ENUM('published','draft') | Statut de publication |
 | created_at | DATETIME | Date de création |
 | updated_at | DATETIME | Date de dernière modification |
 
@@ -178,11 +178,11 @@ Le seed est idempotent : il ajoute uniquement des enregistrements de demonstrati
 | Colonne | Type | Description |
 |---------|------|-------------|
 | id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
-| nom | VARCHAR(255) | Nom de l'événement |
-| date_heure | DATETIME | Date et heure de début |
-| lieu | VARCHAR(255) | Lieu de l'événement |
+| name | VARCHAR(255) | Nom de l'événement |
+| start_at | DATETIME | Date et heure de début |
+| location | VARCHAR(255) | Lieu de l'événement |
 | discord_channel_id | VARCHAR(32) NULL | ID du canal Discord dédié (optionnel, 17 à 20 chiffres) |
-| statut | ENUM('planifie','en_cours','termine') | État métier de l'événement |
+| status | ENUM('planned','in_progress','ended') | État métier de l'événement |
 | created_at | DATETIME | Date de création |
 | updated_at | DATETIME | Date de dernière modification |
 
@@ -191,9 +191,9 @@ Le seed est idempotent : il ajoute uniquement des enregistrements de demonstrati
 | Colonne | Type | Description |
 |---------|------|-------------|
 | id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
-| nom | VARCHAR(100) | Nom du jeu |
+| name | VARCHAR(100) | Nom du jeu |
 | console | VARCHAR(100) | Console / plateforme (PC, PS5, Xbox…) |
-| type_rencontre | ENUM('1v1','2v2') | Format de la rencontre |
+| match_type | ENUM('1v1','2v2','solo') | Format de la rencontre |
 | created_at | DATETIME | Date de création |
 | updated_at | DATETIME | Date de dernière modification |
 
@@ -202,10 +202,10 @@ Le seed est idempotent : il ajoute uniquement des enregistrements de demonstrati
 | Colonne | Type | Description |
 |---------|------|-------------|
 | id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
-| nom | VARCHAR(100) | Nom auto-généré (jeux vidéo iconiques) |
+| name | VARCHAR(100) | Nom auto-généré (jeux vidéo iconiques) |
 | type | ENUM('console','simulation') | Type de la salle |
-| type_rencontre | ENUM('1v1','2v2') | Format de rencontre supporté |
-| actif | TINYINT(1) DEFAULT 1 | 1 = active, 0 = inactive (panne) |
+| match_type | ENUM('1v1','2v2','solo') | Format de rencontre supporté |
+| is_active | TINYINT(1) DEFAULT 1 | 1 = active, 0 = inactive (panne) |
 | event_id | INT UNSIGNED | Référence vers events.id (CASCADE) |
 | created_at | DATETIME | Date de création |
 | updated_at | DATETIME | Date de dernière modification |
@@ -218,7 +218,7 @@ Le seed est idempotent : il ajoute uniquement des enregistrements de demonstrati
 | event_id | INT UNSIGNED | Référence vers events.id (CASCADE) |
 | game_id | INT UNSIGNED | Référence vers games.id (RESTRICT) |
 | room_id | INT UNSIGNED NULL | Référence vers rooms.id (SET NULL) |
-| statut | ENUM | file_attente / planifie / en_attente / en_cours / termine |
+| status | ENUM | queue / planned / setup / in_progress / ended |
 | score | VARCHAR(100) NULL | Score final saisi manuellement |
 | notes | TEXT NULL | Notes libres du modérateur |
 | created_at | DATETIME | Date de création |
@@ -231,21 +231,21 @@ Le seed est idempotent : il ajoute uniquement des enregistrements de demonstrati
 | id | INT UNSIGNED AUTO_INCREMENT | Clé primaire |
 | battle_id | INT UNSIGNED | Référence vers battles.id (CASCADE) |
 | user_id | INT UNSIGNED | Référence vers users.id (CASCADE) |
-| equipe | TINYINT(1) DEFAULT 1 | Numéro d'équipe (1 ou 2) |
-| est_gagnant | TINYINT(1) DEFAULT 0 | 1 = gagnant, 0 = perdant |
+| team | TINYINT(1) DEFAULT 1 | Numéro d'équipe (1 ou 2) |
+| is_winner | TINYINT(1) DEFAULT 0 | 1 = gagnant, 0 = perdant |
 
 ### Système de rencontres (Étape 5)
 
 #### Logique de file d'attente automatique
 
-1. À la **création** d'une rencontre : le système vérifie si une salle est disponible (active, bon type, sans battle en_attente/en_cours). Si oui → statut `planifie` + salle attribuée. Sinon → statut `file_attente`.
-2. À la **fin** d'une rencontre (`termine`) : `reevaluateQueue()` parcourt les rencontres en `file_attente` par ordre chronologique et tente d'assigner une salle à chacune.
+1. À la **création** d'une rencontre : le système vérifie si une salle est disponible (active, bon type, sans battle `planned`/`setup`/`in_progress`). Si oui → statut `planned` ou `setup` + salle attribuée. Sinon → statut `queue`.
+2. À la **fin** d'une rencontre (`ended`) : `reevaluateQueue()` parcourt les rencontres en `queue` par ordre chronologique et tente d'assigner une salle à chacune.
 3. **Règle immuable** : une salle attribuée ne peut jamais changer.
 
 #### Cycle de vie d'une rencontre
 
 ```
-file_attente  →  planifie  →  en_attente  →  en_cours  →  termine
+queue  →  planned  →  setup  →  in_progress  →  ended
      │                │            │              │
      └── (salle dispo)┘    (Joueurs   (Lancer     (Score +
                              en place)  la partie)  gagnants)

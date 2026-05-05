@@ -18,7 +18,7 @@
       <h1 class="admin-title">
         <i class="fas fa-users"></i> Identifier les joueurs
       </h1>
-      <p class="admin-subtitle"><i class="fas fa-calendar-alt"></i> <%= event.nom %></p>
+      <p class="admin-subtitle"><i class="fas fa-calendar-alt"></i> <%= event.name %></p>
     </div>
     <div class="admin-header-actions">
       <a href="/battles/events/<%= event.id %>/create" class="btn btn--ghost btn--sm">
@@ -42,10 +42,10 @@
   <div class="card" style="margin-bottom:var(--space-md); border-left:4px solid var(--color-primary);">
     <div class="card-body" style="padding:.75rem var(--space-md); display:flex; align-items:center; gap:1rem; flex-wrap:wrap;">
       <div>
-        <strong><i class="fas fa-gamepad"></i> <%= game.nom %></strong>
+        <strong><i class="fas fa-gamepad"></i> <%= game.name %></strong>
         <span style="color:var(--color-text-muted); margin-left:.5rem;"><%= game.console %></span>
-        <span class="badge badge--<%= game.type_rencontre === '2v2' ? 'info' : game.type_rencontre === 'solo' ? 'warning' : 'primary' %>" style="margin-left:.5rem;">
-          <%= game.type_rencontre %>
+        <span class="badge badge--<%= game.match_type === '2v2' ? 'info' : game.match_type === 'solo' ? 'warning' : 'primary' %>" style="margin-left:.5rem;">
+          <%= game.match_type %>
         </span>
       </div>
       <div style="color:var(--color-text-muted); font-size:.85rem;">
@@ -79,26 +79,26 @@
         <%
           // Génère les slots joueurs selon le type de rencontre
           const slots = [];
-          if (game.type_rencontre === '2v2') {
-            slots.push({ label: 'Joueur 1 — Équipe 1', equipe: 1 });
-            slots.push({ label: 'Joueur 2 — Équipe 1', equipe: 1 });
-            slots.push({ label: 'Joueur 3 — Équipe 2', equipe: 2 });
-            slots.push({ label: 'Joueur 4 — Équipe 2', equipe: 2 });
-          } else if (game.type_rencontre === 'solo') {
-            slots.push({ label: 'Joueur Solo', equipe: 1 });
+          if (game.match_type === '2v2') {
+            slots.push({ label: 'Joueur 1 — Équipe 1', team: 1 });
+            slots.push({ label: 'Joueur 2 — Équipe 1', team: 1 });
+            slots.push({ label: 'Joueur 3 — Équipe 2', team: 2 });
+            slots.push({ label: 'Joueur 4 — Équipe 2', team: 2 });
+          } else if (game.match_type === 'solo') {
+            slots.push({ label: 'Joueur Solo', team: 1 });
           } else {
-            slots.push({ label: 'Joueur 1', equipe: 1 });
-            slots.push({ label: 'Joueur 2', equipe: 2 });
+            slots.push({ label: 'Joueur 1', team: 1 });
+            slots.push({ label: 'Joueur 2', team: 2 });
           }
         %>
 
         <% slots.forEach(function(slot, i) { %>
-          <div class="player-slot team-<%= slot.equipe %>">
+          <div class="player-slot team-<%= slot.team %>">
             <div class="player-slot-title">
-              <i class="fas fa-circle-user" style="color:<%= slot.equipe === 1 ? '#3b82f6' : '#f59e0b' %>;"></i>
+              <i class="fas fa-circle-user" style="color:<%= slot.team === 1 ? '#3b82f6' : '#f59e0b' %>;"></i>
               <%= slot.label %>
             </div>
-            <input type="hidden" name="equipe[]" value="<%= slot.equipe %>" />
+            <input type="hidden" name="team[]" value="<%= slot.team %>" />
             <div class="qr-scan-area">
               <input type="text"
                      id="token_<%= i %>"

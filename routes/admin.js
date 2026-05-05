@@ -1338,6 +1338,16 @@ const settingsValidation = [
     .isURL().withMessage('Le lien site web doit être une URL valide.')
     .isLength({ max: 500 }).withMessage('Le lien ne peut pas dépasser 500 caractères.'),
   
+  // Langue et localisation
+  body('language')
+    .optional({ checkFalsy: true })
+    .trim()
+    .isIn(['fr', 'en']).withMessage('La langue doit être «fr» ou «en».'),
+  body('locale')
+    .optional({ checkFalsy: true })
+    .trim()
+    .matches(/^[a-zA-Z]{2,3}(-[a-zA-Z]{2,4})?$/).withMessage('La locale doit être un code BCP 47 valide (ex. : fr-FR).'),
+
   // Discord existants
   body('discord_bot_token')
     .optional({ checkFalsy: true })
@@ -1438,6 +1448,12 @@ router.post('/settings', settingsValidation, async (req, res) => {
     // Clé publique Discord pour la vérification des interactions (slash commands)
     const discord_application_public_key = (req.body.discord_application_public_key || '').trim() || null;
 
+    // Langue et locale
+    const language = ['fr', 'en'].includes((req.body.language || '').trim())
+      ? req.body.language.trim()
+      : 'fr';
+    const locale = (req.body.locale || '').trim() || 'fr-FR';
+
     await AppSettings.setMultiple({
       // Identité de l'association
       organization_name,
@@ -1456,10 +1472,17 @@ router.post('/settings', settingsValidation, async (req, res) => {
       discord_client_id,
       discord_client_secret,
       discord_application_public_key,
+      // Langue et localisation
+      language,
+      locale,
     });
 
     // Invalide le cache Discord pour que la nouvelle config soit prise en compte
     discord.clearConfigCache();
+
+    // Invalide le cache i18n pour que la nouvelle langue soit prise en compte immédiatement
+    const i18n = require('../config/i18n');
+    i18n.clearCache();
 
     logger.info(`[ADMIN/SETTINGS] Paramètres mis à jour par l'utilisateur #${req.session.userId}`);
     req.flash('success', 'Paramètres enregistrés avec succès.');

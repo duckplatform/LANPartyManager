@@ -5,7 +5,8 @@
  * Vérifie que l'utilisateur est connecté
  */
 
-const AppSettings = require('../models/AppSettings');
+const AppSettings                              = require('../models/AppSettings');
+const { loadTranslations, createT, DEFAULT_LOCALE } = require('../config/i18n');
 
 /**
  * Exige que l'utilisateur soit authentifié.
@@ -67,6 +68,17 @@ async function injectLocals(req, res, next) {
   // Injecte les paramètres d'application pour l'identité et les liens communautés
   try {
     const appSettings = await AppSettings.getAll();
+
+    // Langue et locale pour les traductions et le formatage des dates/heures
+    const language = appSettings.language || 'fr';
+    const locale   = appSettings.locale   || DEFAULT_LOCALE;
+
+    // Charge les traductions correspondant à la langue configurée
+    const translations = loadTranslations(language);
+    res.locals.t        = createT(translations);
+    res.locals.locale   = locale;
+    res.locals.language = language;
+
     res.locals.appSettings = {
       organization_name: appSettings.organization_name || 'LANPartyManager',
       organization_logo: appSettings.organization_logo || null,
@@ -79,6 +91,10 @@ async function injectLocals(req, res, next) {
     };
   } catch (err) {
     // En cas d'erreur (DB indisponible), on utilise les valeurs par défaut
+    const { createT: _createT, loadTranslations: _load, DEFAULT_LOCALE: _locale } = require('../config/i18n');
+    res.locals.t        = _createT(_load('fr'));
+    res.locals.locale   = _locale;
+    res.locals.language = 'fr';
     res.locals.appSettings = {
       organization_name: 'LANPartyManager',
       organization_logo: null,

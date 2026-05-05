@@ -8,7 +8,7 @@
       <h1 class="admin-title">
         <i class="fas fa-plus"></i> Nouvelle rencontre
       </h1>
-      <p class="admin-subtitle"><i class="fas fa-calendar-alt"></i> <%= event.nom %></p>
+      <p class="admin-subtitle"><i class="fas fa-calendar-alt"></i> <%= event.name %></p>
     </div>
     <div class="admin-header-actions">
       <a href="/battles/events/<%= event.id %>" class="btn btn--ghost btn--sm">
@@ -57,7 +57,7 @@
               <option value="">— Sélectionner un jeu —</option>
               <% games.forEach(function(game) { %>
                 <option value="<%= game.id %>" <%= String(old.game_id) === String(game.id) ? 'selected' : '' %>>
-                  <%= game.nom %> — <%= game.console %> (<%= game.type_rencontre %>)
+                  <%= game.name %> — <%= game.console %> (<%= game.match_type %>)
                 </option>
               <% }); %>
             </select>
@@ -91,7 +91,7 @@
 (function () {
   'use strict';
 
-  const games = <%- JSON.stringify(games.map(function(g) { return { id: g.id, nom: g.nom, console: g.console, type_rencontre: g.type_rencontre }; })) %>;
+  const games = <%- JSON.stringify(games.map(function(g) { return { id: g.id, name: g.name, console: g.console, match_type: g.match_type }; })) %>;
   const select   = document.getElementById('game_id');
   const preview  = document.getElementById('gamePreview');
   const previewNom     = document.getElementById('previewNom');
@@ -104,13 +104,13 @@
     const game   = games.find(g => g.id === gameId);
     if (!game) { preview.style.display = 'none'; return; }
 
-    previewNom.textContent     = game.nom;
+    previewNom.textContent     = game.name;
     previewConsole.textContent = '— ' + game.console;
-    previewType.textContent    = game.type_rencontre;
-    previewType.className      = 'badge badge--' + (game.type_rencontre === '2v2' ? 'info' : game.type_rencontre === 'solo' ? 'warning' : 'primary');
-    previewInfo.textContent    = game.type_rencontre === '2v2'
+    previewType.textContent    = game.match_type;
+    previewType.className      = 'badge badge--' + (game.match_type === '2v2' ? 'info' : game.match_type === 'solo' ? 'warning' : 'primary');
+    previewInfo.textContent    = game.match_type === '2v2'
       ? '4 joueurs à identifier (2 équipes de 2)'
-      : game.type_rencontre === 'solo'
+      : game.match_type === 'solo'
         ? '1 joueur à identifier (compétition individuelle)'
         : '2 joueurs à identifier (face à face)';
     preview.style.display = 'block';

@@ -140,12 +140,18 @@ function verifySignature(rawBody, signature, timestamp, publicKeyHex) {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Formate une date pour l'affichage en français.
+ * Formate une date selon la locale configurée dans app_settings.
+ * Replie sur 'fr-FR' si la locale n'est pas disponible.
  * @param {Date|string} date
- * @returns {string}
+ * @returns {Promise<string>}
  */
-function formatDate(date) {
-  return new Date(date).toLocaleDateString('fr-FR', {
+async function formatDate(date) {
+  let locale = 'fr-FR';
+  try {
+    const AppSettings = require('../models/AppSettings');
+    locale = (await AppSettings.get('locale')) || 'fr-FR';
+  } catch (_) { /* fallback silencieux */ }
+  return new Date(date).toLocaleDateString(locale, {
     weekday: 'long',
     day:     'numeric',
     month:   'long',
@@ -436,7 +442,7 @@ async function handleEvenement() {
     color,
     fields: [
       { name: '📍 Lieu',        value: event.location,                     inline: true },
-      { name: '🕐 Date',        value: formatDate(event.start_at),         inline: true },
+      { name: '🕐 Date',        value: await formatDate(event.start_at),         inline: true },
       { name: '📊 Statut',      value: `${statusEmoji} ${statusLabel}`,    inline: true },
       { name: '👥 Inscrits',    value: `${registrationCount} participant(s)`, inline: true },
     ],

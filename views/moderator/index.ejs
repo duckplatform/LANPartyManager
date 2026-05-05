@@ -38,23 +38,23 @@
             <tbody>
               <% events.forEach(function(e) { %>
                 <tr>
-                  <td><strong><%= e.nom %></strong></td>
+                  <td><strong><%= e.name %></strong></td>
                   <td class="td-date">
-                    <%= new Date(e.date_heure).toLocaleDateString('fr-FR', {
+                    <%= new Date(e.start_at).toLocaleDateString(locale, {
                       day: '2-digit', month: '2-digit', year: 'numeric'
                     }) %>
                   </td>
-                  <td><%= e.lieu %></td>
+                  <td><%= e.location %></td>
                   <td>
-                    <% if (e.statut === 'planifie') { %>
+                    <% if (e.status === 'planned') { %>
                       <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> Planifié</span>
-                    <% } else if (e.statut === 'en_cours') { %>
+                    <% } else if (e.status === 'in_progress') { %>
                       <span class="badge badge--member"><i class="fas fa-circle-play"></i> En cours</span>
                     <% } else { %>
                       <span class="badge badge--draft"><i class="fas fa-circle-check"></i> Terminé</span>
                     <% } %>
                   </td>
-                  <td><%= e.registration_count || 0 %></td>
+                  <td><%= e.registrationCount || 0 %></td>
                   <td>
                     <a href="/moderator/events/<%= e.id %>/scan" class="btn btn--primary btn--sm">
                       <i class="fas fa-qrcode"></i> Contrôler les billets

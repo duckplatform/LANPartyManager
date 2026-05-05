@@ -15,7 +15,7 @@
         <div class="news-card-meta">
           <span class="news-card-date">
             <i class="fas fa-calendar-alt"></i>
-            <%= new Date(announcement.created_at).toLocaleDateString('fr-FR', {
+            <%= new Date(announcement.created_at).toLocaleDateString(locale, {
               weekday: 'long',
               day:     'numeric',
               month:   'long',
@@ -23,12 +23,12 @@
             }) %>
           </span>
         </div>
-        <h1 class="news-detail-title"><%= announcement.titre %></h1>
+        <h1 class="news-detail-title"><%= announcement.title %></h1>
       </header>
 
       <!-- Contenu Markdown rendu -->
       <div class="news-detail-body markdown-body">
-        <%- announcement.contenuHtml %>
+        <%- announcement.contentHtml %>
       </div>
     </article>
 

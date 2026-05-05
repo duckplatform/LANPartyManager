@@ -51,11 +51,11 @@
             <% } else { %>
               <% games.forEach(function(game) { %>
                 <tr>
-                  <td><strong><%= game.nom %></strong></td>
+                  <td><strong><%= game.name %></strong></td>
                   <td><i class="fas fa-desktop"></i> <%= game.console %></td>
                   <td>
-                    <span class="badge badge--<%= game.type_rencontre === '2v2' ? 'info' : 'primary' %>">
-                      <i class="fas fa-users"></i> <%= game.type_rencontre %>
+                    <span class="badge badge--<%= game.match_type === '2v2' ? 'info' : 'primary' %>">
+                      <i class="fas fa-users"></i> <%= game.match_type %>
                     </span>
                   </td>
                   <td class="td-actions">
@@ -64,7 +64,7 @@
                     </a>
                     <form action="/admin/games/<%= game.id %>?_method=DELETE" method="POST"
                           class="form-inline"
-                          onsubmit="return confirm('Supprimer le jeu <%= game.nom %> ? Cette action est irréversible.')">
+                          onsubmit="return confirm('Supprimer le jeu <%= game.name %> ? Cette action est irréversible.')">
                       <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                       <button type="submit" class="btn btn--danger btn--xs" title="Supprimer">
                         <i class="fas fa-trash"></i> Supprimer

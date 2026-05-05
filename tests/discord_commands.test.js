@@ -194,7 +194,7 @@ describe('Discord Commandes Slash', function () {
 
     it('doit retourner un message éphémère si l\'événement est planifié (pas en cours)', async function () {
       const Event = require('../models/Event');
-      Event.findActive = async () => ({ id: 1, last_name: 'LAN Test', location: 'Paris', status: 'planned', start_at: new Date() });
+      Event.findActive = async () => ({ id: 1, name: 'LAN Test', location: 'Paris', status: 'planned', start_at: new Date() });
 
       const result = await discordCommands.handleClassement();
 
@@ -206,7 +206,7 @@ describe('Discord Commandes Slash', function () {
       const EventRanking = require('../models/EventRanking');
 
       Event.findActive = async () => ({
-        id: 1, last_name: 'LAN Printemps', location: 'Paris', status: 'in_progress', start_at: new Date(),
+        id: 1, name: 'LAN Printemps', location: 'Paris', status: 'in_progress', start_at: new Date(),
       });
       EventRanking.findByEvent = async () => [
         { rang: 1, user_id: 1, username: 'Alpha', points: 10, wins: 5 },
@@ -235,7 +235,7 @@ describe('Discord Commandes Slash', function () {
       const EventRanking = require('../models/EventRanking');
 
       Event.findActive = async () => ({
-        id: 1, last_name: 'LAN Test', location: 'Paris', status: 'in_progress', start_at: new Date(),
+        id: 1, name: 'LAN Test', location: 'Paris', status: 'in_progress', start_at: new Date(),
       });
       EventRanking.findByEvent = async () => [];
 
@@ -309,7 +309,7 @@ describe('Discord Commandes Slash', function () {
       const EventRanking = require('../models/EventRanking');
 
       User.findByDiscordId     = async () => ({ id: 1, username: 'Alpha', discord_user_id: '111' });
-      Event.findActive         = async () => ({ id: 1, last_name: 'LAN Test', status: 'in_progress' });
+      Event.findActive         = async () => ({ id: 1, name: 'LAN Test', status: 'in_progress' });
       EventRanking.findByEvent = async () => []; // aucun classement
 
       const result = await discordCommands.handlePosition('111');
@@ -324,7 +324,7 @@ describe('Discord Commandes Slash', function () {
       const EventRanking = require('../models/EventRanking');
 
       User.findByDiscordId     = async () => ({ id: 42, username: 'Alpha', discord_user_id: '111' });
-      Event.findActive         = async () => ({ id: 1, last_name: 'LAN Printemps', status: 'in_progress' });
+      Event.findActive         = async () => ({ id: 1, name: 'LAN Printemps', status: 'in_progress' });
       EventRanking.findByEvent = async () => [
         { rang: 1, user_id: 42, points: 15, wins: 5, battles_played: 6 },
         { rang: 2, user_id: 99, points: 10, wins: 3, battles_played: 4 },
@@ -373,7 +373,7 @@ describe('Discord Commandes Slash', function () {
       const EventRanking = require('../models/EventRanking');
 
       User.findByDiscordId     = async () => ({ id: 42, username: 'Alpha', discord_user_id: '111' });
-      Event.findActive         = async () => ({ id: 1, last_name: 'LAN Test', status: 'in_progress' });
+      Event.findActive         = async () => ({ id: 1, name: 'LAN Test', status: 'in_progress' });
       EventRanking.findByEvent = async () => [
         { rang: 2, user_id: 42, points: 8, wins: 4, battles_played: 6 },
       ];
@@ -405,7 +405,7 @@ describe('Discord Commandes Slash', function () {
       const EventRanking = require('../models/EventRanking');
 
       User.findByDiscordId     = async () => ({ id: 42, username: 'Alpha', discord_user_id: '111' });
-      Event.findActive         = async () => ({ id: 1, last_name: 'LAN Test', status: 'in_progress' });
+      Event.findActive         = async () => ({ id: 1, name: 'LAN Test', status: 'in_progress' });
       EventRanking.findByEvent = async () => [];
 
       const result = await discordCommands.handleStatistiques('111');
@@ -457,7 +457,7 @@ describe('Discord Commandes Slash', function () {
       const EventRegistration = require('../models/EventRegistration');
 
       Event.findActive                = async () => ({
-        id: 5, last_name: 'LAN Été', location: 'Lyon', status: 'in_progress',
+        id: 5, name: 'LAN Été', location: 'Lyon', status: 'in_progress',
         start_at: new Date('2026-07-10T14:00:00Z'),
       });
       EventRegistration.countByEvent   = async () => 32;
@@ -484,7 +484,7 @@ describe('Discord Commandes Slash', function () {
       const EventRegistration = require('../models/EventRegistration');
 
       Event.findActive                = async () => ({
-        id: 6, last_name: 'LAN Automne', location: 'Bordeaux', status: 'planned',
+        id: 6, name: 'LAN Automne', location: 'Bordeaux', status: 'planned',
         start_at: new Date(Date.now() + 7 * 24 * 3600 * 1000), // dans 7 jours
       });
       EventRegistration.countByEvent   = async () => 10;
@@ -507,7 +507,7 @@ describe('Discord Commandes Slash', function () {
       const EventRegistration = require('../models/EventRegistration');
 
       Event.findActive                = async () => ({
-        id: 7, last_name: 'LAN Hiver', location: 'Paris', status: 'planned',
+        id: 7, name: 'LAN Hiver', location: 'Paris', status: 'planned',
         start_at: new Date(Date.now() + 3600 * 1000), // dans 1h (inscriptions fermées)
       });
       EventRegistration.countByEvent   = async () => 50;

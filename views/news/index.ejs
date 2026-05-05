@@ -30,7 +30,7 @@
             <div class="news-card-meta">
               <span class="news-card-date">
                 <i class="fas fa-calendar-alt"></i>
-                <%= new Date(a.created_at).toLocaleDateString('fr-FR', {
+                <%= new Date(a.created_at).toLocaleDateString(locale, {
                   day:   'numeric',
                   month: 'long',
                   year:  'numeric'
@@ -38,7 +38,7 @@
               </span>
             </div>
             <h2 class="news-card-title">
-              <a href="/news/<%= a.id %>"><%= a.titre %></a>
+              <a href="/news/<%= a.id %>"><%= a.title %></a>
             </h2>
             <div class="news-card-footer">
               <a href="/news/<%= a.id %>" class="btn btn--ghost btn--sm">

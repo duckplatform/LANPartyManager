@@ -278,19 +278,19 @@
       <i class="fas fa-calendar-days"></i> Événements
     </a>
     <span style="margin: 0 .4rem;">/</span>
-    <span><%= event.nom %></span>
+    <span><%= event.name %></span>
   </nav>
 
   <%
-    const dateObj    = new Date(event.date_heure);
-    const dateFr     = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-    const timeFr     = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-    const isLive     = event.statut === 'en_cours';
-    const isDone     = event.statut === 'termine';
+    const dateObj    = new Date(event.start_at);
+    const dateFr     = dateObj.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const timeFr     = dateObj.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    const isLive     = event.status === 'in_progress';
+    const isDone     = event.status === 'ended';
     const deadlineISO = dateObj.toISOString();
     const totalBattles   = battles.length;
-    const doneBattles    = battles.filter(b => b.statut === 'termine').length;
-    const activeBattles  = battles.filter(b => ['en_cours', 'installation'].includes(b.statut)).length;
+    const doneBattles    = battles.filter(b => b.status === 'ended').length;
+    const activeBattles  = battles.filter(b => ['in_progress', 'setup'].includes(b.status)).length;
     const statusChart = chartData && chartData.statuses ? chartData.statuses : { total: 0, segments: [], gradient: 'conic-gradient(#E5E7EB 0 100%)' };
     const gameChart = chartData && chartData.games ? chartData.games : { max: 0, items: [] };
     const rankingChart = chartData && chartData.rankings ? chartData.rankings : { max: 0, items: [] };
@@ -321,12 +321,12 @@
           </div>
 
           <h1 style="font-size:1.6rem; margin:0 0 var(--space-sm) 0;">
-            <i class="fas fa-gamepad"></i> <%= event.nom %>
+            <i class="fas fa-gamepad"></i> <%= event.name %>
           </h1>
 
           <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.4rem; color: var(--color-text-muted); font-size:.9rem;">
             <li><i class="fas fa-calendar-alt" style="width:1.2rem;"></i> <%= dateFr %> à <%= timeFr %></li>
-            <li><i class="fas fa-location-dot" style="width:1.2rem;"></i> <%= event.lieu %></li>
+            <li><i class="fas fa-location-dot" style="width:1.2rem;"></i> <%= event.location %></li>
           </ul>
         </div>
 
@@ -334,42 +334,42 @@
         <div style="display:flex; flex-direction:column; gap:.5rem; align-items:flex-end;">
           <% if (!currentUser && event.registrationOpen) { %>
             <a href="/auth/login?redirect=/events/<%= event.id %>" class="btn btn--primary btn--sm">
-              <i class="fas fa-right-to-bracket"></i> Se connecter pour s'inscrire
+              <i class="fas fa-right-to-bracket"></i> <%= t('event.login_to_register') %>
             </a>
           <% } else if (!currentUser) { %>
             <span class="text-muted" style="font-size:.85rem; display:flex; align-items:center; gap:.4rem;">
-              <i class="fas fa-lock"></i> Inscriptions fermées
+              <i class="fas fa-lock"></i> <%= t('event.registrations_closed') %>
             </span>
           <% } else if (isRegistered) { %>
             <div class="event-registered-badge" style="font-size:.9rem;">
-              <i class="fas fa-circle-check"></i> Inscription confirmée
+              <i class="fas fa-circle-check"></i> <%= t('event.registration_confirmed') %>
             </div>
             <% if (event.registrationOpen) { %>
               <form action="/events/<%= event.id %>/unregister" method="POST" style="display:inline;">
                 <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                 <button type="submit" class="btn btn--ghost btn--xs"
-                        onclick="return confirm('Annuler votre inscription à « ' + <%= JSON.stringify(event.nom) %> + ' » ?')">
-                  <i class="fas fa-user-minus"></i> Se désinscrire
+                        onclick="return confirm('<%= t('event.confirm_unregister_named', { name: event.name }) %>')">
+                  <i class="fas fa-user-minus"></i> <%= t('event.unregister') %>
                 </button>
               </form>
             <% } %>
-            <a href="/profile" class="btn btn--ghost btn--xs" title="Voir mon billet">
-              <i class="fas fa-ticket"></i> Mon billet
+            <a href="/profile" class="btn btn--ghost btn--xs" title="<%= t('event.my_ticket') %>">
+              <i class="fas fa-ticket"></i> <%= t('event.my_ticket') %>
             </a>
           <% } else if (event.registrationOpen) { %>
             <form action="/events/<%= event.id %>/register" method="POST" style="display:inline;">
               <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
               <button type="submit" class="btn btn--primary btn--sm">
-                <i class="fas fa-user-plus"></i> S'inscrire
+                <i class="fas fa-user-plus"></i> <%= t('event.register') %>
               </button>
             </form>
           <% } else { %>
             <span class="text-muted" style="font-size:.85rem; display:flex; align-items:center; gap:.4rem;">
-              <i class="fas fa-lock"></i> Inscriptions fermées
+              <i class="fas fa-lock"></i> <%= t('event.registrations_closed') %>
             </span>
           <% } %>
           <a href="/events" class="btn btn--ghost btn--xs">
-            <i class="fas fa-arrow-left"></i> Retour aux événements
+            <i class="fas fa-arrow-left"></i> <%= t('event.back_to_events') %>
           </a>
         </div>
 
@@ -379,7 +379,7 @@
       <% if (event.registrationOpen && !isLive) { %>
         <div class="event-countdown-wrap" style="margin-top: var(--space-md);">
           <p class="event-countdown-label" style="font-size:.8rem;">
-            <i class="fas fa-hourglass-half"></i> Inscriptions ouvertes — fermeture dans :
+            <i class="fas fa-hourglass-half"></i> <%= t('event.registrations_open_until') %>
           </p>
           <div class="event-countdown event-countdown--sm" data-deadline="<%= deadlineISO %>">
             <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">j</span></div>
@@ -503,7 +503,7 @@
           <% rankingChart.items.forEach(function(item) { %>
             <div class="chart-bar-item">
               <div class="chart-bar-topline">
-                <span class="chart-bar-label">#<%= item.rang %> · <%= item.pseudo %></span>
+                <span class="chart-bar-label">#<%= item.rang %> · <%= item.username %></span>
                 <span class="chart-bar-meta"><%= item.points %> pts · <%= item.wins %> victoire<%= item.wins !== 1 ? 's' : '' %></span>
               </div>
               <div class="chart-note"><%= item.battles_played %> rencontre<%= item.battles_played !== 1 ? 's' : '' %> jouée<%= item.battles_played !== 1 ? 's' : '' %></div>
@@ -536,7 +536,7 @@
                 <span class="chart-bar-label"><%= item.name %></span>
                 <span class="chart-bar-meta"><%= item.assigned %> affectation<%= item.assigned !== 1 ? 's' : '' %></span>
               </div>
-              <div class="chart-note"><%= item.matchType %> · <%= item.type %> · <% if (!item.actif) { %>inactive<% } else if (item.active > 0) { %><%= item.active %> active<%= item.active !== 1 ? 's' : '' %><% } else { %>libre<% } %> · <%= item.done %> terminée<%= item.done !== 1 ? 's' : '' %></div>
+              <div class="chart-note"><%= item.matchType %> · <%= item.type %> · <% if (!item.isActive) { %>inactive<% } else if (item.active > 0) { %><%= item.active %> active<%= item.active !== 1 ? 's' : '' %><% } else { %>libre<% } %> · <%= item.done %> terminée<%= item.done !== 1 ? 's' : '' %></div>
               <div class="chart-bar-track">
                 <div class="chart-bar-fill" style="width:<%= item.width %>%; background:linear-gradient(90deg, #00897B, #4DB6AC);"></div>
               </div>
@@ -592,7 +592,7 @@
                       <%= medalIcon || entry.rang %>
                     </td>
                     <td style="padding: var(--space-sm) var(--space-md); font-weight:600; color:var(--color-text);">
-                      <%= entry.pseudo %>
+                      <%= entry.username %>
                     </td>
                     <td style="padding: var(--space-sm); text-align:right;">
                       <span style="background:#E3F2FD; color:#1976D2; padding:.2rem .5rem; border-radius:1rem; font-size:.82rem; font-weight:600;">
@@ -633,11 +633,11 @@
             let statusClass = 'battle-status--queue';
             let statusIcon  = 'fas fa-clock';
             let statusLabel = 'File d\'attente';
-            if (battle.statut === 'planifie')    { statusClass = 'battle-status--planned'; statusIcon = 'fas fa-calendar-check'; statusLabel = 'Planifié'; }
-            if (battle.statut === 'installation'){ statusClass = 'battle-status--install'; statusIcon = 'fas fa-screwdriver-wrench'; statusLabel = 'Installation'; }
-            if (battle.statut === 'en_cours')    { statusClass = 'battle-status--live';    statusIcon = 'fas fa-bolt'; statusLabel = 'En cours'; }
-            if (battle.statut === 'termine')     { statusClass = 'battle-status--done';    statusIcon = 'fas fa-flag-checkered'; statusLabel = 'Terminé'; }
-            const winners = (battle.players || []).filter(p => p.est_gagnant);
+            if (battle.status === 'planned')     { statusClass = 'battle-status--planned'; statusIcon = 'fas fa-calendar-check'; statusLabel = 'Planifié'; }
+            if (battle.status === 'setup')       { statusClass = 'battle-status--install'; statusIcon = 'fas fa-screwdriver-wrench'; statusLabel = 'Installation'; }
+            if (battle.status === 'in_progress') { statusClass = 'battle-status--live';    statusIcon = 'fas fa-bolt'; statusLabel = 'En cours'; }
+            if (battle.status === 'ended')       { statusClass = 'battle-status--done';    statusIcon = 'fas fa-flag-checkered'; statusLabel = 'Terminé'; }
+            const winners = (battle.players || []).filter(p => p.is_winner);
             const allPlayers = battle.players || [];
           %>
             <div class="card event-battle-card">
@@ -648,8 +648,8 @@
                       <i class="<%= statusIcon %>"></i> <%= statusLabel %>
                     </span>
                     <span class="event-battle-meta">
-                      #<%= battle.id %> · <%= battle.game_nom %>
-                      <% if (battle.type_rencontre) { %> · <%= battle.type_rencontre %><% } %>
+                      #<%= battle.id %> · <%= battle.game_name %>
+                      <% if (battle.match_type) { %> · <%= battle.match_type %><% } %>
                     </span>
                   </div>
 
@@ -657,8 +657,8 @@
                   <% if (allPlayers.length > 0) { %>
                     <div class="event-battle-players">
                       <% allPlayers.forEach(function(p, pi) { %>
-                        <span style="color: <%= p.est_gagnant ? '#388E3C' : 'inherit' %>; font-weight: <%= p.est_gagnant ? 600 : 'normal' %>;">
-                          <%= p.est_gagnant ? '🏆 ' : '' %><%= p.pseudo %>
+                        <span style="color: <%= p.is_winner ? '#388E3C' : 'inherit' %>; font-weight: <%= p.is_winner ? 600 : 'normal' %>;">
+                          <%= p.is_winner ? '🏆 ' : '' %><%= p.username %>
                         </span><% if (pi < allPlayers.length - 1) { %> <span style="margin:0 .2rem;">vs</span> <% } %>
                       <% }); %>
                     </div>
@@ -673,9 +673,9 @@
                 </div>
 
                 <!-- Salle -->
-                <% if (battle.room_nom) { %>
+                <% if (battle.room_name) { %>
                   <div class="event-battle-room">
-                    <i class="fas fa-door-open"></i> <%= battle.room_nom %>
+                    <i class="fas fa-door-open"></i> <%= battle.room_name %>
                   </div>
                 <% } %>
               </div>
@@ -705,7 +705,7 @@
       const diff = deadline - Date.now();
       if (diff <= 0) {
         el.closest('.event-countdown-wrap').innerHTML =
-          '<p style="font-size:.85rem;"><i class="fas fa-lock"></i> Inscriptions fermées</p>';
+          '<p style="font-size:.85rem;"><i class="fas fa-lock"></i> <%= t('event.registrations_closed') %></p>';
         return;
       }
       nums[0].textContent = Math.floor(diff / 86400000);

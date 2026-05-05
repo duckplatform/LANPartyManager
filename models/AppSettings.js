@@ -28,6 +28,10 @@
  *   discord_client_id         — Client ID OAuth2 Discord (connexion utilisateur)
  *   discord_client_secret     — Client Secret OAuth2 Discord (connexion utilisateur)
  *   discord_application_public_key — Clé publique hex (interactions endpoint / slash commands)
+ *   
+ *   # Internationalisation
+ *   language  — Code de langue de l'interface ('fr' | 'en'), défaut : 'fr'
+ *   locale    — Code de locale BCP 47 pour les dates/heures ('fr-FR', 'en-US'…), défaut : 'fr-FR'
  */
 
 const db     = require('../config/database');

@@ -384,8 +384,9 @@ router.post(
     const tokens = readArrayField(req.body, 'badge_token')
       .map(token => (token || '').trim())
       .filter(Boolean);
-    const equipes = readArrayField(req.body, 'equipe')
-      .map(equipe => (equipe || '').toString().trim());
+    const teamsRaw = readArrayField(req.body, 'team');
+    const normalizedTeams = (teamsRaw.length > 0 ? teamsRaw : readArrayField(req.body, 'equipe'))
+      .map(team => (team || '').toString().trim());
 
     try {
       const event = await Event.findById(eventId);
@@ -413,7 +414,7 @@ router.post(
 
       for (let i = 0; i < tokens.length; i++) {
         const token = (tokens[i] || '').trim();
-        const equipe = parseInt(equipes[i], 10) || 1;
+        const team = parseInt(normalizedTeams[i], 10) || 1;
 
         if (!UUID_V4_RE.test(token)) {
           req.flash('error', `Badge invalide (joueur ${i + 1}).`);
@@ -438,7 +439,7 @@ router.post(
         }
 
         seenIds.add(user.id);
-        players.push({ user_id: user.id, team: equipe });
+        players.push({ user_id: user.id, team });
       }
 
       // Crée la rencontre (et tente d'assigner une salle automatiquement)
