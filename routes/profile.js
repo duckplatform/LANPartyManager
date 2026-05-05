@@ -222,11 +222,7 @@ router.post('/events/:id/register', requireAuth, async (req, res) => {
     req.flash('success', `Vous êtes inscrit à l'événement "${event.nom}" !`);
 
     // Notification Discord (fire-and-forget)
-    User.findById(req.session.userId).then(async user => {
-      if (!user) return;
-      const count = await EventRegistration.countByEvent(eventId);
-      discord.notifyUserRegistered({ event, user, registrationCount: count }).catch(() => {});
-    }).catch(() => {});
+    discord.notifyUserRegisteredAsync(eventId, req.session.userId, event);
   } catch (err) {
     logger.error(`[PROFILE] Erreur inscription événement #${eventId} :`, err);
     req.flash('error', 'Erreur lors de l\'inscription à l\'événement.');

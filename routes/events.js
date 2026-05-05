@@ -12,7 +12,6 @@ const Event             = require('../models/Event');
 const EventRanking      = require('../models/EventRanking');
 const EventRegistration = require('../models/EventRegistration');
 const Battle            = require('../models/Battle');
-const User              = require('../models/User');
 const discord           = require('../services/discord');
 const logger            = require('../config/logger');
 const { requireAuth }   = require('../middleware/auth');
@@ -140,11 +139,7 @@ router.post('/:id/register', requireAuth, async (req, res) => {
     req.flash('success', `Inscription confirmée pour « ${event.nom} » !`);
 
     // Notification Discord (fire-and-forget)
-    User.findById(req.session.userId).then(async user => {
-      if (!user) return;
-      const count = await EventRegistration.countByEvent(eventId);
-      discord.notifyUserRegistered({ event, user, registrationCount: count }).catch(() => {});
-    }).catch(() => {});
+    discord.notifyUserRegisteredAsync(eventId, req.session.userId, event);
 
     return res.redirect(`/events/${eventId}`);
   } catch (err) {

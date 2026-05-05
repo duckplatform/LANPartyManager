@@ -403,7 +403,29 @@ async function notifyUserRegistered({ event, user, registrationCount = 0 }) {
   await sendEmbed(channelId, embed);
 }
 
-// ─── Notifications actualités ──────────────────────────────────────────────
+/**
+ * Notifie l'inscription d'un utilisateur à un événement (fire-and-forget).
+ * Charge l'utilisateur et le décompte depuis la base de données, puis envoie
+ * la notification sans bloquer le flux de la requête HTTP.
+ * Les erreurs sont absorbées et journalisées.
+ *
+ * @param {number} eventId  — ID de l'événement
+ * @param {number} userId   — ID de l'utilisateur qui vient de s'inscrire
+ * @param {Object} event    — Objet événement déjà chargé (évite une requête BDD)
+ */
+function notifyUserRegisteredAsync(eventId, userId, event) {
+  const User              = require('../models/User');
+  const EventRegistration = require('../models/EventRegistration');
+
+  User.findById(userId).then(async user => {
+    if (!user) return;
+    const count = await EventRegistration.countByEvent(eventId);
+    await notifyUserRegistered({ event, user, registrationCount: count });
+  }).catch(err => {
+    logger.error(`[DISCORD] Erreur notification inscription user #${userId} → event #${eventId} :`, err);
+  });
+}
+
 
 /**
  * Notifie la publication d'une nouvelle actualité.
@@ -672,6 +694,7 @@ module.exports = {
   notifyEventStarted,
   notifyEventEnded,
   notifyUserRegistered,
+  notifyUserRegisteredAsync,
   notifyNewsPublished,
   notifyBattleCreated,
   notifyBattlePlanned,
