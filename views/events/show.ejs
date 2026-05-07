@@ -275,7 +275,7 @@
   <!-- Fil d'Ariane -->
   <nav aria-label="breadcrumb" style="margin-bottom: var(--space-md); font-size: .85rem; color: var(--color-text-muted);">
     <a href="/events" style="color: var(--color-primary);">
-      <i class="fas fa-calendar-days"></i> Événements
+      <i class="fas fa-calendar-days"></i> <%= t('event.events') %>
     </a>
     <span style="margin: 0 .4rem;">/</span>
     <span><%= event.name %></span>
@@ -307,15 +307,15 @@
           <div style="margin-bottom: var(--space-sm);">
             <% if (isLive) { %>
               <span class="event-status-badge event-status--live">
-                <i class="fas fa-circle-play"></i> En cours
+                <i class="fas fa-circle-play"></i> <%= t('status.in_progress') %>
               </span>
             <% } else if (isDone) { %>
               <span class="event-status-badge" style="background:#3c3f45;color:#fff;">
-                <i class="fas fa-flag-checkered"></i> Terminé
+                <i class="fas fa-flag-checkered"></i> <%= t('status.ended') %>
               </span>
             <% } else { %>
               <span class="event-status-badge event-status--upcoming">
-                <i class="fas fa-calendar-check"></i> Planifié
+                <i class="fas fa-calendar-check"></i> <%= t('status.planned') %>
               </span>
             <% } %>
           </div>
@@ -325,7 +325,7 @@
           </h1>
 
           <ul style="list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:.4rem; color: var(--color-text-muted); font-size:.9rem;">
-            <li><i class="fas fa-calendar-alt" style="width:1.2rem;"></i> <%= dateFr %> à <%= timeFr %></li>
+            <li><i class="fas fa-calendar-alt" style="width:1.2rem;"></i> <%= dateFr %> <%= t('common.at') %> <%= timeFr %></li>
             <li><i class="fas fa-location-dot" style="width:1.2rem;"></i> <%= event.location %></li>
           </ul>
         </div>
@@ -382,13 +382,13 @@
             <i class="fas fa-hourglass-half"></i> <%= t('event.registrations_open_until') %>
           </p>
           <div class="event-countdown event-countdown--sm" data-deadline="<%= deadlineISO %>">
-            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">j</span></div>
+            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl"><%= t('countdown.short_days') %></span></div>
             <span class="countdown-sep">:</span>
-            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">h</span></div>
+            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl"><%= t('countdown.short_hours') %></span></div>
             <span class="countdown-sep">:</span>
-            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">min</span></div>
+            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl"><%= t('countdown.minutes') %></span></div>
             <span class="countdown-sep">:</span>
-            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">s</span></div>
+            <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl"><%= t('countdown.short_seconds') %></span></div>
           </div>
         </div>
       <% } %>
@@ -399,25 +399,25 @@
   <div style="display:flex; flex-wrap:wrap; gap: var(--space-md); margin-bottom: var(--space-lg);">
     <div class="stat-card">
       <div class="stat-value"><%= registrationCount %></div>
-      <div class="stat-label"><i class="fas fa-users"></i> Inscrit<%= registrationCount !== 1 ? 's' : '' %></div>
+      <div class="stat-label"><i class="fas fa-users"></i> <%= registrationCount !== 1 ? t('event.registered_plural') : t('event.registered_singular') %></div>
     </div>
     <div class="stat-card">
       <div class="stat-value"><%= rankings.length %></div>
-      <div class="stat-label"><i class="fas fa-ranking-star"></i> Classé<%= rankings.length !== 1 ? 's' : '' %></div>
+      <div class="stat-label"><i class="fas fa-ranking-star"></i> <%= rankings.length !== 1 ? t('event.ranked_plural') : t('event.ranked_singular') %></div>
     </div>
     <div class="stat-card">
       <div class="stat-value"><%= totalBattles %></div>
-      <div class="stat-label"><i class="fas fa-sword"></i> Rencontre<%= totalBattles !== 1 ? 's' : '' %></div>
+      <div class="stat-label"><i class="fas fa-sword"></i> <%= totalBattles !== 1 ? t('battle.matches_plural') : t('battle.matches_singular') %></div>
     </div>
     <% if (totalBattles > 0) { %>
     <div class="stat-card">
       <div class="stat-value"><%= doneBattles %></div>
-      <div class="stat-label"><i class="fas fa-flag-checkered"></i> Terminée<%= doneBattles !== 1 ? 's' : '' %></div>
+      <div class="stat-label"><i class="fas fa-flag-checkered"></i> <%= doneBattles !== 1 ? t('event.finished_plural') : t('event.finished_singular') %></div>
     </div>
     <% if (activeBattles > 0) { %>
     <div class="stat-card">
       <div class="stat-value" style="color: #388E3C;"><%= activeBattles %></div>
-      <div class="stat-label"><i class="fas fa-bolt"></i> En cours</div>
+      <div class="stat-label"><i class="fas fa-bolt"></i> <%= t('status.in_progress') %></div>
     </div>
     <% } %>
     <% } %>
@@ -428,20 +428,20 @@
     <section class="card event-chart-card">
       <div class="event-chart-head">
         <div>
-          <h2 class="event-chart-title"><i class="fas fa-chart-pie"></i> Répartition des statuts</h2>
-          <p class="event-chart-subtitle">Vue immédiate de la progression des rencontres sur l'événement.</p>
+          <h2 class="event-chart-title"><i class="fas fa-chart-pie"></i> <%= t('event.status_breakdown') %></h2>
+          <p class="event-chart-subtitle"><%= t('event.status_breakdown_subtitle') %></p>
         </div>
-        <span class="chart-kicker"><%= statusChart.total %> rencontre<%= statusChart.total !== 1 ? 's' : '' %></span>
+        <span class="chart-kicker"><%= statusChart.total %> <%= statusChart.total !== 1 ? t('battle.matches_plural') : t('battle.matches_singular') %></span>
       </div>
 
       <% if (statusChart.total === 0) { %>
-        <div class="chart-empty">Le graphique apparaîtra dès la première rencontre créée.</div>
+        <div class="chart-empty"><%= t('event.chart_status_empty') %></div>
       <% } else { %>
         <div class="chart-donut-layout">
           <div class="chart-donut" style="background:<%= statusChart.gradient %>;">
             <div class="chart-donut-center">
               <div class="chart-donut-value"><%= doneBattles %></div>
-              <div class="chart-donut-label">terminée<%= doneBattles !== 1 ? 's' : '' %></div>
+              <div class="chart-donut-label"><%= doneBattles !== 1 ? t('event.finished_plural') : t('event.finished_singular') %></div>
             </div>
           </div>
 
@@ -461,23 +461,23 @@
     <section class="card event-chart-card">
       <div class="event-chart-head">
         <div>
-          <h2 class="event-chart-title"><i class="fas fa-gamepad"></i> Rencontres par jeu</h2>
-          <p class="event-chart-subtitle">Quels jeux concentrent l'activité et combien sont déjà finalisés.</p>
+          <h2 class="event-chart-title"><i class="fas fa-gamepad"></i> <%= t('event.matches_by_game') %></h2>
+          <p class="event-chart-subtitle"><%= t('event.matches_by_game_subtitle') %></p>
         </div>
         <span class="chart-kicker"><%= gameChart.items.length %> jeu<%= gameChart.items.length !== 1 ? 'x' : '' %></span>
       </div>
 
       <% if (gameChart.items.length === 0) { %>
-        <div class="chart-empty">Aucune donnée de jeu disponible tant qu'aucune rencontre n'existe.</div>
+        <div class="chart-empty"><%= t('event.chart_games_empty') %></div>
       <% } else { %>
         <div class="chart-bars">
           <% gameChart.items.forEach(function(item) { %>
             <div class="chart-bar-item">
               <div class="chart-bar-topline">
                 <span class="chart-bar-label"><%= item.name %></span>
-                <span class="chart-bar-meta"><%= item.total %> rencontre<%= item.total !== 1 ? 's' : '' %> · <%= item.done %> terminée<%= item.done !== 1 ? 's' : '' %></span>
+                <span class="chart-bar-meta"><%= item.total %> <%= item.total !== 1 ? t('battle.matches_plural') : t('battle.matches_singular') %> · <%= item.done %> <%= item.done !== 1 ? t('event.finished_plural') : t('event.finished_singular') %></span>
               </div>
-              <div class="chart-note"><%= item.console || 'Console non renseignée' %><% if (item.active > 0) { %> · <%= item.active %> active<%= item.active !== 1 ? 's' : '' %><% } %></div>
+              <div class="chart-note"><%= item.console || t('event.console_not_set') %><% if (item.active > 0) { %> · <%= item.active %> <%= item.active !== 1 ? t('event.active_plural') : t('event.active_singular') %><% } %></div>
               <div class="chart-bar-track">
                 <div class="chart-bar-fill" style="width:<%= item.width %>%; background:linear-gradient(90deg, #1976D2, #64B5F6);"></div>
               </div>
@@ -490,23 +490,23 @@
     <section class="card event-chart-card">
       <div class="event-chart-head">
         <div>
-          <h2 class="event-chart-title"><i class="fas fa-ranking-star"></i> Top classement</h2>
-          <p class="event-chart-subtitle">Lecture rapide des leaders sur les points et les victoires.</p>
+          <h2 class="event-chart-title"><i class="fas fa-ranking-star"></i> <%= t('event.top_ranking') %></h2>
+          <p class="event-chart-subtitle"><%= t('event.top_ranking_subtitle') %></p>
         </div>
-        <span class="chart-kicker"><%= rankingChart.items.length %> joueur<%= rankingChart.items.length !== 1 ? 's' : '' %></span>
+        <span class="chart-kicker"><%= rankingChart.items.length %> <%= rankingChart.items.length !== 1 ? t('event.players_plural') : t('event.players_singular') %></span>
       </div>
 
       <% if (rankingChart.items.length === 0) { %>
-        <div class="chart-empty">Le classement sera visualisé dès qu'une rencontre terminée attribuera des points.</div>
+        <div class="chart-empty"><%= t('event.chart_ranking_empty') %></div>
       <% } else { %>
         <div class="chart-bars">
           <% rankingChart.items.forEach(function(item) { %>
             <div class="chart-bar-item">
               <div class="chart-bar-topline">
                 <span class="chart-bar-label">#<%= item.rang %> · <%= item.username %></span>
-                <span class="chart-bar-meta"><%= item.points %> pts · <%= item.wins %> victoire<%= item.wins !== 1 ? 's' : '' %></span>
+                <span class="chart-bar-meta"><%= item.points %> <%= t('common.points') %> · <%= item.wins %> <%= item.wins !== 1 ? t('common.wins_plural') : t('common.wins') %></span>
               </div>
-              <div class="chart-note"><%= item.battles_played %> rencontre<%= item.battles_played !== 1 ? 's' : '' %> jouée<%= item.battles_played !== 1 ? 's' : '' %></div>
+              <div class="chart-note"><%= item.battles_played %> <%= item.battles_played !== 1 ? t('event.played_matches_plural') : t('event.played_matches_singular') %></div>
               <div class="chart-bar-track">
                 <div class="chart-bar-fill" style="width:<%= item.width %>%; background:linear-gradient(90deg, #FFB300, #FFD54F);"></div>
               </div>
@@ -519,24 +519,24 @@
     <section class="card event-chart-card">
       <div class="event-chart-head">
         <div>
-          <h2 class="event-chart-title"><i class="fas fa-door-open"></i> Charge des salles</h2>
-          <p class="event-chart-subtitle">Répartition des rencontres affectées et disponibilité instantanée du parc.</p>
+          <h2 class="event-chart-title"><i class="fas fa-door-open"></i> <%= t('event.rooms_load') %></h2>
+          <p class="event-chart-subtitle"><%= t('event.rooms_load_subtitle') %></p>
         </div>
-        <span class="chart-kicker"><%= roomChart.total %> salle<%= roomChart.total !== 1 ? 's' : '' %></span>
+        <span class="chart-kicker"><%= roomChart.total %> <%= roomChart.total !== 1 ? t('event.rooms_plural') : t('event.rooms_singular') %></span>
       </div>
 
       <% if (roomChart.items.length === 0) { %>
-        <div class="chart-empty">Aucune salle n'est encore rattachée à cet événement.</div>
+        <div class="chart-empty"><%= t('event.chart_rooms_empty') %></div>
       <% } else { %>
-        <div class="chart-note"><strong><%= roomChart.activeNow %></strong> occupée<%= roomChart.activeNow !== 1 ? 's' : '' %> maintenant · <strong><%= roomChart.availableNow %></strong> disponible<%= roomChart.availableNow !== 1 ? 's' : '' %></div>
+        <div class="chart-note"><strong><%= roomChart.activeNow %></strong> <%= roomChart.activeNow !== 1 ? t('event.occupied_now_plural') : t('event.occupied_now_singular') %> · <strong><%= roomChart.availableNow %></strong> <%= roomChart.availableNow !== 1 ? t('event.available_plural') : t('event.available_singular') %></div>
         <div class="chart-bars">
           <% roomChart.items.forEach(function(item) { %>
             <div class="chart-bar-item">
               <div class="chart-bar-topline">
                 <span class="chart-bar-label"><%= item.name %></span>
-                <span class="chart-bar-meta"><%= item.assigned %> affectation<%= item.assigned !== 1 ? 's' : '' %></span>
+                <span class="chart-bar-meta"><%= item.assigned %> <%= item.assigned !== 1 ? t('event.assignments_plural') : t('event.assignments_singular') %></span>
               </div>
-              <div class="chart-note"><%= item.matchType %> · <%= item.type %> · <% if (!item.isActive) { %>inactive<% } else if (item.active > 0) { %><%= item.active %> active<%= item.active !== 1 ? 's' : '' %><% } else { %>libre<% } %> · <%= item.done %> terminée<%= item.done !== 1 ? 's' : '' %></div>
+              <div class="chart-note"><%= item.matchType %> · <%= item.type %> · <% if (!item.isActive) { %><%= t('status.inactive') %><% } else if (item.active > 0) { %><%= item.active %> <%= item.active !== 1 ? t('event.active_plural') : t('event.active_singular') %><% } else { %><%= t('event.free') %><% } %> · <%= item.done %> <%= item.done !== 1 ? t('event.finished_plural') : t('event.finished_singular') %></div>
               <div class="chart-bar-track">
                 <div class="chart-bar-fill" style="width:<%= item.width %>%; background:linear-gradient(90deg, #00897B, #4DB6AC);"></div>
               </div>
@@ -552,7 +552,7 @@
     <!-- Classement -->
     <div class="event-section-card event-ranking-card">
       <h2 style="font-size:1.1rem; margin-bottom: var(--space-md); display:flex; align-items:center; gap:.5rem;">
-        <i class="fas fa-ranking-star"></i> Classement
+        <i class="fas fa-ranking-star"></i> <%= t('event.ranking') %>
       </h2>
 
       <% if (rankings.length === 0) { %>
@@ -560,9 +560,9 @@
           <i class="fas fa-ranking-star" style="font-size:2rem; margin-bottom:.5rem; display:block; opacity:.3;"></i>
           <p style="margin:0;">
             <% if (isDone) { %>
-              Aucun point attribué lors de cet événement.
+              <%= t('event.no_points_awarded') %>
             <% } else { %>
-              Le classement sera disponible dès les premières rencontres terminées.
+              <%= t('event.ranking_available_later') %>
             <% } %>
           </p>
         </div>
@@ -573,10 +573,10 @@
               <thead>
                 <tr style="background: rgba(0,0,0,.03);">
                   <th style="padding: var(--space-sm) var(--space-md); text-align:left;">#</th>
-                  <th style="padding: var(--space-sm) var(--space-md); text-align:left;">Joueur</th>
-                  <th style="padding: var(--space-sm); text-align:right;">Pts</th>
-                  <th style="padding: var(--space-sm); text-align:right;">V</th>
-                  <th style="padding: var(--space-sm) var(--space-md); text-align:right;">Rencontres</th>
+                  <th style="padding: var(--space-sm) var(--space-md); text-align:left;"><%= t('event.player') %></th>
+                  <th style="padding: var(--space-sm); text-align:right;"><%= t('event.points_short') %></th>
+                  <th style="padding: var(--space-sm); text-align:right;"><%= t('event.wins_short') %></th>
+                  <th style="padding: var(--space-sm) var(--space-md); text-align:right;"><%= t('battle.battles') %></th>
                 </tr>
               </thead>
               <tbody>
@@ -619,24 +619,24 @@
     <!-- Rencontres -->
     <div class="event-section-card">
       <h2 style="font-size:1.1rem; margin-bottom: var(--space-md); display:flex; align-items:center; gap:.5rem;">
-        <i class="fas fa-gamepad"></i> Rencontres
+        <i class="fas fa-gamepad"></i> <%= t('battle.battles') %>
       </h2>
 
       <% if (battles.length === 0) { %>
         <div class="card" style="text-align:center; padding: var(--space-lg); color: var(--color-text-muted);">
           <i class="fas fa-gamepad" style="font-size:2rem; margin-bottom:.5rem; display:block; opacity:.3;"></i>
-          <p style="margin:0;">Aucune rencontre créée pour le moment.</p>
+          <p style="margin:0;"><%= t('event.no_battle') %></p>
         </div>
       <% } else { %>
         <div class="event-battles-list">
           <% battles.forEach(function(battle) {
             let statusClass = 'battle-status--queue';
             let statusIcon  = 'fas fa-clock';
-            let statusLabel = 'File d\'attente';
-            if (battle.status === 'planned')     { statusClass = 'battle-status--planned'; statusIcon = 'fas fa-calendar-check'; statusLabel = 'Planifié'; }
-            if (battle.status === 'setup')       { statusClass = 'battle-status--install'; statusIcon = 'fas fa-screwdriver-wrench'; statusLabel = 'Installation'; }
-            if (battle.status === 'in_progress') { statusClass = 'battle-status--live';    statusIcon = 'fas fa-bolt'; statusLabel = 'En cours'; }
-            if (battle.status === 'ended')       { statusClass = 'battle-status--done';    statusIcon = 'fas fa-flag-checkered'; statusLabel = 'Terminé'; }
+            let statusLabel = t('status.queue');
+            if (battle.status === 'planned')     { statusClass = 'battle-status--planned'; statusIcon = 'fas fa-calendar-check'; statusLabel = t('status.planned'); }
+            if (battle.status === 'setup')       { statusClass = 'battle-status--install'; statusIcon = 'fas fa-screwdriver-wrench'; statusLabel = t('status.setup'); }
+            if (battle.status === 'in_progress') { statusClass = 'battle-status--live';    statusIcon = 'fas fa-bolt'; statusLabel = t('status.in_progress'); }
+            if (battle.status === 'ended')       { statusClass = 'battle-status--done';    statusIcon = 'fas fa-flag-checkered'; statusLabel = t('status.ended'); }
             const winners = (battle.players || []).filter(p => p.is_winner);
             const allPlayers = battle.players || [];
           %>
@@ -667,7 +667,7 @@
                   <!-- Score -->
                   <% if (battle.score) { %>
                     <div style="font-size:.8rem; color:var(--color-text-muted); margin-top:.1rem;">
-                      <i class="fas fa-trophy" style="font-size:.7rem;"></i> Score : <strong><%= battle.score %></strong>
+                      <i class="fas fa-trophy" style="font-size:.7rem;"></i> <%= t('event.score') %> : <strong><%= battle.score %></strong>
                     </div>
                   <% } %>
                 </div>

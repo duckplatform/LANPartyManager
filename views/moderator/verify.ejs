@@ -28,12 +28,12 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-id-card"></i> Vérification de badge
+        <i class="fas fa-id-card"></i> <%= t('moderator.badge_verification') %>
       </h1>
     </div>
     <div class="admin-header-actions">
       <a href="<%= returnTo || '/moderator' %>" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Retour
+        <i class="fas fa-arrow-left"></i> <%= t('common.back') %>
       </a>
     </div>
   </div>
@@ -45,11 +45,11 @@
         <div style="font-size: 4rem; color: var(--color-danger); margin-bottom: var(--space-md);">
           <i class="fas fa-circle-xmark"></i>
         </div>
-        <h2 style="color: var(--color-danger); margin-bottom: var(--space-sm);">Badge invalide</h2>
+        <h2 style="color: var(--color-danger); margin-bottom: var(--space-sm);"><%= t('moderator.invalid_badge') %></h2>
         <p class="text-muted"><%= error %></p>
         <% if (token) { %>
           <p class="text-muted" style="font-family: monospace; font-size: 0.8rem; margin-top: var(--space-sm);">
-            Token : <%= token %>
+            <%= t('moderator.token_label') %> : <%= token %>
           </p>
         <% } %>
       </div>
@@ -62,11 +62,11 @@
         <div style="font-size: 4rem; color: var(--color-danger); margin-bottom: var(--space-md);">
           <i class="fas fa-circle-xmark"></i>
         </div>
-        <h2 style="color: var(--color-danger); margin-bottom: var(--space-sm);">Badge inconnu</h2>
-        <p class="text-muted">Ce badge n'appartient à aucun membre de l'association.</p>
+        <h2 style="color: var(--color-danger); margin-bottom: var(--space-sm);"><%= t('moderator.unknown_badge') %></h2>
+        <p class="text-muted"><%= t('moderator.unknown_badge_hint') %></p>
         <% if (token) { %>
           <p class="text-muted" style="font-family: monospace; font-size: 0.8rem; margin-top: var(--space-sm);">
-            Token : <%= token %>
+            <%= t('moderator.token_label') %> : <%= token %>
           </p>
         <% } %>
       </div>
@@ -80,9 +80,9 @@
         <div style="display:flex; align-items:center; gap: var(--space-sm);">
           <span style="font-size: 2rem; color: <%= cardColor %>;"><i class="fas fa-circle-user"></i></span>
           <div>
-            <h2 style="color: <%= cardColor %>; margin:0;">Membre identifié</h2>
+            <h2 style="color: <%= cardColor %>; margin:0;"><%= t('moderator.member_identified') %></h2>
             <p style="margin:0; font-size: 0.85rem; color: var(--color-text-muted);">
-              Badge de membre authentique
+              <%= t('moderator.authentic_badge') %>
             </p>
           </div>
         </div>
@@ -91,17 +91,17 @@
 
         <!-- Infos membre -->
         <div class="verify-section">
-          <h3 class="verify-section-title"><i class="fas fa-user"></i> Membre</h3>
+          <h3 class="verify-section-title"><i class="fas fa-user"></i> <%= t('moderator.member') %></h3>
           <p class="verify-player-pseudo"><%= member.username %></p>
           <p class="verify-detail"><%= member.first_name %> <%= member.last_name %></p>
           <p class="verify-detail"><a href="mailto:<%= member.email %>" class="link-muted"><%= member.email %></a></p>
           <div style="margin-top: var(--space-xs);">
             <% if (member.is_admin) { %>
-              <span class="badge badge--admin"><i class="fas fa-shield-halved"></i> Administrateur</span>
+              <span class="badge badge--admin"><i class="fas fa-shield-halved"></i> <%= t('profile.badge_admin') %></span>
             <% } else if (member.is_moderator) { %>
-              <span class="badge badge--moderator"><i class="fas fa-user-shield"></i> Modérateur</span>
+              <span class="badge badge--moderator"><i class="fas fa-user-shield"></i> <%= t('profile.badge_moderator') %></span>
             <% } else { %>
-              <span class="badge badge--member"><i class="fas fa-user"></i> Membre</span>
+              <span class="badge badge--member"><i class="fas fa-user"></i> <%= t('profile.badge_member') %></span>
             <% } %>
           </div>
         </div>
@@ -111,14 +111,14 @@
 
           <!-- Statut inscription à l'événement -->
           <div class="verify-section">
-            <h3 class="verify-section-title"><i class="fas fa-calendar-star"></i> Événement contrôlé</h3>
+            <h3 class="verify-section-title"><i class="fas fa-calendar-star"></i> <%= t('moderator.checked_event') %></h3>
             <p class="verify-event-name"><%= event.name %></p>
             <p class="verify-detail">
               <i class="fas fa-calendar-alt"></i>
               <%= new Date(event.start_at).toLocaleDateString(locale, {
                 weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
               }) %>
-              à
+              <%= t('common.at') %>
               <%= new Date(event.start_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) %>
             </p>
             <p class="verify-detail"><i class="fas fa-location-dot"></i> <%= event.location %></p>
@@ -128,17 +128,17 @@
                         border: 1px solid <%= cardColor %>;">
               <% if (isRegistered) { %>
                 <p style="color: var(--color-success); font-size: 1.05rem; font-weight: 600; margin: 0;">
-                  <i class="fas fa-circle-check"></i> Inscrit à cet événement
+                  <i class="fas fa-circle-check"></i> <%= t('moderator.registered_this_event') %>
                 </p>
                 <p style="color: var(--color-text-muted); font-size: 0.85rem; margin: var(--space-xs) 0 0;">
-                  L'accès est autorisé.
+                  <%= t('moderator.access_allowed') %>
                 </p>
               <% } else { %>
                 <p style="color: var(--color-danger); font-size: 1.05rem; font-weight: 600; margin: 0;">
-                  <i class="fas fa-circle-xmark"></i> Non inscrit à cet événement
+                  <i class="fas fa-circle-xmark"></i> <%= t('moderator.not_registered_this_event') %>
                 </p>
                 <p style="color: var(--color-text-muted); font-size: 0.85rem; margin: var(--space-xs) 0 0;">
-                  Ce membre ne figure pas dans la liste des inscrits.
+                  <%= t('moderator.not_in_registered_list') %>
                 </p>
               <% } %>
             </div>
@@ -147,8 +147,8 @@
           <hr style="border-color: var(--color-border); margin: var(--space-md) 0;" />
           <p class="text-muted" style="font-size: 0.9rem;">
             <i class="fas fa-circle-info"></i>
-            Aucun événement associé à cette vérification.
-            Utilisez le scanner depuis la page de contrôle d'un événement spécifique.
+            <%= t('moderator.no_event_for_verification') %>
+            <%= t('moderator.use_scan_from_event_page') %>
           </p>
         <% } %>
 

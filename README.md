@@ -1,60 +1,86 @@
 # LANPartyManager
 
-Site web pour association de jeux vidéo — gestion d'utilisateurs et panneau d'administration.
+> Portail web pour la gestion de LAN Party — événements, matchmaking, contrôle d'accès et classements en temps réel.
 
-**Stack :** Node.js · Express · MySQL · EJS  
-**Thème :** Gaming dark/neon (responsive)
+**Stack :** Node.js · Express · MySQL · EJS &nbsp;|&nbsp; **Thème :** Gaming dark/neon (responsive)
 
-## Installation rapide
+---
 
-Le projet utilise un schema SQL unique : `database/install.sql`.
-Il n'y a pas de migrations SQL incrementales a executer.
+## Présentation
+
+LANPartyManager est un portail complet pour organiser et animer des événements LAN. Il couvre l'ensemble du cycle de vie d'un événement, de l'inscription des participants jusqu'à l'affichage du classement final.
+
+### Fonctionnalités principales
+
+| Domaine | Fonctionnalités |
+|---------|----------------|
+| **Événements** | Création, planification et suivi d'état (planifié → en cours → terminé) |
+| **Inscriptions** | Formulaire web + OAuth Discord · Badge QR code personnel |
+| **Contrôle d'accès** | Scan de badge par les modérateurs pour valider l'entrée physique |
+| **Rencontres** | Création par scan de badge + sélection du jeu · Attribution automatique de salle |
+| **File d'attente** | Gestion FIFO automatique · Détection des conflits de joueurs |
+| **Classement** | Suivi en temps réel des résultats et du classement par événement |
+| **Notifications** | Intégration Discord (annonces, résultats) |
+| **Administration** | Gestion complète des utilisateurs, jeux, salles et actualités |
+
+---
+
+## Captures d'écran
+
+> 💡 Pour générer les captures depuis votre instance locale :
+> ```bash
+> APP_URL=http://localhost:3000 node scripts/capture-screenshots.js
+> ```
+
+### Page d'accueil
+
+![Page d'accueil](docs/screenshots/01-accueil.png)
+
+### Événements publics
+
+![Événements](docs/screenshots/03-evenements.png)
+
+### Actualités
+
+![Actualités](docs/screenshots/02-actualites.png)
+
+### Inscription
+
+![Inscription](docs/screenshots/05-inscription.png)
+
+### Dashboard administrateur
+
+![Dashboard admin](docs/screenshots/06-admin-dashboard.png)
+
+### Tableau de bord des rencontres
+
+![Rencontres](docs/screenshots/12-moderateur-rencontres.png)
+
+### Contrôle d'accès (scan de badge)
+
+![Scan badge](docs/screenshots/11-moderateur-scan.png)
+
+---
+
+## Démarrage rapide
 
 ```bash
-# 1. Importer database/install.sql dans PHPMyAdmin
-# 2. Configurer les variables d'environnement dans cPanel
+# 1. Importer database/install.sql dans PHPMyAdmin (ou via CLI)
+# 2. Configurer les variables d'environnement
 npm install
 npm start
 ```
 
-Compte admin par défaut : `admin@lanparty.local` / `Admin1234`  
-⚠️ Changez ce mot de passe dès la première connexion.
+Pour l'installation complète, la configuration Discord et les variables d'environnement, voir [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
-Dans le Codespace, l'initialisation importe aussi un jeu de donnees de demonstration :
-- utilisateurs de test (admin, moderatrice et joueurs)
-- actualites publiees + brouillon
-- evenements planifie / en cours / termine
-- inscriptions, jeux, salles et rencontres de demonstration
-
-Comptes utiles :
-- `admin@lanparty.local` / `Admin1234`
-- `lea.martin@lanparty.local` / `Admin1234`
-- `hugo.bernard@lanparty.local` / `Admin1234`
+---
 
 ## Documentation
 
-- [Architecture & Installation](docs/ARCHITECTURE.md)
-- [Guide d'utilisation](docs/USAGE.md)
-
-## Tests
-
-```bash
-npm test
-```
-
-Parametres de connexion habituels dans ce projet:
-- Systeme: `MySQL`
-- Serveur: `db`
-- Utilisateur / mot de passe / base: voir `.devcontainer/docker-compose.yml`
-
-Pour reappliquer manuellement le schema et les donnees du Codespace :
-
-```bash
-bash .devcontainer/init-db.sh
-```
-
-Pour repartir d'une base Codespace propre avec le jeu de donnees de demonstration :
-
-```bash
-npm run db:reset
-```
+| Document | Description |
+|----------|-------------|
+| [Installation & Configuration](docs/INSTALLATION.md) | Prérequis, variables d'environnement, démarrage, tests |
+| [Architecture technique](docs/ARCHITECTURE.md) | Structure du projet, stack, modèle de données |
+| [Guide d'utilisation](docs/USAGE.md) | Guide complet par profil (joueur, modérateur, admin) |
+| [Configuration admin](docs/ADMIN_CONFIGURATION.md) | Configuration avancée depuis le panneau admin |
+| [Journal des mises à jour](docs/UPDATES.md) | Historique des changements |

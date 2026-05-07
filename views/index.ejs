@@ -5,10 +5,10 @@
   <div class="hero-bg"></div>
   <div class="container hero-content">
     <div class="hero-badge">
-      <span><i class="fas fa-bolt"></i> Association Gaming</span>
+      <span><i class="fas fa-bolt"></i> E Gaming</span>
     </div>
     <h1 class="hero-title">
-      Bienvenue à<br />
+      <%= t('page.welcome') %><br />
       <span class="text-gradient"><%= appSettings.organization_name %></span><br />
     </h1>
     <% if (appSettings.organization_slogan) { %>
@@ -17,8 +17,7 @@
       </p>
     <% } else { %>
       <p class="hero-subtitle">
-        Compétitions, soirées gaming, tournois et bien plus encore.
-        Rejoignez notre communauté de passionnés !
+        <%= t('page.competitions_and_more') %>
       </p>
     <% } %>
     <div class="hero-actions">
@@ -32,7 +31,7 @@
       <% } else { %>
         <a href="/profile" class="btn btn--primary btn--lg">
           <i class="fas fa-user"></i> Mon profil
-        </a>
+        </a><%= t('nav.profile') %>
       <% } %>
     </div>
   </div>
@@ -50,11 +49,11 @@
         <% if (eventIsLive) { %>
           <span class="event-status-badge event-status--live">
             <i class="fas fa-circle-play"></i> En cours
+          </span><%= t('status.in_progress') %>
           </span>
         <% } else { %>
           <span class="event-status-badge event-status--upcoming">
-            <i class="fas fa-calendar-check"></i> Prochain événement
-          </span>
+            <i class="fas fa-calendar-check"></i> <%= t('page.next_event') %>
         <% } %>
       </div>
 
@@ -79,7 +78,7 @@
             </span>
             <span>
               <i class="fas fa-users"></i> <%= registrationCount %> inscrit<%= registrationCount !== 1 ? 's' : '' %>
-            </span>
+            </span><%= registrationCount !== 1 ? t('page.registered_count_plural') : t('page.registered_count')
           </div>
 
           <!-- Chrono inscriptions -->
@@ -91,13 +90,13 @@
               <div class="event-countdown" id="eventCountdown"
                    data-deadline="<%= registrationDeadlineISO %>">
                 <div class="countdown-unit"><span class="countdown-num" id="cd-days">--</span><span class="countdown-lbl">jours</span></div>
+                <span class="countdown-sep">:</span><%= t('countdown.days') %></span></div>
                 <span class="countdown-sep">:</span>
-                <div class="countdown-unit"><span class="countdown-num" id="cd-hours">--</span><span class="countdown-lbl">heures</span></div>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-hours">--</span><span class="countdown-lbl"><%= t('countdown.hours') %></span></div>
                 <span class="countdown-sep">:</span>
-                <div class="countdown-unit"><span class="countdown-num" id="cd-minutes">--</span><span class="countdown-lbl">min</span></div>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-minutes">--</span><span class="countdown-lbl"><%= t('countdown.minutes') %></span></div>
                 <span class="countdown-sep">:</span>
-                <div class="countdown-unit"><span class="countdown-num" id="cd-seconds">--</span><span class="countdown-lbl">sec</span></div>
-              </div>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-seconds">--</span><span class="countdown-lbl"><%= t('countdown.seconds') %>
             </div>
           <% } else { %>
             <p class="event-registrations-closed">
@@ -161,7 +160,7 @@
   function tick() {
     const diff = deadline - Date.now();
     if (diff <= 0) {
-      el.innerHTML = '<span class="event-registrations-closed"><i class="fas fa-lock"></i> <%= t('event.registrations_closed') %></span>';
+      el.innerHTML = '<span class="event-registrations-closed"><i class="fas fa-lock"></i> <%= t("event.registrations_closed") %></span>';
       return;
     }
     const days    = Math.floor(diff / 86400000);

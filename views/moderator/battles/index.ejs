@@ -6,13 +6,13 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-gamepad"></i> Gestion des rencontres
+        <i class="fas fa-gamepad"></i> <%= t('moderator.battles_management') %>
       </h1>
-      <p class="admin-subtitle">Sélectionnez un événement pour gérer ses rencontres</p>
+      <p class="admin-subtitle"><%= t('moderator.select_event_battles') %></p>
     </div>
     <div class="admin-header-actions">
       <a href="/moderator" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Contrôle billets
+        <i class="fas fa-arrow-left"></i> <%= t('moderator.battles_back_list') %>
       </a>
     </div>
   </div>
@@ -20,26 +20,26 @@
   <!-- Liste des événements -->
   <div class="card admin-users-card">
     <div class="card-header">
-      <h2><i class="fas fa-calendar-days"></i> Événements (<%= events.length %>)</h2>
+      <h2><i class="fas fa-calendar-days"></i> <%= t('moderator.battles_table_title') %> (<%= events.length %>)</h2>
     </div>
     <div class="card-body">
       <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Événement</th>
-              <th>Date</th>
-              <th>Lieu</th>
-              <th>Statut</th>
-              <th>Inscrits</th>
-              <th>Actions</th>
+              <th><%= t('admin.event_name') %></th>
+              <th><%= t('admin.event_date_time') %></th>
+              <th><%= t('event.location') %></th>
+              <th><%= t('moderator.status_label') %></th>
+              <th><%= t('admin.event_registered') %></th>
+              <th><%= t('common.actions') %></th>
             </tr>
           </thead>
           <tbody>
             <% if (events.length === 0) { %>
               <tr>
                 <td colspan="6" class="table-empty">
-                  <i class="fas fa-inbox"></i> Aucun événement disponible.
+                  <i class="fas fa-inbox"></i> <%= t('moderator.no_events_available_battles') %>
                 </td>
               </tr>
             <% } else { %>
@@ -62,11 +62,11 @@
                   <td class="td-actions">
                     <% if (event.status === 'in_progress') { %>
                       <a href="/battles/events/<%= event.id %>" class="btn btn--primary btn--sm">
-                        <i class="fas fa-swords"></i> Rencontres
+                        <i class="fas fa-swords"></i> <%= t('moderator.matches') %>
                       </a>
                     <% } else { %>
-                      <span class="btn btn--ghost btn--sm" aria-disabled="true" title="Disponible uniquement pour un événement en cours">
-                        <i class="fas fa-lock"></i> Inactif
+                      <span class="btn btn--ghost btn--sm" aria-disabled="true" title="<%= t('moderator.event_inactive_hint') %>">
+                        <i class="fas fa-lock"></i> <%= t('moderator.event_inactive') %>
                       </span>
                     <% } %>
                   </td>

@@ -23,10 +23,10 @@
   <!-- Barre d'actions (masquée à l'impression) -->
   <div class="badge-actions no-print">
     <a href="<%= backUrl || '/profile' %>" class="btn btn--ghost btn--sm">
-      <i class="fas fa-arrow-left"></i> <%= backLabel || 'Retour au profil' %>
+      <i class="fas fa-arrow-left"></i> <%= backLabel || t('badge.back_to_profile') %>
     </a>
     <button id="btnPdf" class="btn btn--primary btn--sm">
-      <i class="fas fa-print"></i> Imprimer / Sauvegarder en PDF
+      <i class="fas fa-print"></i> <%= t('badge.print_pdf') %>
     </button>
   </div>
 
@@ -40,7 +40,7 @@
           <i class="fas fa-gamepad"></i>
           <span>LAN<span class="badge-logo-accent">Party</span>Manager</span>
         </div>
-        <div class="badge-tag">BADGE MEMBRE</div>
+        <div class="badge-tag"><%= t('badge.member_badge') %></div>
       </div>
 
       <!-- Bloc événement supprimé : le badge est propre au membre, pas à un événement -->

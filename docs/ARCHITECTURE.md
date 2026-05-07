@@ -442,7 +442,7 @@ Configurez ces variables dans l'interface cPanel → **Node.js Selector** :
 #### Étape 1 — Créer une application Discord
 
 1. Rendez-vous sur le [Discord Developer Portal](https://discord.com/developers/applications)
-2. Connectez-vous avec votre compte Discord (de préférence le compte d'administration de votre association)
+2. Connectez-vous avec votre compte Discord (de préférence le compte d'administration de votre site)
 3. Cliquez sur **New Application** (bouton en haut à droite)
 4. Donnez un nom à votre application (ex : `LANPartyManager`)
 5. Acceptez les conditions d'utilisation et cliquez sur **Create**

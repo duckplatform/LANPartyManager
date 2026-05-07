@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS `users` (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
-  COMMENT='Utilisateurs de l''association';
+  COMMENT='Utilisateurs du site';
 
 -- Compte admin par défaut : admin@lanparty.local / Admin1234
 -- Changer ce mot de passe dès la première connexion.
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `events` (
 ) ENGINE=InnoDB
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_unicode_ci
-  COMMENT='Evenements organises par l''association';
+  COMMENT='Evenements organises par le site';
 
 -- ------------------------------------------------------------
 -- Table `event_registrations`

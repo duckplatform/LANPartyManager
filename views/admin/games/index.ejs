@@ -10,16 +10,16 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-gamepad"></i> Jeux disponibles
+        <i class="fas fa-gamepad"></i> <%= t('admin.games_title') %>
       </h1>
-      <p class="admin-subtitle">Gérez les jeux disponibles pour les rencontres</p>
+      <p class="admin-subtitle"><%= t('admin.games_subtitle') %></p>
     </div>
     <div class="admin-header-actions">
       <a href="/admin/games/create" class="btn btn--primary btn--sm">
-        <i class="fas fa-plus"></i> Ajouter un jeu
+        <i class="fas fa-plus"></i> <%= t('admin.games_add_button') %>
       </a>
       <a href="/admin" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Administration
+        <i class="fas fa-arrow-left"></i> <%= t('admin.dashboard') %>
       </a>
     </div>
   </div>
@@ -27,25 +27,25 @@
   <!-- Liste des jeux -->
   <div class="card admin-users-card">
     <div class="card-header admin-card-header">
-      <h2><i class="fas fa-list"></i> Jeux (<%= games.length %>)</h2>
+      <h2><i class="fas fa-list"></i> <%= t('admin.games_list_title') %> (<%= games.length %>)</h2>
     </div>
     <div class="card-body">
       <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Nom</th>
-              <th>Console / Plateforme</th>
-              <th>Format</th>
-              <th>Actions</th>
+              <th><%= t('admin.event_name') %></th>
+              <th><%= t('admin.games_console') %></th>
+              <th><%= t('admin.games_format') %></th>
+              <th><%= t('common.actions') %></th>
             </tr>
           </thead>
           <tbody>
             <% if (games.length === 0) { %>
               <tr>
                 <td colspan="4" class="table-empty">
-                  <i class="fas fa-inbox"></i> Aucun jeu configuré.
-                  <a href="/admin/games/create">Ajouter le premier jeu</a>.
+                  <i class="fas fa-inbox"></i> <%= t('admin.no_games') %>
+                  <a href="/admin/games/create"><%= t('admin.add_first_game') %></a>.
                 </td>
               </tr>
             <% } else { %>
@@ -59,15 +59,15 @@
                     </span>
                   </td>
                   <td class="td-actions">
-                    <a href="/admin/games/<%= game.id %>/edit" class="btn btn--ghost btn--xs" title="Modifier">
-                      <i class="fas fa-pen"></i> Modifier
+                    <a href="/admin/games/<%= game.id %>/edit" class="btn btn--ghost btn--xs" title="<%= t('admin.games_edit') %>">
+                      <i class="fas fa-pen"></i> <%= t('admin.games_edit') %>
                     </a>
                     <form action="/admin/games/<%= game.id %>?_method=DELETE" method="POST"
                           class="form-inline"
-                          onsubmit="return confirm('Supprimer le jeu <%= game.name %> ? Cette action est irréversible.')">
+                          onsubmit="return confirm('<%= t('admin.games_delete_confirmation', { name: game.name }) %>')">
                       <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
-                      <button type="submit" class="btn btn--danger btn--xs" title="Supprimer">
-                        <i class="fas fa-trash"></i> Supprimer
+                      <button type="submit" class="btn btn--danger btn--xs" title="<%= t('admin.games_delete') %>">
+                        <i class="fas fa-trash"></i> <%= t('admin.games_delete') %>
                       </button>
                     </form>
                   </td>

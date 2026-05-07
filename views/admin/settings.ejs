@@ -36,17 +36,17 @@
           <!-- ── Colonne principale ── -->
           <div class="news-form-main">
 
-            <!-- Section Identité de l'association -->
+            <!-- Section Identité du site -->
             <div class="card" style="margin-bottom: var(--space-lg);">
               <div class="card-header">
-                <h2><i class="fas fa-building"></i> Identité de l'association</h2>
+                <h2><i class="fas fa-building"></i> Identité du site</h2>
               </div>
               <div class="card-body">
 
-                <!-- Nom de l'association -->
+                <!-- Nom du site -->
                 <div class="form-group">
                   <label class="form-label" for="organization_name">
-                    <i class="fas fa-heading"></i> Nom de l'association
+                    <i class="fas fa-heading"></i> Nom du site
                   </label>
                   <input
                     type="text"
@@ -59,7 +59,7 @@
                     required
                   />
                   <span class="form-hint">
-                    Nom de votre association affiché sur toutes les pages publiques.
+                    Nom de votre site affiché sur toutes les pages publiques.
                   </span>
                 </div>
 
@@ -78,7 +78,7 @@
                     maxlength="255"
                   />
                   <span class="form-hint">
-                    Slogan ou tagline de votre association (affiché si configuré).
+                    Slogan ou tagline de votre site (affiché si configuré).
                   </span>
                 </div>
 
@@ -97,7 +97,7 @@
                     maxlength="500"
                   />
                   <span class="form-hint">
-                    URL du logo de votre association. Format recommandé: PNG ou SVG, dimensions au moins 200x200px.
+                    URL du logo de votre site. Format recommandé: PNG ou SVG, dimensions au moins 200x200px.
                     <% if (settings && settings.organization_logo) { %>
                       <div style="margin-top: var(--space-sm);">
                         <img src="<%= settings.organization_logo %>" alt="Logo" style="max-height: 60px; max-width: 200px; border: 1px solid var(--color-border); border-radius: 4px; padding: 4px;" />
@@ -206,12 +206,12 @@
                     id="community_link_website"
                     name="community_link_website"
                     class="form-input"
-                    placeholder="Ex. : https://votre-association.com"
+                    placeholder="Ex. : https://votre-site.com"
                     value="<%= (settings && settings.community_link_website) ? settings.community_link_website : '' %>"
                     maxlength="500"
                   />
                   <span class="form-hint">
-                    Lien vers le site web officiel de votre association.
+                    Lien vers le site web officiel de votre site.
                   </span>
                 </div>
 

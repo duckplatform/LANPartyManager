@@ -6,33 +6,33 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-ticket"></i> Contrôle des billets
+        <i class="fas fa-ticket"></i> <%= t('moderator.ticket_control') %>
       </h1>
-      <p class="admin-subtitle">Sélectionnez un événement pour contrôler les billets à l'entrée</p>
+      <p class="admin-subtitle"><%= t('moderator.select_event') %></p>
     </div>
   </div>
 
   <!-- Liste des événements -->
   <div class="card admin-users-card">
     <div class="card-header admin-card-header">
-      <h2><i class="fas fa-calendar-days"></i> Événements</h2>
+      <h2><i class="fas fa-calendar-days"></i> <%= t('moderator.events_table_title') %></h2>
     </div>
     <div class="card-body">
       <% if (!events || events.length === 0) { %>
         <p class="text-muted text-center">
-          <i class="fas fa-calendar-xmark"></i> Aucun événement disponible.
+          <i class="fas fa-calendar-xmark"></i> <%= t('moderator.no_events_available') %>
         </p>
       <% } else { %>
         <div class="table-responsive">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Événement</th>
-                <th>Date</th>
-                <th>Lieu</th>
-                <th>Statut</th>
-                <th>Inscrits</th>
-                <th>Action</th>
+                <th><%= t('admin.event_name') %></th>
+                <th><%= t('admin.event_date_time') %></th>
+                <th><%= t('event.location') %></th>
+                <th><%= t('moderator.status_label') %></th>
+                <th><%= t('admin.event_registered') %></th>
+                <th><%= t('common.actions') %></th>
               </tr>
             </thead>
             <tbody>
@@ -47,17 +47,17 @@
                   <td><%= e.location %></td>
                   <td>
                     <% if (e.status === 'planned') { %>
-                      <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> Planifié</span>
+                      <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> <%= t('status.planned') %></span>
                     <% } else if (e.status === 'in_progress') { %>
-                      <span class="badge badge--member"><i class="fas fa-circle-play"></i> En cours</span>
+                      <span class="badge badge--member"><i class="fas fa-circle-play"></i> <%= t('status.in_progress') %></span>
                     <% } else { %>
-                      <span class="badge badge--draft"><i class="fas fa-circle-check"></i> Terminé</span>
+                      <span class="badge badge--draft"><i class="fas fa-circle-check"></i> <%= t('status.ended') %></span>
                     <% } %>
                   </td>
                   <td><%= e.registrationCount || 0 %></td>
                   <td>
                     <a href="/moderator/events/<%= e.id %>/scan" class="btn btn--primary btn--sm">
-                      <i class="fas fa-qrcode"></i> Contrôler les billets
+                      <i class="fas fa-qrcode"></i> <%= t('moderator.ticket_check') %>
                     </a>
                   </td>
                 </tr>

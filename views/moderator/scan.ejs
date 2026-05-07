@@ -49,14 +49,14 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-qrcode"></i> Contrôle — <%= event.name %>
+        <i class="fas fa-qrcode"></i> <%= t('moderator.control_event_named', { name: event.name }) %>
       </h1>
       <p class="admin-subtitle">
         <i class="fas fa-calendar-alt"></i>
         <%= new Date(event.start_at).toLocaleDateString(locale, {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
         }) %>
-        à
+        <%= t('common.at') %>
         <%= new Date(event.start_at).toLocaleTimeString(locale, {
           hour: '2-digit', minute: '2-digit'
         }) %>
@@ -65,7 +65,7 @@
     </div>
     <div class="admin-header-actions">
       <a href="/moderator" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Liste des événements
+        <i class="fas fa-arrow-left"></i> <%= t('moderator.events_list') %>
       </a>
     </div>
   </div>
@@ -73,12 +73,12 @@
   <!-- Vérification par token (manuel ou scan caméra) -->
   <div class="card" style="margin-bottom: var(--space-lg);">
     <div class="card-header">
-      <h2><i class="fas fa-search"></i> Vérifier un billet</h2>
+      <h2><i class="fas fa-search"></i> <%= t('moderator.verify_ticket') %></h2>
     </div>
     <div class="card-body">
       <p class="form-hint" style="margin-bottom: var(--space-md);">
-        Saisissez l'ID billet manuellement ou cliquez sur <strong><i class="fas fa-camera"></i> Scanner</strong>
-        pour remplir automatiquement le champ depuis le QR code.
+        <%= t('moderator.scan_hint_before') %> <strong><i class="fas fa-camera"></i> <%= t('moderator.scan_button') %></strong>
+        <%= t('moderator.scan_hint_after') %>
       </p>
 
       <!-- Formulaire de saisie / soumission -->
@@ -92,15 +92,15 @@
                name="token"
                class="form-input"
                style="max-width:380px; font-family:monospace;"
-               placeholder="Badge membre (QR code)"
-               title="Badge membre"
+               placeholder="<%= t('moderator.member_badge_qr') %>"
+               title="<%= t('moderator.member_badge') %>"
                autocomplete="off"
                required />
-        <button type="button" id="btnCamera" class="btn btn--ghost btn--sm" title="Scanner avec la caméra">
-          <i class="fas fa-camera"></i> Scanner
+        <button type="button" id="btnCamera" class="btn btn--ghost btn--sm" title="<%= t('moderator.scan_with_camera') %>">
+          <i class="fas fa-camera"></i> <%= t('moderator.scan_button') %>
         </button>
         <button type="submit" class="btn btn--primary btn--sm">
-          <i class="fas fa-check-circle"></i> Vérifier
+          <i class="fas fa-check-circle"></i> <%= t('moderator.verify') %>
         </button>
       </form>
 
@@ -115,11 +115,11 @@
               border-radius:8px;pointer-events:none;">
         </div>
         <p style="text-align:center;margin-top:.4rem;color:var(--color-text-muted);font-size:.82rem;">
-          <i class="fas fa-qrcode"></i> Pointez le QR code dans le cadre — l'ID du billet sera recopié dans le champ
+          <i class="fas fa-qrcode"></i> <%= t('moderator.scan_target_qr') %>
         </p>
         <button type="button" onclick="stopCamera()" class="btn btn--ghost btn--xs"
                 style="margin-top:.4rem;">
-          <i class="fas fa-times"></i> Annuler
+          <i class="fas fa-times"></i> <%= t('common.cancel') %>
         </button>
       </div>
     </div>
@@ -128,24 +128,24 @@
   <!-- Liste des inscrits -->
   <div class="card admin-users-card">
     <div class="card-header admin-card-header">
-      <h2><i class="fas fa-list"></i> Liste des inscrits (<%= registrations.length %>)</h2>
+      <h2><i class="fas fa-list"></i> <%= t('moderator.registered_list') %> (<%= registrations.length %>)</h2>
     </div>
     <div class="card-body">
       <div class="table-responsive">
         <table class="data-table">
           <thead>
             <tr>
-              <th>Pseudo</th>
-              <th>Nom complet</th>
-              <th>Email</th>
-              <th>Inscrit le</th>
+              <th><%= t('admin.table_user_pseudo') %></th>
+              <th><%= t('admin.table_full_name') %></th>
+              <th><%= t('admin.table_email') %></th>
+              <th><%= t('admin.table_registration_date') %></th>
             </tr>
           </thead>
           <tbody>
             <% if (registrations.length === 0) { %>
               <tr>
                 <td colspan="4" class="table-empty">
-                  <i class="fas fa-inbox"></i> Aucun inscrit pour le moment.
+                  <i class="fas fa-inbox"></i> <%= t('moderator.no_registered_yet') %>
                 </td>
               </tr>
             <% } else { %>
@@ -186,6 +186,11 @@
   const video      = document.getElementById('scanVideo');
   const canvas     = document.getElementById('scanCanvas');
   const ctx        = canvas.getContext('2d', { willReadFrequently: true });
+  const i18n = {
+    qrUnavailable: <%- JSON.stringify(t('moderator.qr_unavailable')) %>,
+    cameraUnavailableHttps: <%- JSON.stringify(t('moderator.camera_unavailable_https')) %>,
+    cameraAccessError: <%- JSON.stringify(t('moderator.camera_access_error')) %>
+  };
 
   let stream = null;
   let rafId  = null;
@@ -205,7 +210,7 @@
   } else {
     // Caméra non disponible (HTTP ou navigateur non supporté)
     btnCamera.disabled = true;
-    btnCamera.title    = 'Caméra non disponible (HTTPS requis)';
+    btnCamera.title    = i18n.cameraUnavailableHttps;
   }
 
   async function startCamera() {
@@ -215,7 +220,7 @@
       }
 
       if (!detector && typeof window.jsQR !== 'function') {
-        alert('Détection QR indisponible : la bibliothèque de scan est bloquée ou absente.');
+        alert(i18n.qrUnavailable);
         return;
       }
 
@@ -229,7 +234,7 @@
       document.body.classList.add('scan-active');
       rafId = requestAnimationFrame(scanFrame);
     } catch (err) {
-      alert('Impossible d\'accéder à la caméra : ' + err.message);
+      alert(i18n.cameraAccessError + ' ' + err.message);
     }
   }
 

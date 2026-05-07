@@ -1296,11 +1296,11 @@ router.get('/settings', async (req, res) => {
 
 // Règles de validation pour les paramètres Discord
 const settingsValidation = [
-  // Identité de l'association
+  // Identité du site
   body('organization_name')
     .trim()
-    .isLength({ min: 1, max: 255 }).withMessage('Le nom de l\'association ne peut pas dépasser 255 caractères.')
-    .notEmpty().withMessage('Le nom de l\'association est obligatoire.'),
+    .isLength({ min: 1, max: 255 }).withMessage('Le nom du site ne peut pas dépasser 255 caractères.')
+    .notEmpty().withMessage('Le nom du site est obligatoire.'),
   body('organization_slogan')
     .optional({ checkFalsy: true })
     .trim()
@@ -1410,7 +1410,7 @@ router.post('/settings', settingsValidation, async (req, res) => {
   try {
     const currentSettings = await AppSettings.getAll();
 
-    // Identité de l'association
+    // Identité du site
     const organization_name = (req.body.organization_name || 'LANPartyManager').trim();
     const organization_slogan = (req.body.organization_slogan || '').trim() || null;
     const organization_logo = (req.body.organization_logo || '').trim() || null;
@@ -1455,7 +1455,7 @@ router.post('/settings', settingsValidation, async (req, res) => {
     const locale = (req.body.locale || '').trim() || 'fr-FR';
 
     await AppSettings.setMultiple({
-      // Identité de l'association
+      // Identité du site
       organization_name,
       organization_slogan,
       organization_logo,

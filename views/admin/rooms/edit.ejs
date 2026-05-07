@@ -9,12 +9,12 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-pen"></i> Modifier — <%= room.name %>
+        <i class="fas fa-pen"></i> <%= t('common.edit') %> - <%= room.name %>
       </h1>
     </div>
     <div class="admin-header-actions">
       <a href="/admin/rooms?event_id=<%= room.event_id %>" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Retour aux salles
+        <i class="fas fa-arrow-left"></i> <%= t('admin.rooms_back_list') %>
       </a>
     </div>
   </div>
@@ -33,7 +33,7 @@
         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
 
         <div class="form-group">
-          <label class="form-label">Événement</label>
+          <label class="form-label"><%= t('admin.room_event') %></label>
           <p class="form-static">
             <i class="fas fa-calendar-days"></i>
             <%= events.find(e => e.id === room.event_id) ? events.find(e => e.id === room.event_id).name : 'Événement #' + room.event_id %>
@@ -41,47 +41,47 @@
         </div>
 
         <div class="form-group">
-             <label class="form-label" for="name">Nom de la salle <span class="required">*</span></label>
+             <label class="form-label" for="name"><%= t('admin.room_name') %> <span class="required">*</span></label>
              <input type="text" id="name" name="name" class="form-input"
                value="<%= old.name || '' %>"
                  maxlength="100" required />
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="type">Type de salle <span class="required">*</span></label>
+          <label class="form-label" for="type"><%= t('admin.room_type') %> <span class="required">*</span></label>
           <select id="type" name="type" class="form-select" required>
             <% ROOM_TYPES.forEach(function(t) { %>
               <option value="<%= t %>" <%= old.type === t ? 'selected' : '' %>>
-                <%= t === 'simulation' ? 'Simulation' : 'Console' %>
+                <%= t === 'simulation' ? t('admin.room_type_simulation') : t('admin.room_type_console') %>
               </option>
             <% }); %>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="match_type">Format supporté <span class="required">*</span></label>
+          <label class="form-label" for="match_type"><%= t('admin.room_match_format') %> <span class="required">*</span></label>
           <select id="match_type" name="match_type" class="form-select" required>
             <% MATCH_TYPES.forEach(function(t) { %>
               <option value="<%= t %>" <%= old.match_type === t ? 'selected' : '' %>>
-                <%= t === '2v2' ? '2v2 — Équipes (4 joueurs)' : t === '1v1' ? '1v1 — Face à face (2 joueurs)' : 'Solo — Un seul joueur' %>
+                <%= t === '2v2' ? t('admin.room_match_format_2v2') : t === '1v1' ? t('admin.room_match_format_1v1') : t('admin.room_match_format_solo') %>
               </option>
             <% }); %>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label">État</label>
+          <label class="form-label"><%= t('moderator.status_label') %></label>
           <label class="form-checkbox">
             <input type="checkbox" name="is_active" value="1" <%= (old.is_active == '1' || old.is_active === 1) ? 'checked' : '' %> />
-            Salle active
+            <%= t('admin.room_is_active') %>
           </label>
         </div>
 
         <div class="form-actions">
           <button type="submit" class="btn btn--primary">
-            <i class="fas fa-save"></i> Enregistrer
+            <i class="fas fa-save"></i> <%= t('common.save') %>
           </button>
-          <a href="/admin/rooms?event_id=<%= room.event_id %>" class="btn btn--ghost">Annuler</a>
+          <a href="/admin/rooms?event_id=<%= room.event_id %>" class="btn btn--ghost"><%= t('common.cancel') %></a>
         </div>
       </form>
     </div>

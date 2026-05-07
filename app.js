@@ -2,7 +2,7 @@
 
 /**
  * LANPartyManager - Application principale
- * Site web pour association de jeux vidéo
+ * Site web pour gestion d'événements de jeux vidéo
  *
  * Stack : Node.js + Express + MySQL + EJS
  * Déploiement : VPS cPanel (variables d'environnement définies dans cPanel)

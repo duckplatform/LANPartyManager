@@ -9,8 +9,8 @@
  *
  * Clés reconnues :
  *   
- *   # Identité de l'association
- *   organization_name         — Nom de l'association (ex: "LANPartyManager")
+ *   # Identité du site
+ *   organization_name         — Nom du site (ex: "LANPartyManager")
  *   organization_logo         — URL du logo (PNG, SVG recommandé)
  *   organization_slogan       — Slogan ou tagline
  *   

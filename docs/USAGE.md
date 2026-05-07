@@ -2,7 +2,7 @@
 
 ## Présentation
 
-LANPartyManager est le site web de l'association de jeux vidéo. Il permet aux membres de s'inscrire, gérer leur profil, et aux administrateurs de gérer les comptes.
+LANPartyManager est le site web du site de jeux vidéo. Il permet aux membres de s'inscrire, gérer leur profil, et aux administrateurs de gérer les comptes.
 
 ---
 
@@ -10,7 +10,7 @@ LANPartyManager est le site web de l'association de jeux vidéo. Il permet aux m
 
 ### Page d'accueil
 
-La page d'accueil présente l'association avec ses activités (tournois, événements, communauté).
+La page d'accueil présente le site avec ses activités (tournois, événements, communauté).
 
 - Accédez au site via votre navigateur (URL fournie par l'administrateur)
 - Les visiteurs non connectés voient les boutons **Connexion** et **Nous rejoindre**

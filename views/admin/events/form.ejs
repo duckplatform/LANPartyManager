@@ -11,13 +11,13 @@
     <div>
       <h1 class="admin-title">
         <i class="fas fa-<%= event && event.id ? 'edit' : 'plus-circle' %>"></i>
-        <%= event && event.id ? 'Modifier l\'événement' : 'Nouvel événement' %>
+        <%= event && event.id ? t('admin.event_form_title_edit') : t('admin.event_form_title_create') %>
       </h1>
-      <p class="admin-subtitle">Définissez les informations de l'événement.</p>
+      <p class="admin-subtitle"><%= t('admin.event_form_subtitle') %></p>
     </div>
     <div>
       <a href="/admin/events" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Retour à la liste
+        <i class="fas fa-arrow-left"></i> <%= t('admin.events_list_title') %>
       </a>
     </div>
   </div>
@@ -48,14 +48,14 @@
         <!-- Nom -->
         <div class="form-group">
           <label class="form-label" for="name">
-            <i class="fas fa-tag"></i> Nom de l'événement <span class="required">*</span>
+            <i class="fas fa-tag"></i> <%= t('admin.event_name') %> <span class="required">*</span>
           </label>
           <input
             type="text"
             id="name"
             name="name"
             class="form-input"
-            placeholder="Ex. : LAN Party Printemps 2025"
+            placeholder="<%= t('admin.event_name_hint') %>"
             value="<%= (event && event.name) ? event.name : '' %>"
             maxlength="255"
             required
@@ -66,7 +66,7 @@
         <!-- Date/heure -->
         <div class="form-group">
           <label class="form-label" for="start_at">
-            <i class="fas fa-calendar-alt"></i> Date et heure <span class="required">*</span>
+            <i class="fas fa-calendar-alt"></i> <%= t('admin.event_date_time') %> <span class="required">*</span>
           </label>
           <input
             type="datetime-local"
@@ -81,14 +81,14 @@
         <!-- Lieu -->
         <div class="form-group">
           <label class="form-label" for="location">
-            <i class="fas fa-location-dot"></i> Lieu <span class="required">*</span>
+            <i class="fas fa-location-dot"></i> <%= t('admin.event_location') %> <span class="required">*</span>
           </label>
           <input
             type="text"
             id="location"
             name="location"
             class="form-input"
-            placeholder="Ex. : Salle des fêtes, 12 rue de la Paix"
+            placeholder="<%= t('admin.event_location_hint') %>"
             value="<%= (event && event.location) ? event.location : '' %>"
             maxlength="255"
             required
@@ -100,14 +100,14 @@
         <% if (typeof discordEnabled !== 'undefined' && discordEnabled) { %>
         <div class="form-group">
           <label class="form-label" for="discord_channel_id">
-            <i class="fab fa-discord"></i> ID canal Discord (optionnel)
+            <i class="fab fa-discord"></i> <%= t('admin.event_discord_channel') %>
           </label>
           <input
             type="text"
             id="discord_channel_id"
             name="discord_channel_id"
             class="form-input"
-            placeholder="Ex. : 123456789012345678"
+            placeholder="123456789012345678"
             value="<%= (event && event.discord_channel_id) ? event.discord_channel_id : '' %>"
             maxlength="32"
             inputmode="numeric"
@@ -115,15 +115,14 @@
             autocomplete="off"
           />
           <span class="form-hint">
-            Facultatif. Identifiant numérique du canal Discord dédié à cet événement.
-            Les notifications (création, début, fin, rencontres) seront envoyées sur ce canal.
+            <%= t('admin.event_discord_channel_hint') %>
           </span>
         </div>
 
         <!-- Activer/désactiver les notifications Discord pour cet événement -->
         <div class="form-group">
           <label class="form-label">
-            <i class="fas fa-bell"></i> Notifications Discord
+            <i class="fas fa-bell"></i> <%= t('admin.event_discord_notifications') %>
           </label>
           <div style="display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-xs);">
             <input
@@ -141,12 +140,11 @@
               style="width: 1.2rem; height: 1.2rem; cursor: pointer;"
             />
             <label for="discord_notifications_enabled" style="cursor: pointer; font-weight: normal;">
-              Activer les notifications Discord pour cet événement
+              <%= t('admin.event_discord_notifications') %>
             </label>
           </div>
           <span class="form-hint">
-            Si désactivé, aucune notification Discord ne sera envoyée pour cet événement
-            (ni à la création, ni lors des changements de statut, ni pour les rencontres).
+            <%= t('admin.event_discord_notifications_hint') %>
           </span>
         </div>
         <% } %>
@@ -164,17 +162,17 @@
           <div class="card-body">
             <div class="form-group">
               <label class="form-label" for="status">
-                <i class="fas fa-toggle-on"></i> État de l'événement
+                <i class="fas fa-toggle-on"></i> <%= t('moderator.status_label') %>
               </label>
               <select id="status" name="status" class="form-input" required>
                 <option value="planned"  <%= (!event || event.status === 'planned')  ? 'selected' : '' %>>
-                  📅 Planifié — inscriptions ouvertes
+                  📅 <%= t('status.planned') %>
                 </option>
                 <option value="in_progress" <%= (event && event.status === 'in_progress') ? 'selected' : '' %>>
-                  ▶ En cours — inscriptions fermées
+                  ▶ <%= t('status.in_progress') %>
                 </option>
                 <option value="ended"  <%= (event && event.status === 'ended')  ? 'selected' : '' %>>
-                  ✅ Terminé — événement archivé
+                  ✅ <%= t('status.ended') %>
                 </option>
               </select>
               <span class="form-hint">
@@ -187,14 +185,14 @@
             <div class="form-actions">
               <button type="submit" class="btn btn--primary btn--full">
                 <i class="fas fa-save"></i>
-                <%= event && event.id ? 'Enregistrer' : 'Créer l\'événement' %>
+                <%= event && event.id ? t('common.save') : t('common.create') + ' ' + t('admin.events') %>
               </button>
             </div>
 
             <% if (event && event.id) { %>
               <div style="margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border);">
                 <a href="/admin/events" class="btn btn--ghost btn--full btn--sm">
-                  <i class="fas fa-times"></i> Annuler
+                  <i class="fas fa-times"></i> <%= t('common.cancel') %>
                 </a>
               </div>
             <% } %>
@@ -204,7 +202,7 @@
         <!-- Note inscriptions -->
         <div class="card sidebar-card">
           <div class="card-header">
-            <h2><i class="fas fa-circle-info"></i> Inscriptions</h2>
+            <h2><i class="fas fa-circle-info"></i> <%= t('event.registrations') %></h2>
           </div>
           <div class="card-body">
             <p class="form-hint">
@@ -215,7 +213,7 @@
             <% if (event && event.id) { %>
               <div style="margin-top: var(--space-sm);">
                 <a href="/admin/events/<%= event.id %>/registrations" class="btn btn--ghost btn--full btn--sm">
-                  <i class="fas fa-users"></i> Voir les inscrits
+                  <i class="fas fa-users"></i> <%= t('admin.event_registered') %>
                 </a>
               </div>
             <% } %>
