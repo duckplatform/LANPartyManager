@@ -78,7 +78,7 @@
             </span>
             <span>
               <i class="fas fa-users"></i> <%= registrationCount %> inscrit<%= registrationCount !== 1 ? 's' : '' %>
-            </span><%= registrationCount !== 1 ? t('page.registered_count_plural') : t('page.registered_count')
+            </span>
           </div>
 
           <!-- Chrono inscriptions -->
@@ -89,14 +89,13 @@
               </p>
               <div class="event-countdown" id="eventCountdown"
                    data-deadline="<%= registrationDeadlineISO %>">
-                <div class="countdown-unit"><span class="countdown-num" id="cd-days">--</span><span class="countdown-lbl">jours</span></div>
-                <span class="countdown-sep">:</span><%= t('countdown.days') %></span></div>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-days">--</span><span class="countdown-lbl"><%= t('countdown.days') %></span></div>
                 <span class="countdown-sep">:</span>
                 <div class="countdown-unit"><span class="countdown-num" id="cd-hours">--</span><span class="countdown-lbl"><%= t('countdown.hours') %></span></div>
                 <span class="countdown-sep">:</span>
                 <div class="countdown-unit"><span class="countdown-num" id="cd-minutes">--</span><span class="countdown-lbl"><%= t('countdown.minutes') %></span></div>
                 <span class="countdown-sep">:</span>
-                <div class="countdown-unit"><span class="countdown-num" id="cd-seconds">--</span><span class="countdown-lbl"><%= t('countdown.seconds') %>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-seconds">--</span><span class="countdown-lbl"><%= t('countdown.seconds') %></span></div>
             </div>
           <% } else { %>
             <p class="event-registrations-closed">
