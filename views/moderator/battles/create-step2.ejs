@@ -16,13 +16,13 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-users"></i> Identifier les joueurs
+        <i class="fas fa-users"></i> <%= t('moderator.step2_identify_players') %>
       </h1>
       <p class="admin-subtitle"><i class="fas fa-calendar-alt"></i> <%= event.name %></p>
     </div>
     <div class="admin-header-actions">
       <a href="/battles/events/<%= event.id %>/create" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Retour
+        <i class="fas fa-arrow-left"></i> <%= t('common.back') %>
       </a>
     </div>
   </div>
@@ -30,11 +30,11 @@
   <!-- Étape 2 sur 2 -->
   <div class="wizard-progress" style="display:flex; gap:.5rem; margin-bottom:var(--space-lg); align-items:center;">
     <div style="flex:1; background:var(--color-surface); border:1px solid var(--color-primary); border-radius:6px; padding:.4rem 1rem; text-align:center; color:var(--color-primary); font-weight:600;">
-      <i class="fas fa-check"></i> 1. Jeu choisi
+      <i class="fas fa-check"></i> 1. <%= t('moderator.step1_choose_game') %>
     </div>
     <i class="fas fa-chevron-right" style="color:var(--color-text-muted);"></i>
     <div style="flex:1; background:var(--color-primary); color:#fff; border-radius:6px; padding:.4rem 1rem; text-align:center; font-weight:600;">
-      <i class="fas fa-users"></i> 2. Identifier les joueurs
+      <i class="fas fa-users"></i> 2. <%= t('moderator.step2_identify_players') %>
     </div>
   </div>
 
@@ -49,14 +49,14 @@
         </span>
       </div>
       <div style="color:var(--color-text-muted); font-size:.85rem;">
-        <%= nbJoueurs %> joueur(s) à identifier
+        <%= nbJoueurs %> <%= t('moderator.players_to_identify_suffix') %>
       </div>
     </div>
   </div>
 
   <div class="card">
     <div class="card-header">
-      <h2><i class="fas fa-qrcode"></i> Étape 2 — Scan des badges</h2>
+      <h2><i class="fas fa-qrcode"></i> <%= t('moderator.step2_header') %></h2>
     </div>
     <div class="card-body">
       <% if (errors && errors.length > 0) { %>
@@ -68,8 +68,7 @@
       <% } %>
 
       <p class="form-hint" style="margin-bottom:var(--space-md);">
-        Saisissez manuellement le token de badge ou cliquez sur <strong><i class="fas fa-camera"></i> Scanner</strong>
-        pour remplir automatiquement depuis le QR code.
+        <%= t('moderator.step2_hint') %>
       </p>
 
       <form action="/battles/events/<%= event.id %>/store" method="POST" id="playersForm">
@@ -80,15 +79,15 @@
           // Génère les slots joueurs selon le type de rencontre
           const slots = [];
           if (game.match_type === '2v2') {
-            slots.push({ label: 'Joueur 1 — Équipe 1', team: 1 });
-            slots.push({ label: 'Joueur 2 — Équipe 1', team: 1 });
-            slots.push({ label: 'Joueur 3 — Équipe 2', team: 2 });
-            slots.push({ label: 'Joueur 4 — Équipe 2', team: 2 });
+            slots.push({ label: t('moderator.slot_player1_team1'), team: 1 });
+            slots.push({ label: t('moderator.slot_player2_team1'), team: 1 });
+            slots.push({ label: t('moderator.slot_player3_team2'), team: 2 });
+            slots.push({ label: t('moderator.slot_player4_team2'), team: 2 });
           } else if (game.match_type === 'solo') {
-            slots.push({ label: 'Joueur Solo', team: 1 });
+            slots.push({ label: t('moderator.slot_solo'), team: 1 });
           } else {
-            slots.push({ label: 'Joueur 1', team: 1 });
-            slots.push({ label: 'Joueur 2', team: 2 });
+            slots.push({ label: t('moderator.slot_player1'), team: 1 });
+            slots.push({ label: t('moderator.slot_player2'), team: 2 });
           }
         %>
 
@@ -105,13 +104,13 @@
                      name="badge_token[]"
                      class="form-input token-input"
                      style="max-width:340px; font-family:monospace;"
-                     placeholder="Badge (QR code)"
+                     placeholder="<%= t('moderator.member_badge_qr') %>"
                      autocomplete="off"
                      data-slot="<%= i %>"
                      required />
               <button type="button" class="btn btn--ghost btn--sm btn-scan" data-slot="<%= i %>"
-                      title="Scanner avec la caméra">
-                <i class="fas fa-camera"></i> Scanner
+                      title="<%= t('moderator.scan_with_camera') %>">
+                <i class="fas fa-camera"></i> <%= t('moderator.scan_button') %>
               </button>
             </div>
             <!-- Overlay caméra -->
@@ -123,27 +122,27 @@
                           width:150px;height:150px;border:3px solid var(--color-primary);
                           border-radius:8px;pointer-events:none;"></div>
               <p style="text-align:center;margin:.3rem 0;font-size:.78rem;color:var(--color-text-muted);">
-                <i class="fas fa-qrcode"></i> Pointez le QR code dans le cadre
+                <i class="fas fa-qrcode"></i> <%= t('moderator.scan_qr_frame') %>
               </p>
               <button type="button" class="btn btn--ghost btn--xs btn-stop-scan" data-slot="<%= i %>">
-                <i class="fas fa-times"></i> Annuler
+                <i class="fas fa-times"></i> <%= t('common.cancel') %>
               </button>
             </div>
           </div>
         <% }); %>
 
         <div class="form-group" style="margin-top:var(--space-md);">
-          <label class="form-label" for="notes">Notes (facultatif)</label>
+          <label class="form-label" for="notes"><%= t('moderator.field_notes') %></label>
           <input type="text" id="notes" name="notes" class="form-input"
-                 placeholder="Ex: demande spéciale, handicap…" maxlength="500" />
+                 placeholder="<%= t('moderator.field_notes_placeholder') %>" maxlength="500" />
         </div>
 
         <div class="form-actions">
           <button type="submit" class="btn btn--primary">
-            <i class="fas fa-check"></i> Créer la rencontre
+            <i class="fas fa-check"></i> <%= t('moderator.create_battle_btn') %>
           </button>
           <a href="/battles/events/<%= event.id %>/create" class="btn btn--ghost">
-            <i class="fas fa-arrow-left"></i> Retour
+            <i class="fas fa-arrow-left"></i> <%= t('common.back') %>
           </a>
         </div>
       </form>
@@ -193,7 +192,7 @@
     if (streams[slot]) stopCamera(slot);
 
     if (!window._nativeDetector && typeof window.jsQR !== 'function') {
-      alert('Détection QR indisponible.');
+      alert('<%= t('moderator.qr_unavailable') %>');
       return;
     }
 
@@ -252,7 +251,7 @@
         rafIds[slot] = requestAnimationFrame(scan);
       }
     } catch (err) {
-      alert('Impossible d\'accéder à la caméra : ' + err.message);
+      alert('<%= t('moderator.camera_access_error') %> ' + err.message);
     }
   }
 
@@ -264,7 +263,7 @@
       });
     } else {
       btn.disabled = true;
-      btn.title    = 'Caméra non disponible (HTTPS requis)';
+      btn.title    = '<%= t('moderator.camera_unavailable_https') %>';
     }
   });
 

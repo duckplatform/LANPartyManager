@@ -63,11 +63,11 @@
             <div class="badge-player-name"><%= user.first_name %> <%= user.last_name %></div>
             <div class="badge-player-role">
               <% if (user.is_admin) { %>
-                <span class="badge-role badge-role--admin"><i class="fas fa-shield-halved"></i> Administrateur</span>
+                <span class="badge-role badge-role--admin"><i class="fas fa-shield-halved"></i> <%= t('profile.badge_admin') %></span>
               <% } else if (user.is_moderator) { %>
-                <span class="badge-role badge-role--moderator"><i class="fas fa-user-shield"></i> Modérateur</span>
+                <span class="badge-role badge-role--moderator"><i class="fas fa-user-shield"></i> <%= t('profile.badge_moderator') %></span>
               <% } else { %>
-                <span class="badge-role badge-role--member"><i class="fas fa-user"></i> Membre</span>
+                <span class="badge-role badge-role--member"><i class="fas fa-user"></i> <%= t('profile.badge_member') %></span>
               <% } %>
             </div>
           </div>
@@ -75,18 +75,18 @@
 
         <div class="badge-qr">
           <img src="<%= qrDataUrl %>" alt="QR Code badge membre" class="badge-qr-img" />
-          <p class="badge-qr-hint">Scanner à l'entrée</p>
+          <p class="badge-qr-hint"><%= t('badge.scan_at_entrance') %></p>
         </div>
       </div>
 
       <!-- Pied du badge -->
       <div class="badge-footer">
         <div class="badge-id">
-          <span class="badge-id-label">ID Membre</span>
+          <span class="badge-id-label"><%= t('badge.id_member') %></span>
           <span class="badge-id-value"><%= user.badge_token %></span>
         </div>
         <div class="badge-registered-date">
-          <span>Membre depuis <%= new Date(user.created_at).toLocaleDateString(locale) %></span>
+          <span><%= t('common.member_since') %> <%= new Date(user.created_at).toLocaleDateString(locale) %></span>
         </div>
       </div>
 

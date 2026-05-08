@@ -30,8 +30,8 @@
         </a>
       <% } else { %>
         <a href="/profile" class="btn btn--primary btn--lg">
-          <i class="fas fa-user"></i> Mon profil
-        </a><%= t('nav.profile') %>
+          <i class="fas fa-user"></i> <%= t('nav.profile') %>
+        </a>
       <% } %>
     </div>
   </div>
@@ -48,8 +48,7 @@
       <div class="event-highlight-badge">
         <% if (eventIsLive) { %>
           <span class="event-status-badge event-status--live">
-            <i class="fas fa-circle-play"></i> En cours
-          </span><%= t('status.in_progress') %>
+            <i class="fas fa-circle-play"></i> <%= t('status.in_progress') %>
           </span>
         <% } else { %>
           <span class="event-status-badge event-status--upcoming">
@@ -225,19 +224,19 @@
   <div class="container">
     <div class="ranking-card">
       <div class="ranking-header">
-        <h2><i class="fas fa-trophy"></i> Classement Live</h2>
-        <p class="ranking-subtitle">Solo = 1pt • 1v1 = 2pts • 2v2 = 3pts</p>
+          <h2><i class="fas fa-trophy"></i> <%= t('page.ranking_live') %></h2>
+          <p class="ranking-subtitle"><%= t('page.ranking_points_hint') %></p>
       </div>
       <div class="ranking-body">
         <div style="overflow-x:auto;">
           <table class="ranking-table">
             <thead>
               <tr>
-                <th class="ranking-col-rank">Rang</th>
-                <th class="ranking-col-player">Joueur</th>
-                <th class="ranking-col-points"><i class="fas fa-star"></i> Points</th>
-                <th class="ranking-col-wins"><i class="fas fa-circle-check"></i> Victoires</th>
-                <th class="ranking-col-battles"><i class="fas fa-gamepad"></i> Rencontres</th>
+                <th class="ranking-col-rank"><%= t('common.rank') %></th>
+                <th class="ranking-col-player"><%= t('nav.profile') %></th>
+                <th class="ranking-col-points"><i class="fas fa-star"></i> <%= t('common.points') %></th>
+                <th class="ranking-col-wins"><i class="fas fa-circle-check"></i> <%= t('common.wins') %></th>
+                <th class="ranking-col-battles"><i class="fas fa-gamepad"></i> <%= t('common.battles') %></th>
               </tr>
             </thead>
             <tbody>
@@ -405,39 +404,39 @@
 <section class="section features-section">
   <div class="container">
     <h2 class="section-title text-center">
-      Pourquoi nous rejoindre ?
+      <%= t('page.why_join') %>
     </h2>
     <div class="features-grid">
       <article class="feature-card">
         <div class="feature-icon">
           <i class="fas fa-trophy"></i>
         </div>
-        <h3>Tournois</h3>
-        <p>Participez à des tournois organisés régulièrement sur vos jeux favoris.</p>
+        <h3><%= t('page.feature_tournaments') %></h3>
+        <p><%= t('page.feature_tournaments_desc') %></p>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon">
           <i class="fas fa-users"></i>
         </div>
-        <h3>Communauté</h3>
-        <p>Rejoignez des centaines de gamers passionnés et faites-vous de nouveaux amis.</p>
+        <h3><%= t('page.feature_community') %></h3>
+        <p><%= t('page.feature_community_desc') %></p>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon">
           <i class="fas fa-calendar-days"></i>
         </div>
-        <h3>Événements</h3>
-        <p>LAN parties, soirées gaming et rassemblements tout au long de l'année.</p>
+        <h3><%= t('page.feature_events') %></h3>
+        <p><%= t('page.feature_events_desc') %></p>
       </article>
 
       <article class="feature-card">
         <div class="feature-icon">
           <i class="fas fa-headset"></i>
         </div>
-        <h3>Support</h3>
-        <p>Une équipe dédiée pour vous accompagner dans tous vos besoins gaming.</p>
+        <h3><%= t('page.feature_support') %></h3>
+        <p><%= t('page.feature_support_desc') %></p>
       </article>
     </div>
   </div>
@@ -448,11 +447,11 @@
 <section class="section cta-section">
   <div class="container cta-inner">
     <div class="cta-content">
-      <h2>Prêt à rejoindre l'aventure ?</h2>
-      <p>Créez votre compte gratuitement et accédez à tous nos événements.</p>
+      <h2><%= t('page.cta_title') %></h2>
+      <p><%= t('page.cta_subtitle') %></p>
     </div>
     <a href="/auth/register" class="btn btn--primary btn--lg">
-      <i class="fas fa-gamepad"></i> Commencer maintenant
+        <i class="fas fa-gamepad"></i> <%= t('page.cta_button') %>
     </a>
   </div>
 </section>
@@ -464,10 +463,10 @@
   <div class="container">
     <div class="news-home-header">
       <h2 class="section-title">
-        <i class="fas fa-newspaper"></i> Dernières actualités
+          <i class="fas fa-newspaper"></i> <%= t('page.latest_news') %>
       </h2>
       <a href="/news" class="btn btn--ghost btn--sm news-all-link">
-        Toutes les actualités <i class="fas fa-arrow-right"></i>
+          <%= t('page.all_news') %> <i class="fas fa-arrow-right"></i>
       </a>
     </div>
     <div class="news-home-grid">
@@ -490,7 +489,7 @@
             <%- a.contentHtml %>
           </div>
           <a href="/news/<%= a.id %>" class="btn btn--ghost btn--sm news-read-more">
-            Lire la suite <i class="fas fa-arrow-right"></i>
+              <%= t('page.read_more') %> <i class="fas fa-arrow-right"></i>
           </a>
         </article>
       <% }); %>
