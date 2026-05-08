@@ -119,7 +119,7 @@
                             <button type="submit"
                                     class="btn btn--xs <%= u.is_admin ? 'btn--warning' : 'btn--info' %>"
                                     title="<%= u.is_admin ? t('admin.demote_admin') : t('admin.promote_admin') %>"
-                                    onclick="return confirm('<%= u.is_admin ? t(\'admin.confirm_demote_admin\').replace(\'{{name}}\', u.username) : t(\'admin.confirm_promote_admin\').replace(\'{{name}}\', u.username) %>')">
+                                  onclick='return confirm(<%- JSON.stringify(u.is_admin ? t("admin.confirm_demote_admin").replace("{{name}}", u.username) : t("admin.confirm_promote_admin").replace("{{name}}", u.username)) %>)'>
                               <i class="fas <%= u.is_admin ? 'fa-user-minus' : 'fa-user-shield' %>"></i>
                               <%= u.is_admin ? t('admin.demote_admin') : t('admin.promote_admin') %>
                             </button>
@@ -131,7 +131,7 @@
                             <button type="submit"
                                     class="btn btn--xs <%= u.is_moderator ? 'btn--warning' : 'btn--secondary' %>"
                                     title="<%= u.is_moderator ? t('admin.demote_moderator') : t('admin.promote_moderator') %>"
-                                    onclick="return confirm('<%= u.is_moderator ? t(\'admin.confirm_demote_mod\').replace(\'{{name}}\', u.username) : t(\'admin.confirm_promote_mod\').replace(\'{{name}}\', u.username) %>')">
+                                  onclick='return confirm(<%- JSON.stringify(u.is_moderator ? t("admin.confirm_demote_mod").replace("{{name}}", u.username) : t("admin.confirm_promote_mod").replace("{{name}}", u.username)) %>)'>
                               <i class="fas <%= u.is_moderator ? 'fa-user-minus' : 'fa-user-check' %>"></i>
                               <%= u.is_moderator ? t('admin.demote_moderator') : t('admin.promote_moderator') %>
                             </button>
@@ -143,7 +143,7 @@
                             <button type="submit"
                                     class="btn btn--xs btn--danger"
                                     title="<%= t('admin.delete_user_title') %>"
-                                    onclick="return confirm('<%= t(\'admin.confirm_delete_user\').replace(\'{{name}}\', u.username) %>')">
+                                    onclick='return confirm(<%- JSON.stringify(t("admin.confirm_delete_user").replace("{{name}}", u.username)) %>)'>
                               <i class="fas fa-trash"></i> <%= t('common.delete') %>
                             </button>
                           </form>
