@@ -62,7 +62,7 @@ pm2 restart app
 ### 5. **Configuration initiale**
 
 1. Accédez à `/admin/settings`
-2. Remplissez la section "Identité de l'association"
+2. Remplissez la section "Identité du site"
 3. Configurez les liens des communautés
 4. Cliquez sur "Enregistrer"
 
@@ -79,7 +79,7 @@ pm2 restart app
 
 ### Les utilisateurs verront:
 - Logo personnalisé dans le header
-- Nom de l'association à la place de "LANPartyManager"
+- Nom du site à la place de "LANPartyManager"
 - Slogan sur la page d'accueil et dans le footer
 - Liens vers les réseaux sociaux dans le footer
 

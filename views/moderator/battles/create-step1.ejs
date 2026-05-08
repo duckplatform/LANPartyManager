@@ -6,13 +6,13 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-plus"></i> Nouvelle rencontre
+        <i class="fas fa-plus"></i> <%= t('moderator.new_match') %>
       </h1>
-      <p class="admin-subtitle"><i class="fas fa-calendar-alt"></i> <%= event.nom %></p>
+      <p class="admin-subtitle"><i class="fas fa-calendar-alt"></i> <%= event.name %></p>
     </div>
     <div class="admin-header-actions">
       <a href="/battles/events/<%= event.id %>" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Retour
+        <i class="fas fa-arrow-left"></i> <%= t('common.back') %>
       </a>
     </div>
   </div>
@@ -20,17 +20,17 @@
   <!-- Étape 1 sur 2 -->
   <div class="wizard-progress" style="display:flex; gap:.5rem; margin-bottom:var(--space-lg); align-items:center;">
     <div style="flex:1; background:var(--color-primary); color:#fff; border-radius:6px; padding:.4rem 1rem; text-align:center; font-weight:600;">
-      <i class="fas fa-gamepad"></i> 1. Choisir le jeu
+      <i class="fas fa-gamepad"></i> <%= t('moderator.step1_choose_game') %>
     </div>
     <i class="fas fa-chevron-right" style="color:var(--color-text-muted);"></i>
     <div style="flex:1; background:var(--color-surface); border:1px solid var(--color-border); border-radius:6px; padding:.4rem 1rem; text-align:center; color:var(--color-text-muted);">
-      <i class="fas fa-users"></i> 2. Identifier les joueurs
+      <i class="fas fa-users"></i> <%= t('moderator.step2_identify_players') %>
     </div>
   </div>
 
   <div class="card">
     <div class="card-header">
-      <h2><i class="fas fa-gamepad"></i> Étape 1 — Choix du jeu</h2>
+      <h2><i class="fas fa-gamepad"></i> <%= t('moderator.step1_game_choice') %></h2>
     </div>
     <div class="card-body">
       <% if (errors && errors.length > 0) { %>
@@ -44,25 +44,25 @@
       <% if (games.length === 0) { %>
         <div class="alert alert--warning">
           <i class="fas fa-exclamation-triangle"></i>
-          Aucun jeu n'est encore configuré.
-          <a href="/admin/games/create">Ajouter des jeux</a> d'abord.
+          <%= t('moderator.no_game_configured') %>
+          <a href="/admin/games/create"><%= t('moderator.add_games') %></a> <%= t('moderator.first') %>
         </div>
       <% } else { %>
         <form action="/battles/events/<%= event.id %>/create" method="POST">
           <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
 
           <div class="form-group">
-            <label class="form-label" for="game_id">Jeu <span class="required">*</span></label>
+            <label class="form-label" for="game_id"><%= t('admin.games') %> <span class="required">*</span></label>
             <select id="game_id" name="game_id" class="form-select" required>
-              <option value="">— Sélectionner un jeu —</option>
+              <option value=""><%= t('moderator.select_game_option') %></option>
               <% games.forEach(function(game) { %>
                 <option value="<%= game.id %>" <%= String(old.game_id) === String(game.id) ? 'selected' : '' %>>
-                  <%= game.nom %> — <%= game.console %> (<%= game.type_rencontre %>)
+                  <%= game.name %> — <%= game.console %> (<%= game.match_type %>)
                 </option>
               <% }); %>
             </select>
             <p class="form-hint">
-              Le format (1v1, 2v2 ou solo) détermine le nombre de joueurs à identifier à l'étape suivante.
+              <%= t('moderator.game_format_hint') %>
             </p>
           </div>
 
@@ -77,7 +77,7 @@
 
           <div class="form-actions">
             <button type="submit" class="btn btn--primary">
-              <i class="fas fa-arrow-right"></i> Suivant — Identifier les joueurs
+              <i class="fas fa-arrow-right"></i> <%= t('moderator.next_identify_players') %>
             </button>
           </div>
         </form>
@@ -91,7 +91,7 @@
 (function () {
   'use strict';
 
-  const games = <%- JSON.stringify(games.map(function(g) { return { id: g.id, nom: g.nom, console: g.console, type_rencontre: g.type_rencontre }; })) %>;
+  const games = <%- JSON.stringify(games.map(function(g) { return { id: g.id, name: g.name, console: g.console, match_type: g.match_type }; })) %>;
   const select   = document.getElementById('game_id');
   const preview  = document.getElementById('gamePreview');
   const previewNom     = document.getElementById('previewNom');
@@ -104,15 +104,15 @@
     const game   = games.find(g => g.id === gameId);
     if (!game) { preview.style.display = 'none'; return; }
 
-    previewNom.textContent     = game.nom;
+    previewNom.textContent     = game.name;
     previewConsole.textContent = '— ' + game.console;
-    previewType.textContent    = game.type_rencontre;
-    previewType.className      = 'badge badge--' + (game.type_rencontre === '2v2' ? 'info' : game.type_rencontre === 'solo' ? 'warning' : 'primary');
-    previewInfo.textContent    = game.type_rencontre === '2v2'
-      ? '4 joueurs à identifier (2 équipes de 2)'
-      : game.type_rencontre === 'solo'
-        ? '1 joueur à identifier (compétition individuelle)'
-        : '2 joueurs à identifier (face à face)';
+    previewType.textContent    = game.match_type;
+    previewType.className      = 'badge badge--' + (game.match_type === '2v2' ? 'info' : game.match_type === 'solo' ? 'warning' : 'primary');
+    previewInfo.textContent    = game.match_type === '2v2'
+      ? '<%= t('moderator.preview_2v2') %>'
+      : game.match_type === 'solo'
+        ? '<%= t('moderator.preview_solo') %>'
+        : '<%= t('moderator.preview_1v1') %>';
     preview.style.display = 'block';
   }
 

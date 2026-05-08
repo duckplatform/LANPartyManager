@@ -23,10 +23,10 @@
   <!-- En-tête de page -->
   <div style="text-align:center; margin-bottom: var(--space-xl);">
     <h1 class="section-title">
-      <i class="fas fa-calendar-days"></i> Événements
+      <i class="fas fa-calendar-days"></i> <%= t('page.events_page_title') %>
     </h1>
     <p class="text-muted" style="max-width:600px; margin: 0 auto;">
-      Retrouvez tous nos prochains événements. Connectez-vous pour vous inscrire et recevoir votre billet électronique.
+      <%= t('page.events_page_subtitle') %>
     </p>
   </div>
 
@@ -36,20 +36,20 @@
       <div style="font-size:3rem; color:var(--color-text-muted); margin-bottom:var(--space-md);">
         <i class="fas fa-calendar-xmark"></i>
       </div>
-      <h2 style="color:var(--color-text-muted);">Aucun événement planifié</h2>
-      <p class="text-muted">Revenez prochainement, de nouveaux événements seront annoncés bientôt !</p>
+      <h2 style="color:var(--color-text-muted);"><%= t('page.no_events_planned') %></h2>
+      <p class="text-muted"><%= t('page.no_events_subtitle') %></p>
       <a href="/news" class="btn btn--primary" style="margin-top:var(--space-md);">
-        <i class="fas fa-newspaper"></i> Voir les actualités
+        <i class="fas fa-newspaper"></i> <%= t('page.see_news') %>
       </a>
     </div>
 
   <% } else { %>
     <div class="events-grid" style="margin-bottom: 3rem;">
       <% events.forEach(function(event) {
-        const dateObj   = new Date(event.date_heure);
-        const dateFr    = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-        const timeFr    = dateObj.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-        const isLive    = event.statut === 'en_cours';
+        const dateObj   = new Date(event.start_at);
+        const dateFr    = dateObj.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const timeFr    = dateObj.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+        const isLive    = event.status === 'in_progress';
         const isPast    = dateObj <= new Date() && !isLive;
         const regCount  = parseInt(event.registrationCount, 10) || 0;
         const deadlineISO = dateObj.toISOString();
@@ -60,15 +60,15 @@
         <div class="event-card-status">
           <% if (isLive) { %>
             <span class="event-status-badge event-status--live">
-              <i class="fas fa-circle-play"></i> En cours
+              <i class="fas fa-circle-play"></i> <%= t('status.in_progress') %>
             </span>
-          <% } else if (event.statut === 'termine') { %>
+          <% } else if (event.status === 'ended') { %>
             <span class="event-status-badge" style="background:#3c3f45;color:#fff;">
-              <i class="fas fa-flag-checkered"></i> Terminé
+              <i class="fas fa-flag-checkered"></i> <%= t('status.ended') %>
             </span>
           <% } else { %>
             <span class="event-status-badge event-status--upcoming">
-              <i class="fas fa-calendar-check"></i> Planifié
+              <i class="fas fa-calendar-check"></i> <%= t('status.planned') %>
             </span>
           <% } %>
         </div>
@@ -77,21 +77,21 @@
         <div class="event-card-body">
           <h2 class="event-card-title">
             <a href="/events/<%= event.id %>" style="color:inherit; text-decoration:none;">
-              <i class="fas fa-gamepad"></i> <%= event.nom %>
+              <i class="fas fa-gamepad"></i> <%= event.name %>
             </a>
           </h2>
 
           <ul class="event-card-meta">
             <li>
               <i class="fas fa-calendar-alt"></i>
-              <%= dateFr %> à <%= timeFr %>
+              <%= dateFr %> <%= t('common.at') %> <%= timeFr %>
             </li>
             <li>
-              <i class="fas fa-location-dot"></i> <%= event.lieu %>
+              <i class="fas fa-location-dot"></i> <%= event.location %>
             </li>
             <li>
               <i class="fas fa-users"></i>
-              <%= regCount %> inscrit<%= regCount !== 1 ? 's' : '' %>
+              <%= regCount %> <%= regCount !== 1 ? t('event.registered_plural') : t('event.registered_singular') %>
             </li>
           </ul>
 
@@ -99,22 +99,22 @@
           <% if (event.registrationOpen && !isLive) { %>
             <div class="event-countdown-wrap" style="margin-top:var(--space-sm);">
               <p class="event-countdown-label" style="font-size:.8rem;">
-                <i class="fas fa-hourglass-half"></i> Inscriptions ouvertes — fermeture dans :
+                  <i class="fas fa-hourglass-half"></i> <%= t('event.registrations_open_until') %>
               </p>
               <div class="event-countdown event-countdown--sm"
                    data-deadline="<%= deadlineISO %>">
-                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">j</span></div>
+                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl"><%= t('countdown.short_days') %></span></div>
                 <span class="countdown-sep">:</span>
-                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">h</span></div>
+                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl"><%= t('countdown.short_hours') %></span></div>
                 <span class="countdown-sep">:</span>
-                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">min</span></div>
+                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl"><%= t('countdown.minutes') %></span></div>
                 <span class="countdown-sep">:</span>
-                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl">s</span></div>
+                <div class="countdown-unit"><span class="countdown-num">--</span><span class="countdown-lbl"><%= t('countdown.short_seconds') %></span></div>
               </div>
             </div>
           <% } else if (!event.registrationOpen && !isLive) { %>
             <p class="event-registrations-closed" style="margin-top:var(--space-sm);font-size:.85rem;">
-              <i class="fas fa-lock"></i> Inscriptions fermées
+                <i class="fas fa-lock"></i> <%= t('event.registrations_closed') %>
             </p>
           <% } %>
 
@@ -123,7 +123,7 @@
               <div class="card-body" style="padding: 0;">
                 <div style="padding: var(--space-md);">
                   <h3 style="font-size:1rem; margin:0 0 var(--space-md) 0; display:flex; align-items:center; gap:.5rem;">
-                    <i class="fas fa-ranking-star"></i> Classement
+                    <i class="fas fa-ranking-star"></i> <%= t('event.ranking') %>
                   </h3>
                 </div>
                 
@@ -156,11 +156,11 @@
                         <% } %>
                       </td>
                       <td style="padding: var(--space-sm) var(--space-md); font-weight:600; color:var(--color-text);">
-                        <%= entry.pseudo %>
+                        <%= entry.username %>
                       </td>
                       <td style="padding: var(--space-sm) var(--space-sm); text-align:right;">
                         <span style="display:inline-block; background:#E3F2FD; color:#1976D2; padding:0.25rem 0.6rem; border-radius:1rem; font-size:0.85rem; font-weight:600; white-space:nowrap;">
-                          <i class="fas fa-star" style="margin-right:0.3rem;"></i><%= entry.points %> pts
+                          <i class="fas fa-star" style="margin-right:0.3rem;"></i><%= entry.points %> <%= t('common.points') %>
                         </span>
                       </td>
                       <td style="padding: var(--space-sm) var(--space-sm); text-align:right;">
@@ -185,38 +185,38 @@
         <div class="event-card-actions">
           <% if (!currentUser && event.registrationOpen) { %>
             <a href="/auth/login?redirect=/events" class="btn btn--primary btn--sm">
-              <i class="fas fa-right-to-bracket"></i> Se connecter pour s'inscrire
+              <i class="fas fa-right-to-bracket"></i> <%= t('event.login_to_register') %>
             </a>
           <% } else if (!currentUser) { %>
             <span class="text-muted" style="font-size:.85rem; display:flex; align-items:center; gap:.4rem;">
-              <i class="fas fa-lock"></i> Inscriptions fermées
+              <i class="fas fa-lock"></i> <%= t('event.registrations_closed') %>
             </span>
           <% } else if (event.isRegistered) { %>
             <div class="event-registered-badge" style="font-size:.9rem;">
-              <i class="fas fa-circle-check"></i> Inscription confirmée
+              <i class="fas fa-circle-check"></i> <%= t('event.registration_confirmed') %>
             </div>
             <% if (event.registrationOpen && !isLive) { %>
               <form action="/events/<%= event.id %>/unregister" method="POST" style="display:inline;">
                 <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                 <button type="submit" class="btn btn--ghost btn--xs"
-                        onclick="return confirm('Annuler votre inscription à « ' + <%= JSON.stringify(event.nom) %> + ' » ?')">
-                  <i class="fas fa-user-minus"></i> Se désinscrire
+                        onclick="return confirm('<%= t('event.confirm_unregister_named', { name: event.name }) %>')">
+                  <i class="fas fa-user-minus"></i> <%= t('event.unregister') %>
                 </button>
               </form>
             <% } %>
-            <a href="/profile" class="btn btn--ghost btn--xs" title="Voir mon billet">
-              <i class="fas fa-ticket"></i> Mon billet
+            <a href="/profile" class="btn btn--ghost btn--xs" title="<%= t('event.my_ticket') %>">
+              <i class="fas fa-ticket"></i> <%= t('event.my_ticket') %>
             </a>
           <% } else if (event.registrationOpen) { %>
             <form action="/events/<%= event.id %>/register" method="POST" style="display:inline;">
               <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
               <button type="submit" class="btn btn--primary btn--sm">
-                <i class="fas fa-user-plus"></i> S'inscrire
+                <i class="fas fa-user-plus"></i> <%= t('event.register') %>
               </button>
             </form>
           <% } else { %>
             <span class="text-muted" style="font-size:.85rem; display:flex; align-items:center; gap:.4rem;">
-              <i class="fas fa-lock"></i> Inscriptions fermées
+              <i class="fas fa-lock"></i> <%= t('event.registrations_closed') %>
             </span>
           <% } %>
         </div>
@@ -229,7 +229,7 @@
 </div>
 
 <template id="event-registrations-closed-template">
-  <p class="event-registrations-closed" style="font-size:.85rem;"><i class="fas fa-lock"></i> Inscriptions fermées</p>
+  <p class="event-registrations-closed" style="font-size:.85rem;"><i class="fas fa-lock"></i> <%= t('event.registrations_closed') %></p>
 </template>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -259,7 +259,7 @@
           const msg = document.createElement('p');
           msg.className = 'event-registrations-closed';
           msg.style.fontSize = '.85rem';
-          msg.innerHTML = '<i class="fas fa-lock"></i> Inscriptions fermées';
+          msg.innerHTML = '<i class="fas fa-lock"></i> <%= t('event.registrations_closed') %>';
           parent.appendChild(msg);
         }
         return;

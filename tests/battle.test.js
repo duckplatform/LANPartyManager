@@ -38,13 +38,13 @@ describe('Battle Model', function () {
   describe('findById()', function () {
     it('doit retourner une battle avec ses joueurs', async function () {
       const fakeBattle = {
-        id: 1, event_id: 1, game_id: 1, room_id: null, statut: 'file_attente',
+        id: 1, event_id: 1, game_id: 1, room_id: null, status: 'queue',
         score: null, notes: null, created_at: new Date(), updated_at: new Date(),
-        game_nom: 'SF6', game_console: 'PS5', type_rencontre: '1v1', room_nom: null, room_type: null,
+        game_nom: 'SF6', game_console: 'PS5', match_type: '1v1', room_nom: null, room_type: null,
       };
       const fakePlayers = [
-        { id: 1, battle_id: 1, user_id: 10, equipe: 1, est_gagnant: 0, pseudo: 'Player1', nom: 'Dupont', prenom: 'Jean' },
-        { id: 2, battle_id: 1, user_id: 11, equipe: 2, est_gagnant: 0, pseudo: 'Player2', nom: 'Martin', prenom: 'Luc' },
+        { id: 1, battle_id: 1, user_id: 10, team: 1, is_winner: 0, username: 'Player1', last_name: 'Dupont', first_name: 'Jean' },
+        { id: 2, battle_id: 1, user_id: 11, team: 2, is_winner: 0, username: 'Player2', last_name: 'Martin', first_name: 'Luc' },
       ];
 
       poolStub.execute.onFirstCall().resolves([[fakeBattle]]);  // battle query
@@ -68,7 +68,7 @@ describe('Battle Model', function () {
   describe('findPlayers()', function () {
     it('doit retourner les joueurs d\'une battle', async function () {
       const fakePlayers = [
-        { id: 1, battle_id: 1, user_id: 10, equipe: 1, est_gagnant: 0, pseudo: 'P1', nom: 'A', prenom: 'B' },
+        { id: 1, battle_id: 1, user_id: 10, team: 1, is_winner: 0, username: 'P1', last_name: 'A', first_name: 'B' },
       ];
       poolStub.execute.resolves([fakePlayers]);
 
@@ -88,15 +88,15 @@ describe('Battle Model', function () {
       // INSERT player 2
       poolStub.execute.onCall(2).resolves([{ insertId: 2 }]);
       // assignRoomIfAvailable → SELECT battle (file_attente)
-      poolStub.execute.onCall(3).resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
+      poolStub.execute.onCall(3).resolves([[{ status: 'queue', match_type: '1v1' }]]);
       // assignRoomIfAvailable → aucun conflit joueur
       poolStub.execute.onCall(4).resolves([[{ total: 0 }]]);
       // assignRoomIfAvailable → SELECT rooms (aucune salle dispo)
       poolStub.execute.onCall(5).resolves([[]]);
 
       const players = [
-        { user_id: 10, equipe: 1 },
-        { user_id: 11, equipe: 2 },
+        { user_id: 10, team: 1 },
+        { user_id: 11, team: 2 },
       ];
 
       const id = await Battle.create({ event_id: 1, game_id: 1, notes: null }, players);
@@ -115,7 +115,7 @@ describe('Battle Model', function () {
       // INSERT player 2
       poolStub.execute.onCall(2).resolves([{ insertId: 2 }]);
       // assignRoomIfAvailable → statut file_attente
-      poolStub.execute.onCall(3).resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
+      poolStub.execute.onCall(3).resolves([[{ status: 'queue', match_type: '1v1' }]]);
       // assignRoomIfAvailable → aucun conflit joueur
       poolStub.execute.onCall(4).resolves([[{ total: 0 }]]);
       // assignRoomIfAvailable → salle dispo
@@ -123,14 +123,14 @@ describe('Battle Model', function () {
       // UPDATE battle statut → planifie
       poolStub.execute.onCall(6).resolves([{ affectedRows: 1 }]);
 
-      const players = [{ user_id: 10, equipe: 1 }, { user_id: 11, equipe: 2 }];
+      const players = [{ user_id: 10, team: 1 }, { user_id: 11, team: 2 }];
       const id = await Battle.create({ event_id: 1, game_id: 1 }, players);
       expect(id).to.equal(1);
 
       // Vérifie que l'UPDATE a été appelé (assignation de salle)
       const updateCall = poolStub.execute.getCall(6);
       expect(updateCall.args[0]).to.include('UPDATE battles');
-      expect(updateCall.args[1][1]).to.equal('installation');
+      expect(updateCall.args[1][1]).to.equal('setup');
     });
   });
 
@@ -138,13 +138,13 @@ describe('Battle Model', function () {
 
   describe('assignRoomIfAvailable()', function () {
     it('doit retourner false si la battle n\'est pas en file_attente', async function () {
-      poolStub.execute.resolves([[{ statut: 'en_cours', type_rencontre: '1v1' }]]);
+      poolStub.execute.resolves([[{ status: 'in_progress', match_type: '1v1' }]]);
       const result = await Battle.assignRoomIfAvailable(1, 1, 1);
       expect(result).to.be.false;
     });
 
     it('doit retourner false si aucune salle disponible', async function () {
-      poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
+      poolStub.execute.onFirstCall().resolves([[{ status: 'queue', match_type: '1v1' }]]);
       poolStub.execute.onSecondCall().resolves([[{ total: 0 }]]);
       poolStub.execute.onThirdCall().resolves([[]]);
       const result = await Battle.assignRoomIfAvailable(1, 1, 1);
@@ -152,7 +152,7 @@ describe('Battle Model', function () {
     });
 
     it('doit retourner true et mettre à jour si une salle est disponible', async function () {
-      poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
+      poolStub.execute.onFirstCall().resolves([[{ status: 'queue', match_type: '1v1' }]]);
       poolStub.execute.onSecondCall().resolves([[{ total: 0 }]]);
       poolStub.execute.onThirdCall().resolves([[{ id: 3 }]]);
       poolStub.execute.onCall(3).resolves([{ affectedRows: 1 }]);
@@ -161,7 +161,7 @@ describe('Battle Model', function () {
     });
 
     it('doit passer en installation si la salle est libre immediatement', async function () {
-      poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
+      poolStub.execute.onFirstCall().resolves([[{ status: 'queue', match_type: '1v1' }]]);
       poolStub.execute.onSecondCall().resolves([[{ total: 0 }]]);
       poolStub.execute.onThirdCall().resolves([[{ id: 3, active_count: 0 }]]);
       poolStub.execute.onCall(3).resolves([{ affectedRows: 1 }]);
@@ -170,24 +170,24 @@ describe('Battle Model', function () {
 
       expect(result).to.be.true;
       const updateCallArgs = poolStub.execute.getCall(3).args[1];
-      expect(updateCallArgs[1]).to.equal('installation');
+      expect(updateCallArgs[1]).to.equal('setup');
     });
 
     it('doit considérer une salle planifiée comme non disponible', async function () {
-      poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', type_rencontre: '1v1' }]]);
+      poolStub.execute.onFirstCall().resolves([[{ status: 'queue', match_type: '1v1' }]]);
       poolStub.execute.onSecondCall().resolves([[{ total: 0 }]]);
       poolStub.execute.onThirdCall().resolves([[]]);
 
       await Battle.assignRoomIfAvailable(1, 1, 1);
 
       const roomsQuery = poolStub.execute.getCall(2).args[0];
-      expect(roomsQuery).to.include("'planifie'");
-      expect(roomsQuery).to.include("'installation'");
-      expect(roomsQuery).to.include("'en_cours'");
+      expect(roomsQuery).to.include("'planned'");
+      expect(roomsQuery).to.include("'setup'");
+      expect(roomsQuery).to.include("'in_progress'");
     });
 
     it('doit ignorer une battle file_attente si un joueur est deja planifie/en_cours', async function () {
-      poolStub.execute.onFirstCall().resolves([[{ statut: 'file_attente', event_id: 1, type_rencontre: '1v1' }]]);
+      poolStub.execute.onFirstCall().resolves([[{ status: 'queue', event_id: 1, match_type: '1v1' }]]);
       poolStub.execute.onSecondCall().resolves([[{ total: 1 }]]);
 
       const result = await Battle.assignRoomIfAvailable(1, 1, 1);
@@ -229,17 +229,17 @@ describe('Battle Model', function () {
     });
   });
 
-  // ── changeStatut ─────────────────────────────────────────────────────────
+  // ── changeStatus ─────────────────────────────────────────────────────────
 
-  describe('changeStatut()', function () {
+  describe('changeStatus()', function () {
     it('doit retourner true si changement réussi', async function () {
       poolStub.execute.resolves([{ affectedRows: 1 }]);
-      const result = await Battle.changeStatut(1, 'planifie', 1);
+      const result = await Battle.changeStatus(1, 'planned', 1);
       expect(result).to.be.true;
     });
 
     it('doit retourner false si statut invalide', async function () {
-      const result = await Battle.changeStatut(1, 'inexistant', 1);
+      const result = await Battle.changeStatus(1, 'inexistant', 1);
       expect(result).to.be.false;
       expect(poolStub.execute.called).to.be.false;
     });
@@ -250,14 +250,14 @@ describe('Battle Model', function () {
       // reevaluateQueue → SELECT battles en file_attente
       poolStub.execute.onCall(1).resolves([[]]); // aucune en file_attente
 
-      const result = await Battle.changeStatut(1, 'termine', 1);
+      const result = await Battle.changeStatus(1, 'ended', 1);
       expect(result).to.be.true;
       expect(poolStub.execute.callCount).to.be.at.least(2);
     });
 
     it('ne doit pas appeler reevaluateQueue si statut n\'est ni installation ni termine', async function () {
       poolStub.execute.resolves([{ affectedRows: 1 }]);
-      await Battle.changeStatut(1, 'planifie', 1);
+      await Battle.changeStatus(1, 'planned', 1);
       // Une seule requête (UPDATE)
       expect(poolStub.execute.callCount).to.equal(1);
     });
@@ -277,7 +277,7 @@ describe('Battle Model', function () {
       conn.execute.onCall(2).resolves([{ affectedRows: 1 }]);
       poolStub.execute.resolves([[]]);
 
-      const result = await Battle.changeStatut(1, 'installation', 1);
+      const result = await Battle.changeStatus(1, 'setup', 1);
 
       expect(result).to.be.true;
       expect(conn.commit.calledOnce).to.be.true;
@@ -300,7 +300,7 @@ describe('Battle Model', function () {
 
       const reevaluateStub = sinon.stub(Battle, 'reevaluateQueue').resolves([12]);
 
-      const result = await Battle.changeStatutWithQueue(1, 'installation', 1);
+      const result = await Battle.changeStatusWithQueue(1, 'setup', 1);
 
       expect(result).to.deep.equal({ success: true, promotedBattleIds: [12] });
       expect(reevaluateStub.calledOnceWithExactly(1)).to.be.true;
@@ -321,7 +321,7 @@ describe('Battle Model', function () {
       conn.execute.onCall(0).resolves([[{ id: 1, room_id: 3 }]]);
       conn.execute.onCall(1).resolves([[{ total: 1 }]]);
 
-      const result = await Battle.changeStatut(1, 'installation', 1);
+      const result = await Battle.changeStatus(1, 'setup', 1);
 
       expect(result).to.be.false;
       expect(conn.rollback.calledOnce).to.be.true;
@@ -383,7 +383,7 @@ describe('Battle Model', function () {
       expect(reevaluateStub.calledOnceWithExactly(1)).to.be.true;
 
       const installQuery = poolStub.execute.getCall(4).args[0];
-      expect(installQuery).to.include("statut = 'installation'");
+      expect(installQuery).to.include("status = 'setup'");
 
       reevaluateStub.restore();
     });
@@ -408,40 +408,40 @@ describe('Battle Model', function () {
       poolStub.execute.resolves([{ affectedRows: 0 }]);
       await Battle.delete(1);
       const query = poolStub.execute.firstCall.args[0];
-      expect(query).to.include('file_attente');
-      expect(query).to.include('planifie');
+      expect(query).to.include('queue');
+      expect(query).to.include('planned');
     });
   });
 
-  // ── countByStatut ─────────────────────────────────────────────────────────
+  // ── countByStatus ─────────────────────────────────────────────────────────
 
-  describe('countByStatut()', function () {
+  describe('countByStatus()', function () {
     it('doit retourner les compteurs par statut', async function () {
       const fakeRows = [
-        { statut: 'file_attente', total: 2 },
-        { statut: 'planifie',     total: 1 },
-        { statut: 'en_cours',     total: 3 },
+        { status: 'queue', total: 2 },
+        { status: 'planned',     total: 1 },
+        { status: 'in_progress',     total: 3 },
       ];
       poolStub.execute.resolves([fakeRows]);
 
-      const result = await Battle.countByStatut(1);
-      expect(result.file_attente).to.equal(2);
-      expect(result.planifie).to.equal(1);
-      expect(result.en_cours).to.equal(3);
-      expect(result.installation).to.equal(0);  // non présent → défaut 0
-      expect(result.termine).to.equal(0);
+      const result = await Battle.countByStatus(1);
+      expect(result.queue).to.equal(2);
+      expect(result.planned).to.equal(1);
+      expect(result.in_progress).to.equal(3);
+      expect(result.setup).to.equal(0);  // non présent → défaut 0
+      expect(result.ended).to.equal(0);
     });
   });
 
-  // ── STATUTS_VALIDES ───────────────────────────────────────────────────────
+  // ── VALID_STATUSES ───────────────────────────────────────────────────────
 
-  describe('STATUTS_VALIDES', function () {
+  describe('VALID_STATUSES', function () {
     it('doit contenir tous les statuts attendus', function () {
-      expect(Battle.STATUTS_VALIDES).to.include('file_attente');
-      expect(Battle.STATUTS_VALIDES).to.include('planifie');
-      expect(Battle.STATUTS_VALIDES).to.include('installation');
-      expect(Battle.STATUTS_VALIDES).to.include('en_cours');
-      expect(Battle.STATUTS_VALIDES).to.include('termine');
+      expect(Battle.VALID_STATUSES).to.include('queue');
+      expect(Battle.VALID_STATUSES).to.include('planned');
+      expect(Battle.VALID_STATUSES).to.include('setup');
+      expect(Battle.VALID_STATUSES).to.include('in_progress');
+      expect(Battle.VALID_STATUSES).to.include('ended');
     });
   });
 

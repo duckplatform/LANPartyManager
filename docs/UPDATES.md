@@ -9,7 +9,7 @@ Permettre aux administrateurs de configurer entièrement l'identité de l'applic
 
 #### 1. Base de données (`database/install.sql`)
 Ajout de nouveaux champs dans la table `app_settings` :
-- `organization_name` : Nom de l'association (défaut: "LANPartyManager")
+- `organization_name` : Nom du site (défaut: "LANPartyManager")
 - `organization_logo` : URL du logo
 - `organization_slogan` : Slogan ou tagline
 - `community_link_discord` : Lien d'invitation Discord
@@ -19,8 +19,8 @@ Ajout de nouveaux champs dans la table `app_settings` :
 - `community_link_website` : Site web officiel
 
 #### 2. Interface d'administration (`views/admin/settings.ejs`)
-Nouvelle section "Identité de l'association" avec:
-- Champ texte pour le nom de l'association
+Nouvelle section "Identité du site" avec:
+- Champ texte pour le nom du site
 - Champ texte pour le slogan
 - Champ URL pour le logo (avec prévisualisation)
 
@@ -30,7 +30,7 @@ Nouvelle section "Liens des communautés" avec:
 
 #### 3. Route d'administration (`routes/admin.js`)
 Mise à jour des validations pour:
-- Validation du nom de l'association (obligatoire, max 255 caractères)
+- Validation du nom du site (obligatoire, max 255 caractères)
 - Validation des URLs (logo, liens communautés)
 - Validation des longueurs de champ
 
@@ -47,13 +47,13 @@ Modification du middleware `injectLocals` :
 #### 5. Vues publiques
 **Header** (`views/partials/header.ejs`):
 - Affichage du logo personnalisé s'il est configuré
-- Affichage du nom de l'association personnalisé
+- Affichage du nom du site personnalisé
 
 **Footer** (`views/partials/footer.ejs`):
 - Affichage du logo personnalisé
 - Affichage du slogan s'il est configuré
 - Affichage des liens de communauté (seulement s'ils sont renseignés)
-- Affichage du nom de l'association dans le copyright
+- Affichage du nom du site dans le copyright
 
 #### 6. Tests (`tests/middleware.test.js`)
 Mise à jour des tests du middleware `injectLocals` pour:
@@ -64,8 +64,8 @@ Mise à jour des tests du middleware `injectLocals` pour:
 
 #### Pour les administrateurs
 1. Accéder à `/admin/settings`
-2. Remplir la section "Identité de l'association" :
-   - Nom de l'association (requis)
+2. Remplir la section "Identité du site" :
+   - Nom du site (requis)
    - Slogan (optionnel)
    - Logo URL (optionnel)
 3. Remplir la section "Liens des communautés" :

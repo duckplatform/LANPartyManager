@@ -33,8 +33,8 @@ describe('Game Model', function () {
   describe('findAll()', function () {
     it('doit retourner tous les jeux', async function () {
       const fakeRows = [
-        { id: 1, nom: 'Street Fighter 6', console: 'PS5', type_rencontre: '1v1' },
-        { id: 2, nom: 'Rocket League',    console: 'PC',  type_rencontre: '2v2' },
+        { id: 1, name: 'Street Fighter 6', console: 'PS5', match_type: '1v1' },
+        { id: 2, name: 'Rocket League',    console: 'PC',  match_type: '2v2' },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -54,7 +54,7 @@ describe('Game Model', function () {
 
   describe('findById()', function () {
     it('doit retourner un jeu si trouvé', async function () {
-      const fakeGame = { id: 1, nom: 'Tekken 8', console: 'PS5', type_rencontre: '1v1' };
+      const fakeGame = { id: 1, name: 'Tekken 8', console: 'PS5', match_type: '1v1' };
       poolStub.execute.resolves([[fakeGame]]);
 
       const result = await Game.findById(1);
@@ -73,7 +73,7 @@ describe('Game Model', function () {
   describe('findByType()', function () {
     it('doit filtrer les jeux par type de rencontre', async function () {
       const fakeRows = [
-        { id: 1, nom: 'Street Fighter 6', console: 'PS5', type_rencontre: '1v1' },
+        { id: 1, name: 'Street Fighter 6', console: 'PS5', match_type: '1v1' },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -90,7 +90,7 @@ describe('Game Model', function () {
     it('doit créer un jeu et retourner son ID', async function () {
       poolStub.execute.resolves([{ insertId: 10 }]);
 
-      const id = await Game.create({ nom: 'Tekken 8', console: 'PS5', type_rencontre: '1v1' });
+      const id = await Game.create({ name: 'Tekken 8', console: 'PS5', match_type: '1v1' });
       expect(id).to.equal(10);
       expect(poolStub.execute.calledOnce).to.be.true;
       const query = poolStub.execute.firstCall.args[0];
@@ -99,35 +99,35 @@ describe('Game Model', function () {
 
     it('doit utiliser "1v1" par défaut si type_rencontre absent', async function () {
       poolStub.execute.resolves([{ insertId: 1 }]);
-      await Game.create({ nom: 'SF6', console: 'PC' });
+      await Game.create({ name: 'SF6', console: 'PC' });
       const args = poolStub.execute.firstCall.args[1];
       expect(args[2]).to.equal('1v1');
     });
 
     it('doit rejeter un type_rencontre invalide et utiliser "1v1"', async function () {
       poolStub.execute.resolves([{ insertId: 1 }]);
-      await Game.create({ nom: 'SF6', console: 'PC', type_rencontre: 'invalid' });
+      await Game.create({ name: 'SF6', console: 'PC', match_type: 'invalid' });
       const args = poolStub.execute.firstCall.args[1];
       expect(args[2]).to.equal('1v1');
     });
 
     it('doit accepter "2v2" comme type_rencontre', async function () {
       poolStub.execute.resolves([{ insertId: 2 }]);
-      await Game.create({ nom: 'Rocket League', console: 'PC', type_rencontre: '2v2' });
+      await Game.create({ name: 'Rocket League', console: 'PC', match_type: '2v2' });
       const args = poolStub.execute.firstCall.args[1];
       expect(args[2]).to.equal('2v2');
     });
 
     it('doit accepter "solo" comme type_rencontre', async function () {
       poolStub.execute.resolves([{ insertId: 3 }]);
-      await Game.create({ nom: 'Tetris Sprint', console: 'PC', type_rencontre: 'solo' });
+      await Game.create({ name: 'Tetris Sprint', console: 'PC', match_type: 'solo' });
       const args = poolStub.execute.firstCall.args[1];
       expect(args[2]).to.equal('solo');
     });
 
     it('doit trim le nom et la console', async function () {
       poolStub.execute.resolves([{ insertId: 1 }]);
-      await Game.create({ nom: '  SF6  ', console: '  PS5  ', type_rencontre: '1v1' });
+      await Game.create({ name: '  SF6  ', console: '  PS5  ', match_type: '1v1' });
       const args = poolStub.execute.firstCall.args[1];
       expect(args[0]).to.equal('SF6');
       expect(args[1]).to.equal('PS5');
@@ -139,13 +139,13 @@ describe('Game Model', function () {
   describe('update()', function () {
     it('doit retourner true si la mise à jour réussit', async function () {
       poolStub.execute.resolves([{ affectedRows: 1 }]);
-      const result = await Game.update(1, { nom: 'SF6', console: 'PS5', type_rencontre: '1v1' });
+      const result = await Game.update(1, { name: 'SF6', console: 'PS5', match_type: '1v1' });
       expect(result).to.be.true;
     });
 
     it('doit retourner false si aucune ligne affectée', async function () {
       poolStub.execute.resolves([{ affectedRows: 0 }]);
-      const result = await Game.update(999, { nom: 'X', console: 'Y', type_rencontre: '1v1' });
+      const result = await Game.update(999, { name: 'X', console: 'Y', match_type: '1v1' });
       expect(result).to.be.false;
     });
   });
@@ -176,13 +176,13 @@ describe('Game Model', function () {
     });
   });
 
-  // ── TYPES_RENCONTRE ───────────────────────────────────────────────────────
+  // ── MATCH_TYPES ───────────────────────────────────────────────────────
 
-  describe('TYPES_RENCONTRE', function () {
+  describe('MATCH_TYPES', function () {
     it('doit contenir 1v1, 2v2 et solo', function () {
-      expect(Game.TYPES_RENCONTRE).to.include('1v1');
-      expect(Game.TYPES_RENCONTRE).to.include('2v2');
-      expect(Game.TYPES_RENCONTRE).to.include('solo');
+      expect(Game.MATCH_TYPES).to.include('1v1');
+      expect(Game.MATCH_TYPES).to.include('2v2');
+      expect(Game.MATCH_TYPES).to.include('solo');
     });
   });
 

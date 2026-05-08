@@ -10,16 +10,16 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-newspaper"></i> Gestion des annonces
+        <i class="fas fa-newspaper"></i> <%= t('admin.news_title') %>
       </h1>
-      <p class="admin-subtitle">Créez et gérez les annonces publiées sur le site.</p>
+      <p class="admin-subtitle"><%= t('admin.news_subtitle') %></p>
     </div>
     <div class="admin-header-actions">
       <a href="/admin" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Tableau de bord
+        <i class="fas fa-arrow-left"></i> <%= t('admin.dashboard') %>
       </a>
       <a href="/admin/news/create" class="btn btn--primary btn--sm">
-        <i class="fas fa-plus"></i> Nouvelle annonce
+        <i class="fas fa-plus"></i> <%= t('common.create') %>
       </a>
     </div>
   </div>
@@ -27,7 +27,7 @@
   <!-- Tableau des annonces -->
   <div class="card admin-users-card">
     <div class="card-header admin-card-header">
-      <h2><i class="fas fa-list"></i> Liste des annonces (<%= announcements.length %>)</h2>
+      <h2><i class="fas fa-list"></i> <%= t('admin.news_list_title') %> (<%= announcements.length %>)</h2>
     </div>
     <div class="card-body">
       <div class="table-responsive">
@@ -37,8 +37,8 @@
               <th>ID</th>
               <th>Titre</th>
               <th>Statut</th>
-              <th>Date de création</th>
-              <th>Dernière modification</th>
+              <th><%= t('admin.news_table_creation_date') %></th>
+              <th><%= t('admin.news_table_last_modified') %></th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -46,7 +46,7 @@
             <% if (announcements.length === 0) { %>
               <tr>
                 <td colspan="6" class="table-empty">
-                  <i class="fas fa-inbox"></i> Aucune annonce. <a href="/admin/news/create">Créer la première</a>
+                  <i class="fas fa-inbox"></i> <%= t('admin.no_announcements') %> <a href="/admin/news/create"><%= t('admin.create_first_announcement') %></a>
                 </td>
               </tr>
             <% } else { %>
@@ -55,37 +55,37 @@
                   <td class="td-id">#<%= a.id %></td>
                   <td>
                     <span class="news-title-cell">
-                      <% if (a.statut === 'publie') { %>
-                        <a href="/news/<%= a.id %>" class="link-muted" target="_blank" title="Voir sur le site">
-                          <%= a.titre %>
+                      <% if (a.status === 'published') { %>
+                        <a href="/news/<%= a.id %>" class="link-muted" target="_blank" title="<%= t('admin.news_view_site') %>">
+                          <%= a.title %>
                           <i class="fas fa-external-link-alt" style="font-size:0.7em;"></i>
                         </a>
                       <% } else { %>
-                        <%= a.titre %>
+                        <%= a.title %>
                       <% } %>
                     </span>
                   </td>
                   <td>
-                    <% if (a.statut === 'publie') { %>
-                      <span class="badge badge--published"><i class="fas fa-check-circle"></i> Publié</span>
+                    <% if (a.status === 'published') { %>
+                      <span class="badge badge--published"><i class="fas fa-check-circle"></i> <%= t('status.published') %></span>
                     <% } else { %>
-                      <span class="badge badge--draft"><i class="fas fa-pencil"></i> Brouillon</span>
+                      <span class="badge badge--draft"><i class="fas fa-pencil"></i> <%= t('status.draft') %></span>
                     <% } %>
                   </td>
-                  <td class="td-date"><%= new Date(a.created_at).toLocaleDateString('fr-FR') %></td>
-                  <td class="td-date"><%= new Date(a.updated_at).toLocaleDateString('fr-FR') %></td>
+                  <td class="td-date"><%= new Date(a.created_at).toLocaleDateString(locale) %></td>
+                  <td class="td-date"><%= new Date(a.updated_at).toLocaleDateString(locale) %></td>
                   <td class="td-actions">
                     <!-- Modifier -->
                     <a href="/admin/news/<%= a.id %>/edit" class="btn btn--xs btn--info">
-                      <i class="fas fa-edit"></i> Modifier
+                      <i class="fas fa-edit"></i> <%= t('admin.news_edit') %>
                     </a>
                     <!-- Supprimer -->
                     <form action="/admin/news/<%= a.id %>/delete" method="POST" class="inline-form">
                       <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                       <button type="submit"
                               class="btn btn--xs btn--danger"
-                              onclick="return confirm('Supprimer définitivement l\'annonce «\u00A0<%= a.titre %>\u00A0» ?')">
-                        <i class="fas fa-trash"></i> Supprimer
+                              onclick="return confirm('<%= t("admin.news_delete_confirmation", { title: a.title }) %>')">
+                        <i class="fas fa-trash"></i> <%= t('admin.news_delete') %>
                       </button>
                     </form>
                   </td>

@@ -74,8 +74,8 @@ describe('EventRanking Model', function () {
   describe('findByEvent()', function () {
     it('retourne le classement ordonne avec un rang calcule', async function () {
       executeStub.resolves([[
-        { event_id: 1, user_id: 9, points: 8, wins: 3, battles_played: 4, pseudo: 'Alpha', discord_user_id: null },
-        { event_id: 1, user_id: 7, points: 4, wins: 2, battles_played: 3, pseudo: 'Beta', discord_user_id: null },
+        { event_id: 1, user_id: 9, points: 8, wins: 3, battles_played: 4, username: 'Alpha', discord_user_id: null },
+        { event_id: 1, user_id: 7, points: 4, wins: 2, battles_played: 3, username: 'Beta', discord_user_id: null },
       ]]);
 
       const rows = await EventRanking.findByEvent(1, 10);

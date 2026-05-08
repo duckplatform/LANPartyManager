@@ -63,13 +63,13 @@ router.get('/', requireAuth, async (req, res) => {
 // ─── POST /profile ─────────────────────────────────────────────────────────
 
 const updateRules = [
-  body('nom')
+  body('last_name')
     .trim().notEmpty().withMessage('Le nom est obligatoire.')
     .isLength({ max: 100 }).withMessage('Nom trop long (max 100 caractères).'),
-  body('prenom')
+  body('first_name')
     .trim().notEmpty().withMessage('Le prénom est obligatoire.')
     .isLength({ max: 100 }).withMessage('Prénom trop long (max 100 caractères).'),
-  body('pseudo')
+  body('username')
     .trim().notEmpty().withMessage('Le pseudo est obligatoire.')
     .isLength({ min: 2, max: 50 }).withMessage('Le pseudo doit faire entre 2 et 50 caractères.')
     .matches(/^[a-zA-Z0-9_\-. ]+$/).withMessage('Le pseudo contient des caractères non autorisés.'),
@@ -99,7 +99,7 @@ router.post('/', requireAuth, updateRules, async (req, res) => {
   }
 
   try {
-    const { nom, prenom, pseudo, email, discord_user_id } = req.body;
+    const { last_name, first_name, username, email, discord_user_id } = req.body;
 
     // Vérification d'unicité e-mail
     if (await User.emailExists(email, req.session.userId)) {
@@ -115,9 +115,9 @@ router.post('/', requireAuth, updateRules, async (req, res) => {
       });
     }
 
-    await User.update(req.session.userId, { nom, prenom, pseudo, email, discord_user_id });
+    await User.update(req.session.userId, { last_name, first_name, username, email, discord_user_id });
     // Met à jour la session avec le nouveau pseudo
-    req.session.pseudo = pseudo;
+    req.session.username = username;
     logger.info(`[PROFILE] Utilisateur #${req.session.userId} a mis à jour son profil.`);
     req.flash('success', 'Profil mis à jour avec succès.');
     return res.redirect('/profile');
@@ -199,7 +199,7 @@ router.post('/events/:id/register', requireAuth, async (req, res) => {
 
   try {
     const event = await Event.findById(eventId);
-    if (!event || event.statut === 'termine') {
+    if (!event || event.status === 'ended') {
       req.flash('error', 'Événement introuvable ou terminé.');
       return res.redirect('/profile');
     }
@@ -219,7 +219,7 @@ router.post('/events/:id/register', requireAuth, async (req, res) => {
 
     await EventRegistration.create(eventId, req.session.userId);
     logger.info(`[PROFILE] Utilisateur #${req.session.userId} s'est inscrit à l'événement #${eventId}`);
-    req.flash('success', `Vous êtes inscrit à l'événement "${event.nom}" !`);
+    req.flash('success', `Vous êtes inscrit à l'événement "${event.name}" !`);
 
     // Notification Discord (fire-and-forget)
     discord.notifyUserRegisteredAsync(eventId, req.session.userId, event);
@@ -252,7 +252,7 @@ router.post('/events/:id/unregister', requireAuth, async (req, res) => {
     const deleted = await EventRegistration.delete(eventId, req.session.userId);
     if (deleted) {
       logger.info(`[PROFILE] Utilisateur #${req.session.userId} s'est désinscrit de l'événement #${eventId}`);
-      req.flash('success', `Votre inscription à l'événement "${event.nom}" a été annulée.`);
+      req.flash('success', `Votre inscription à l'événement "${event.name}" a été annulée.`);
     } else {
       req.flash('error', 'Inscription introuvable.');
     }

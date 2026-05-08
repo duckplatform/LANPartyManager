@@ -43,15 +43,16 @@ const logger = winston.createLogger({
       format: consoleFormat,
       silent: process.env.NODE_ENV === 'test',
     }),
-    // Fichier principal
+    // Fichier principal (désactivé en test pour éviter la pollution des logs)
     new winston.transports.File({
       filename: path.join(logDir, 'app.log'),
       format:   fileFormat,
       maxsize:  5 * 1024 * 1024, // 5 MB
       maxFiles: 5,
       tailable: true,
+      silent:   process.env.NODE_ENV === 'test',
     }),
-    // Fichier d'erreurs uniquement
+    // Fichier d'erreurs uniquement (désactivé en test)
     new winston.transports.File({
       filename: path.join(logDir, 'error.log'),
       level:    'error',
@@ -59,6 +60,7 @@ const logger = winston.createLogger({
       maxsize:  5 * 1024 * 1024,
       maxFiles: 5,
       tailable: true,
+      silent:   process.env.NODE_ENV === 'test',
     }),
   ],
 });

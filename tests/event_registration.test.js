@@ -33,7 +33,7 @@ describe('EventRegistration Model', function () {
   describe('findByEvent()', function () {
     it('doit retourner tous les inscrits d\'un événement', async function () {
       const fakeRows = [
-        { id: 1, event_id: 10, user_id: 2, pseudo: 'Player1', nom: 'Doe', prenom: 'John', email: 'j@d.com', created_at: new Date() },
+        { id: 1, event_id: 10, user_id: 2, username: 'Player1', last_name: 'Doe', first_name: 'John', email: 'j@d.com', created_at: new Date() },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -49,7 +49,7 @@ describe('EventRegistration Model', function () {
   describe('findByUser()', function () {
     it('doit retourner toutes les inscriptions d\'un utilisateur', async function () {
       const fakeRows = [
-        { id: 1, event_id: 10, user_id: 5, nom: 'LAN Spring', date_heure: new Date(), lieu: 'Paris', statut: 'planifie', created_at: new Date() },
+        { id: 1, event_id: 10, user_id: 5, name: 'LAN Spring', start_at: new Date(), location: 'Paris', status: 'planned', created_at: new Date() },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -59,7 +59,7 @@ describe('EventRegistration Model', function () {
       expect(args[0]).to.equal(5);
       // Vérifie que la requête sélectionne statut et non actif
       const query = poolStub.execute.firstCall.args[0];
-      expect(query).to.include('e.statut');
+      expect(query).to.include('e.status');
     });
   });
 
@@ -100,7 +100,7 @@ describe('EventRegistration Model', function () {
     it('doit retourner l\'inscription d\'un utilisateur pour un événement', async function () {
       const fakeReg = {
         id: 1, event_id: 10, user_id: 5,
-        nom: 'LAN Spring', date_heure: new Date(), lieu: 'Paris', statut: 'planifie',
+        name: 'LAN Spring', start_at: new Date(), location: 'Paris', status: 'planned',
       };
       poolStub.execute.resolves([[fakeReg]]);
 
@@ -164,28 +164,28 @@ describe('EventRegistration Model', function () {
 
   describe('isRegistrationOpen()', function () {
     it('doit retourner true si statut planifie et événement dans le futur', function () {
-      const event = { statut: 'planifie', date_heure: new Date(Date.now() + 48 * 3600 * 1000) };
+      const event = { status: 'planned', start_at: new Date(Date.now() + 48 * 3600 * 1000) };
       expect(EventRegistration.isRegistrationOpen(event)).to.be.true;
     });
 
     it('doit retourner false si statut planifie mais date passée', function () {
-      const event = { statut: 'planifie', date_heure: new Date(Date.now() - 1000) };
+      const event = { status: 'planned', start_at: new Date(Date.now() - 1000) };
       expect(EventRegistration.isRegistrationOpen(event)).to.be.false;
     });
 
     it('doit retourner false si statut en_cours (même si date future)', function () {
-      const event = { statut: 'en_cours', date_heure: new Date(Date.now() + 48 * 3600 * 1000) };
+      const event = { status: 'in_progress', start_at: new Date(Date.now() + 48 * 3600 * 1000) };
       expect(EventRegistration.isRegistrationOpen(event)).to.be.false;
     });
 
     it('doit retourner false si statut termine', function () {
-      const event = { statut: 'termine', date_heure: new Date(Date.now() - 1000) };
+      const event = { status: 'ended', start_at: new Date(Date.now() - 1000) };
       expect(EventRegistration.isRegistrationOpen(event)).to.be.false;
     });
 
     it('doit retourner false exactement à l\'heure de début (statut planifie)', function () {
       // now >= date_heure → false
-      const event = { statut: 'planifie', date_heure: new Date(Date.now()) };
+      const event = { status: 'planned', start_at: new Date(Date.now()) };
       expect(EventRegistration.isRegistrationOpen(event)).to.be.false;
     });
   });

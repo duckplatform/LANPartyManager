@@ -1,20 +1,20 @@
 # Guide d'administration - Configuration personnalisée
 
-## Configuration de l'identité de votre association
+## Configuration de l'identité de votre site
 
-La page de paramètres (`/admin/settings`) vous permet de personnaliser complètement l'identité et la visibilité de votre association.
+La page de paramètres (`/admin/settings`) vous permet de personnaliser complètement l'identité et la visibilité de votre site.
 
 ### Sections disponibles
 
-#### 1. Identité de l'association
+#### 1. Identité du site
 
-**Nom de l'association** *(obligatoire)*
+**Nom du site** *(obligatoire)*
 - Affiche le nom partout sur le site (header, footer, page d'accueil)
 - Exemple: "LANPartyManager", "eSport Club Lyon", "Gaming Association Marseille"
 - Changement immédiat visible sur toutes les pages
 
 **Slogan** *(optionnel)*
-- Tagline courte de votre association
+- Tagline courte de votre site
 - S'affiche sur la page d'accueil et dans le footer
 - Exemple: "La meilleure LAN Party de la région"
 - Si vide, utilise un texte par défaut
@@ -53,7 +53,7 @@ Configurer les liens vers vos réseaux sociaux et site web.
 
 **Site web**
 - Lien vers votre site web (si différent du LANPartyManager)
-- Exemple: `https://votre-association.com`
+- Exemple: `https://votre-site.com`
 - Affiche une icône globe dans le footer
 
 ### Comportement des liens
@@ -64,7 +64,7 @@ Configurer les liens vers vos réseaux sociaux et site web.
 ### Pages affectées
 
 Les paramètres affichent dans:
-- **Header** (logo + nom de l'association)
+- **Header** (logo + nom du site)
 - **Footer** (logo + nom + slogan + liens communautés)
 - **Page d'accueil** (nom + slogan)
 - **Titre du navigateur** (utilisé dans les meta-tags)
@@ -76,11 +76,11 @@ Tous les changements sont appliqués immédiatement après l'enregistrement grâ
 ### Conseil d'utilisation
 
 1. **Commencez par le nom et logo**
-   - C'est l'identité principale de votre association
+   - C'est l'identité principale de votre site
    - Assurez-vous que the logo URL est correctement accessible
 
 2. **Ajoutez progressivement les réseaux**
-   - Commencez par Discord (souvent le premier pour une association gaming)
+   - Commencez par Discord
    - Ajoutez les autres réseaux au fur et à mesure de votre présence
 
 3. **Testez les URLs**

@@ -107,13 +107,13 @@ function discordGet(urlStr, accessToken) {
 // ─── Règles de validation ──────────────────────────────────────────────────
 
 const registerRules = [
-  body('nom')
+  body('last_name')
     .trim().notEmpty().withMessage('Le nom est obligatoire.')
     .isLength({ max: 100 }).withMessage('Le nom ne peut pas dépasser 100 caractères.'),
-  body('prenom')
+  body('first_name')
     .trim().notEmpty().withMessage('Le prénom est obligatoire.')
     .isLength({ max: 100 }).withMessage('Le prénom ne peut pas dépasser 100 caractères.'),
-  body('pseudo')
+  body('username')
     .trim().notEmpty().withMessage('Le pseudo est obligatoire.')
     .isLength({ min: 2, max: 50 }).withMessage('Le pseudo doit faire entre 2 et 50 caractères.')
     .matches(/^[a-zA-Z0-9_\-. ]+$/).withMessage('Le pseudo contient des caractères non autorisés.'),
@@ -199,11 +199,11 @@ router.post('/login', authLimiter, loginRules, async (req, res) => {
         return res.redirect('/auth/login');
       }
       req.session.userId       = user.id;
-      req.session.pseudo       = user.pseudo;
+      req.session.username     = user.username;
       req.session.isAdmin      = !!user.is_admin;
       req.session.isModerator  = !!user.is_moderator;
       logger.info(`[AUTH] Connexion réussie pour l'utilisateur #${user.id} (${user.email})`);
-      req.flash('success', `Bienvenue, ${user.pseudo} !`);
+      req.flash('success', `Bienvenue, ${user.username} !`);
       return res.redirect('/');
     });
   } catch (err) {
@@ -243,9 +243,9 @@ router.get('/register', async (req, res) => {
 router.post('/register', authLimiter, registerRules, async (req, res) => {
   const errors = validationResult(req);
   const old    = {
-    nom:    req.body.nom,
-    prenom: req.body.prenom,
-    pseudo: req.body.pseudo,
+    last_name: req.body.last_name,
+    first_name: req.body.first_name,
+    username: req.body.username,
     email:  req.body.email,
   };
   const discordEnabled = (await AppSettings.get('discord_enabled')) === '1';
@@ -261,7 +261,7 @@ router.post('/register', authLimiter, registerRules, async (req, res) => {
   }
 
   try {
-    const { nom, prenom, pseudo, email, password } = req.body;
+    const { last_name, first_name, username, email, password } = req.body;
 
     // Vérifie l'unicité de l'email
     if (await User.emailExists(email)) {
@@ -274,7 +274,7 @@ router.post('/register', authLimiter, registerRules, async (req, res) => {
       });
     }
 
-    const newId = await User.create({ nom, prenom, pseudo, email, password });
+    const newId = await User.create({ last_name, first_name, username, email, password });
     logger.info(`[AUTH] Nouvel utilisateur créé #${newId} (${email})`);
 
     // Connexion automatique après inscription
@@ -285,7 +285,7 @@ router.post('/register', authLimiter, registerRules, async (req, res) => {
         return res.redirect('/auth/login');
       }
       req.session.userId       = newId;
-      req.session.pseudo       = pseudo;
+      req.session.username     = username;
       req.session.isAdmin      = false;
       req.session.isModerator  = false;
       req.flash('success', 'Compte créé avec succès. Bienvenue !');
@@ -442,11 +442,11 @@ router.get('/discord/callback', async (req, res) => {
           return res.redirect('/auth/login');
         }
         req.session.userId      = existingByDiscord.id;
-        req.session.pseudo      = existingByDiscord.pseudo;
+        req.session.username    = existingByDiscord.username;
         req.session.isAdmin     = !!existingByDiscord.is_admin;
         req.session.isModerator = !!existingByDiscord.is_moderator;
         logger.info(`[AUTH DISCORD] Connexion via Discord pour l'utilisateur #${existingByDiscord.id}`);
-        req.flash('success', `Bienvenue, ${existingByDiscord.pseudo} !`);
+        req.flash('success', `Bienvenue, ${existingByDiscord.username} !`);
         return res.redirect('/');
       });
     }
@@ -463,11 +463,11 @@ router.get('/discord/callback', async (req, res) => {
             return res.redirect('/auth/login');
           }
           req.session.userId      = existingByEmail.id;
-          req.session.pseudo      = existingByEmail.pseudo;
+          req.session.username    = existingByEmail.username;
           req.session.isAdmin     = !!existingByEmail.is_admin;
           req.session.isModerator = !!existingByEmail.is_moderator;
           logger.info(`[AUTH DISCORD] Discord lié automatiquement au compte #${existingByEmail.id} (${existingByEmail.email})`);
-          req.flash('success', `Compte Discord lié avec succès. Bienvenue, ${existingByEmail.pseudo} !`);
+          req.flash('success', `Compte Discord lié avec succès. Bienvenue, ${existingByEmail.username} !`);
           return res.redirect('/');
         });
       }
@@ -494,13 +494,13 @@ router.get('/discord/callback', async (req, res) => {
 // ─── Règles de validation : finalisation d'inscription Discord ────────────
 
 const discordCompleteRules = [
-  body('nom')
+  body('last_name')
     .trim().notEmpty().withMessage('Le nom est obligatoire.')
     .isLength({ max: 100 }).withMessage('Le nom ne peut pas dépasser 100 caractères.'),
-  body('prenom')
+  body('first_name')
     .trim().notEmpty().withMessage('Le prénom est obligatoire.')
     .isLength({ max: 100 }).withMessage('Le prénom ne peut pas dépasser 100 caractères.'),
-  body('pseudo')
+  body('username')
     .trim().notEmpty().withMessage('Le pseudo est obligatoire.')
     .isLength({ min: 2, max: 50 }).withMessage('Le pseudo doit faire entre 2 et 50 caractères.')
     .matches(/^[a-zA-Z0-9_\-. ]+$/).withMessage('Le pseudo contient des caractères non autorisés.'),
@@ -525,10 +525,10 @@ router.get('/discord/complete', (req, res) => {
     pageClass: 'page-auth',
     errors:    [],
     old: {
-      pseudo: pseudoSuggestion,
+      username: pseudoSuggestion,
       email:  email   || '',
-      nom:    '',
-      prenom: '',
+      last_name:    '',
+      first_name: '',
     },
   });
 });
@@ -546,9 +546,9 @@ router.post('/discord/complete', authLimiter, discordCompleteRules, async (req, 
 
   const errors = validationResult(req);
   const old = {
-    nom:    req.body.nom,
-    prenom: req.body.prenom,
-    pseudo: req.body.pseudo,
+    last_name: req.body.last_name,
+    first_name: req.body.first_name,
+    username: req.body.username,
     email:  req.body.email,
   };
 
@@ -562,7 +562,7 @@ router.post('/discord/complete', authLimiter, discordCompleteRules, async (req, 
   }
 
   try {
-    const { nom, prenom, pseudo, email } = req.body;
+    const { last_name, first_name, username, email } = req.body;
 
     // Vérification de l'unicité de l'e-mail
     if (await User.emailExists(email)) {
@@ -574,7 +574,7 @@ router.post('/discord/complete', authLimiter, discordCompleteRules, async (req, 
       });
     }
 
-    const newId = await User.createFromDiscord({ nom, prenom, pseudo, email, discordId });
+    const newId = await User.createFromDiscord({ last_name, first_name, username, email, discordId });
     delete req.session.discordPending;
 
     logger.info(`[AUTH DISCORD] Nouvel utilisateur créé via Discord #${newId} (${email})`);
@@ -586,7 +586,7 @@ router.post('/discord/complete', authLimiter, discordCompleteRules, async (req, 
         return res.redirect('/auth/login');
       }
       req.session.userId      = newId;
-      req.session.pseudo      = pseudo.trim();
+      req.session.username    = username.trim();
       req.session.isAdmin     = false;
       req.session.isModerator = false;
       req.flash('success', 'Compte créé avec succès via Discord. Bienvenue !');

@@ -9,12 +9,12 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-plus"></i> Ajouter une salle
+        <i class="fas fa-plus"></i> <%= t('admin.add_room') %>
       </h1>
     </div>
     <div class="admin-header-actions">
       <a href="/admin/rooms<%= old.event_id ? '?event_id=' + old.event_id : '' %>" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Retour aux salles
+        <i class="fas fa-arrow-left"></i> <%= t('admin.rooms_back_list') %>
       </a>
     </div>
   </div>
@@ -33,61 +33,61 @@
         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
 
         <div class="form-group">
-          <label class="form-label" for="event_id">Événement <span class="required">*</span></label>
+          <label class="form-label" for="event_id"><%= t('admin.room_event') %> <span class="required">*</span></label>
           <select id="event_id" name="event_id" class="form-select" required>
-            <option value="">— Sélectionner —</option>
+            <option value=""><%= t('moderator.select_game_option') %></option>
             <% events.forEach(function(e) { %>
               <option value="<%= e.id %>" <%= String(old.event_id) === String(e.id) ? 'selected' : '' %>>
-                <%= e.nom %> (<%= e.statut %>)
+                <%= e.name %> (<%= e.status %>)
               </option>
             <% }); %>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="nom">Nom de la salle <span class="required">*</span></label>
-          <input type="text" id="nom" name="nom" class="form-input"
-                 value="<%= old.nom || '' %>"
-                 placeholder="Ex: Zelda, Mario, Sonic…"
+             <label class="form-label" for="name"><%= t('admin.room_name') %> <span class="required">*</span></label>
+             <input type="text" id="name" name="name" class="form-input"
+               value="<%= old.name || '' %>"
+                   placeholder="<%= t('admin.room_name_hint') %>"
                  maxlength="100" required />
-          <p class="form-hint">Le nom est auto-suggéré mais peut être modifié.</p>
+                 <p class="form-hint"><%= t('admin.room_name_hint_detail') %></p>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="type">Type de salle <span class="required">*</span></label>
+          <label class="form-label" for="type"><%= t('admin.room_type') %> <span class="required">*</span></label>
           <select id="type" name="type" class="form-select" required>
-            <% TYPES_SALLE.forEach(function(t) { %>
+            <% ROOM_TYPES.forEach(function(t) { %>
               <option value="<%= t %>" <%= old.type === t ? 'selected' : '' %>>
-                <%= t === 'simulation' ? 'Simulation (volant, siège cockpit…)' : 'Console (manette, TV)' %>
+                <%= t === 'simulation' ? t('admin.room_type_simulation') : t('admin.room_type_console') %>
               </option>
             <% }); %>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label" for="type_rencontre">Format supporté <span class="required">*</span></label>
-          <select id="type_rencontre" name="type_rencontre" class="form-select" required>
-            <% TYPES_RENCONTRE.forEach(function(t) { %>
-              <option value="<%= t %>" <%= old.type_rencontre === t ? 'selected' : '' %>>
-                <%= t === '2v2' ? '2v2 — Équipes (4 joueurs)' : t === '1v1' ? '1v1 — Face à face (2 joueurs)' : 'Solo — Un seul joueur' %>
+          <label class="form-label" for="match_type"><%= t('admin.room_match_format') %> <span class="required">*</span></label>
+          <select id="match_type" name="match_type" class="form-select" required>
+            <% MATCH_TYPES.forEach(function(t) { %>
+              <option value="<%= t %>" <%= old.match_type === t ? 'selected' : '' %>>
+                <%= t === '2v2' ? t('admin.room_match_format_2v2') : t === '1v1' ? t('admin.room_match_format_1v1') : t('admin.room_match_format_solo') %>
               </option>
             <% }); %>
           </select>
         </div>
 
         <div class="form-group">
-          <label class="form-label">État initial</label>
+          <label class="form-label"><%= t('admin.room_initial_state') %></label>
           <label class="form-checkbox">
-            <input type="checkbox" name="actif" value="1" <%= (!old.actif || old.actif == '1' || old.actif === 1) ? 'checked' : '' %> />
-            Salle active (disponible pour les rencontres)
+            <input type="checkbox" name="is_active" value="1" <%= (!old.is_active || old.is_active == '1' || old.is_active === 1) ? 'checked' : '' %> />
+            <%= t('admin.room_is_active') %>
           </label>
         </div>
 
         <div class="form-actions">
           <button type="submit" class="btn btn--primary">
-            <i class="fas fa-save"></i> Enregistrer
+            <i class="fas fa-save"></i> <%= t('common.save') %>
           </button>
-          <a href="/admin/rooms<%= old.event_id ? '?event_id=' + old.event_id : '' %>" class="btn btn--ghost">Annuler</a>
+          <a href="/admin/rooms<%= old.event_id ? '?event_id=' + old.event_id : '' %>" class="btn btn--ghost"><%= t('common.cancel') %></a>
         </div>
       </form>
     </div>

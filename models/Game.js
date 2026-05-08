@@ -9,7 +9,7 @@
 const db = require('../config/database');
 
 /** Types de rencontre autorisés */
-const TYPES_RENCONTRE = ['1v1', '2v2', 'solo'];
+const MATCH_TYPES = ['1v1', '2v2', 'solo'];
 
 const Game = {
 
@@ -19,9 +19,9 @@ const Game = {
    */
   async findAll() {
     const [rows] = await db.pool.execute(
-      `SELECT id, nom, console, type_rencontre, created_at, updated_at
+      `SELECT id, name, console, match_type, created_at, updated_at
          FROM games
-         ORDER BY nom ASC`
+         ORDER BY name ASC`
     );
     return rows;
   },
@@ -44,13 +44,13 @@ const Game = {
    * @param {'1v1'|'2v2'|'solo'} typeRencontre
    * @returns {Promise<Array>}
    */
-  async findByType(typeRencontre) {
+  async findByType(matchType) {
     const [rows] = await db.pool.execute(
-      `SELECT id, nom, console, type_rencontre
+      `SELECT id, name, console, match_type
          FROM games
-        WHERE type_rencontre = ?
-        ORDER BY nom ASC`,
-      [typeRencontre]
+        WHERE match_type = ?
+        ORDER BY name ASC`,
+      [matchType]
     );
     return rows;
   },
@@ -60,12 +60,12 @@ const Game = {
    * @param {{ nom: string, console: string, type_rencontre?: string }} data
    * @returns {Promise<number>} ID du nouveau jeu
    */
-  async create({ nom, console: consoleName, type_rencontre = '1v1' }) {
-    const typeFinal = TYPES_RENCONTRE.includes(type_rencontre) ? type_rencontre : '1v1';
+  async create({ name, console: consoleName, match_type = '1v1' }) {
+    const typeFinal = MATCH_TYPES.includes(match_type) ? match_type : '1v1';
     const [result] = await db.pool.execute(
-      `INSERT INTO games (nom, console, type_rencontre)
+      `INSERT INTO games (name, console, match_type)
        VALUES (?, ?, ?)`,
-      [nom.trim(), consoleName.trim(), typeFinal]
+      [name.trim(), consoleName.trim(), typeFinal]
     );
     return result.insertId;
   },
@@ -76,13 +76,13 @@ const Game = {
    * @param {{ nom: string, console: string, type_rencontre?: string }} data
    * @returns {Promise<boolean>}
    */
-  async update(id, { nom, console: consoleName, type_rencontre = '1v1' }) {
-    const typeFinal = TYPES_RENCONTRE.includes(type_rencontre) ? type_rencontre : '1v1';
+  async update(id, { name, console: consoleName, match_type = '1v1' }) {
+    const typeFinal = MATCH_TYPES.includes(match_type) ? match_type : '1v1';
     const [result] = await db.pool.execute(
       `UPDATE games
-          SET nom = ?, console = ?, type_rencontre = ?, updated_at = NOW()
+          SET name = ?, console = ?, match_type = ?, updated_at = NOW()
         WHERE id = ?`,
-      [nom.trim(), consoleName.trim(), typeFinal, id]
+      [name.trim(), consoleName.trim(), typeFinal, id]
     );
     return result.affectedRows > 0;
   },
@@ -112,7 +112,7 @@ const Game = {
   },
 
   /** Types de rencontre autorisés */
-  TYPES_RENCONTRE,
+  MATCH_TYPES,
 };
 
 module.exports = Game;

@@ -35,8 +35,8 @@ describe('Announcement Model', function () {
   describe('findAll()', function () {
     it('doit retourner toutes les annonces (sans filtre)', async function () {
       const fakeRows = [
-        { id: 1, titre: 'Test 1', statut: 'publie',    created_at: new Date(), updated_at: new Date() },
-        { id: 2, titre: 'Test 2', statut: 'brouillon', created_at: new Date(), updated_at: new Date() },
+        { id: 1, title: 'Test 1', status: 'published',    created_at: new Date(), updated_at: new Date() },
+        { id: 2, title: 'Test 2', status: 'draft', created_at: new Date(), updated_at: new Date() },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -46,14 +46,14 @@ describe('Announcement Model', function () {
     });
 
     it('doit filtrer uniquement les publiées si onlyPublished=true', async function () {
-      const fakeRows = [{ id: 1, titre: 'Publiée', statut: 'publie', created_at: new Date(), updated_at: new Date() }];
+      const fakeRows = [{ id: 1, title: 'Publiée', status: 'published', created_at: new Date(), updated_at: new Date() }];
       poolStub.execute.resolves([fakeRows]);
 
       const result = await Announcement.findAll({ onlyPublished: true });
       expect(result).to.deep.equal(fakeRows);
-      // Vérifie que la requête contient WHERE statut = 'publie'
+      // Vérifie que la requête contient WHERE statut = 'published'
       const query = poolStub.execute.firstCall.args[0];
-      expect(query).to.include('publie');
+      expect(query).to.include('published');
     });
   });
 
@@ -62,7 +62,7 @@ describe('Announcement Model', function () {
   describe('findLatestPublished()', function () {
     it('doit retourner les N dernières annonces publiées', async function () {
       const fakeRows = [
-        { id: 3, titre: 'Dernière', contenu: '## Hello 🎮', created_at: new Date() },
+        { id: 3, title: 'Dernière', content: '## Hello 🎮', created_at: new Date() },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -78,7 +78,7 @@ describe('Announcement Model', function () {
 
   describe('findById()', function () {
     it('doit retourner une annonce si trouvée', async function () {
-      const fakeAnnouncement = { id: 5, titre: 'Mon annonce', contenu: 'Texte', statut: 'publie' };
+      const fakeAnnouncement = { id: 5, title: 'Mon annonce', content: 'Texte', status: 'published' };
       poolStub.execute.resolves([[fakeAnnouncement]]);
 
       const result = await Announcement.findById(5);
@@ -101,29 +101,29 @@ describe('Announcement Model', function () {
       poolStub.execute.resolves([{ insertId: 7 }]);
 
       const id = await Announcement.create({
-        titre:   'Titre de test',
-        contenu: '**Contenu** en Markdown',
-        statut:  'publie',
+        title:   'Titre de test',
+        content: '**Contenu** en Markdown',
+        status:  'published',
       });
 
       expect(id).to.equal(7);
       expect(poolStub.execute.calledOnce).to.be.true;
       const callArgs = poolStub.execute.firstCall.args[1];
       expect(callArgs[0]).to.equal('Titre de test');
-      expect(callArgs[2]).to.equal('publie');
+      expect(callArgs[2]).to.equal('published');
     });
 
     it('doit utiliser le statut "brouillon" par défaut', async function () {
       poolStub.execute.resolves([{ insertId: 8 }]);
 
-      await Announcement.create({ titre: 'Test', contenu: 'Texte' });
+      await Announcement.create({ title: 'Test', content: 'Texte' });
       const callArgs = poolStub.execute.firstCall.args[1];
-      expect(callArgs[2]).to.equal('brouillon');
+      expect(callArgs[2]).to.equal('draft');
     });
 
     it('doit trim le titre', async function () {
       poolStub.execute.resolves([{ insertId: 9 }]);
-      await Announcement.create({ titre: '  Titre avec espaces  ', contenu: 'X' });
+      await Announcement.create({ title: '  Titre avec espaces  ', content: 'X' });
       const callArgs = poolStub.execute.firstCall.args[1];
       expect(callArgs[0]).to.equal('Titre avec espaces');
     });
@@ -136,16 +136,16 @@ describe('Announcement Model', function () {
       poolStub.execute.resolves([{ affectedRows: 1 }]);
 
       const result = await Announcement.update(1, {
-        titre:   'Nouveau titre',
-        contenu: 'Nouveau contenu',
-        statut:  'publie',
+        title:   'Nouveau titre',
+        content: 'Nouveau contenu',
+        status:  'published',
       });
       expect(result).to.be.true;
     });
 
     it('doit retourner false si aucune ligne affectée', async function () {
       poolStub.execute.resolves([{ affectedRows: 0 }]);
-      const result = await Announcement.update(999, { titre: 'X', contenu: 'Y', statut: 'brouillon' });
+      const result = await Announcement.update(999, { title: 'X', content: 'Y', status: 'draft' });
       expect(result).to.be.false;
     });
   });

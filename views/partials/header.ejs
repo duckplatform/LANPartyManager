@@ -1,7 +1,7 @@
 <header class="site-header">
   <div class="container header-inner">
     <!-- Logo / Nom du site -->
-    <a href="/" class="logo" aria-label="<%= appSettings.organization_name %> - Accueil">
+    <a href="/" class="logo" aria-label="<%= appSettings.organization_name %> - <%= t('nav.home') %>">
       <% if (appSettings.organization_logo) { %>
         <img src="<%= appSettings.organization_logo %>" alt="Logo" class="logo-image" style="max-height: 40px; max-width: 200px;" />
       <% } else { %>
@@ -11,29 +11,29 @@
     </a>
 
     <!-- Bouton menu mobile -->
-    <button class="nav-toggle" id="navToggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mainNav">
+    <button class="nav-toggle" id="navToggle" aria-label="<%= t('nav.open_menu') %>" aria-expanded="false" aria-controls="mainNav">
       <span class="hamburger"></span>
     </button>
 
     <!-- Navigation principale -->
-    <nav class="main-nav" id="mainNav" role="navigation" aria-label="Navigation principale">
+    <nav class="main-nav" id="mainNav" role="navigation" aria-label="<%= t('nav.nav_label') %>">
       <ul class="nav-list">
         <li><a href="/" class="nav-link<%= (typeof pageClass !== 'undefined' && pageClass === 'page-home') ? ' active' : '' %>">
-          <i class="fas fa-home"></i> Accueil
+          <i class="fas fa-home"></i> <%= t('nav.home') %>
         </a></li>
 
         <li><a href="/news" class="nav-link<%= (typeof pageClass !== 'undefined' && pageClass === 'page-news') ? ' active' : '' %>">
-          <i class="fas fa-newspaper"></i> Actualités
+          <i class="fas fa-newspaper"></i> <%= t('nav.news') %>
         </a></li>
 
         <li><a href="/events" class="nav-link<%= (typeof pageClass !== 'undefined' && pageClass === 'page-events') ? ' active' : '' %>">
-          <i class="fas fa-calendar-days"></i> Événements
+          <i class="fas fa-calendar-days"></i> <%= t('nav.events') %>
         </a></li>
 
         <% if (currentUser) { %>
           <% if (currentUser.isAdmin) { %>
             <li><a href="/admin" class="nav-link nav-link--admin<%= (typeof pageClass !== 'undefined' && pageClass === 'page-admin') ? ' active' : '' %>">
-              <i class="fas fa-shield-halved"></i> Administration
+              <i class="fas fa-shield-halved"></i> <%= t('nav.admin') %>
             </a></li>
           <% } %>
 
@@ -43,7 +43,7 @@
 
           <li class="nav-user-info">
             <a href="/profile" class="nav-pseudo<%= (typeof pageClass !== 'undefined' && pageClass === 'page-profile') ? ' active' : '' %>">
-              <i class="fas fa-circle-user"></i> <%= currentUser.pseudo %>
+              <i class="fas fa-circle-user"></i> <%= currentUser.username %>
             </a>
           </li>
 
@@ -51,7 +51,7 @@
             <form action="/auth/logout" method="POST" class="nav-logout-form">
               <input type="hidden" name="_csrf" value="<%= typeof csrfToken === 'function' ? csrfToken() : '' %>" />
               <button type="submit" class="btn btn--ghost btn--sm">
-                <i class="fas fa-right-from-bracket"></i> Déconnexion
+                <i class="fas fa-right-from-bracket"></i> <%= t('nav.logout') %>
               </button>
             </form>
           </li>
@@ -59,10 +59,10 @@
         <% } else { %>
           <!-- Utilisateur non connecté -->
           <li><a href="/auth/login" class="btn btn--ghost btn--sm">
-            <i class="fas fa-right-to-bracket"></i> Connexion
+            <i class="fas fa-right-to-bracket"></i> <%= t('nav.login') %>
           </a></li>
           <li><a href="/auth/register" class="btn btn--primary btn--sm">
-            <i class="fas fa-user-plus"></i> Inscription
+            <i class="fas fa-user-plus"></i> <%= t('nav.register') %>
           </a></li>
         <% } %>
       </ul>

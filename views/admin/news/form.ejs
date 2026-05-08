@@ -49,16 +49,16 @@
 
         <!-- Titre -->
         <div class="form-group">
-          <label class="form-label" for="titre">
+          <label class="form-label" for="title">
             <i class="fas fa-heading"></i> Titre <span class="required">*</span>
           </label>
           <input
             type="text"
-            id="titre"
-            name="titre"
+            id="title"
+            name="title"
             class="form-input"
             placeholder="Titre de l'annonce…"
-            value="<%= (announcement && announcement.titre) ? announcement.titre : '' %>"
+            value="<%= (announcement && announcement.title) ? announcement.title : '' %>"
             maxlength="255"
             required
             autocomplete="off"
@@ -67,7 +67,7 @@
 
         <!-- Éditeur Markdown + prévisualisation -->
         <div class="form-group">
-          <label class="form-label" for="contenu">
+          <label class="form-label" for="content">
             <i class="fas fa-align-left"></i> Contenu (Markdown) <span class="required">*</span>
           </label>
 
@@ -95,13 +95,13 @@
           <!-- Éditeur / Prévisualisation -->
           <div class="md-editor-wrap">
             <textarea
-              id="contenu"
-              name="contenu"
+              id="content"
+              name="content"
               class="form-input md-editor"
               rows="18"
               placeholder="Rédigez votre annonce en Markdown…&#10;&#10;Exemples :&#10;## Titre de section&#10;**gras**, *italique*, ~~barré~~&#10;- élément de liste&#10;🎮 Les emojis sont supportés nativement !"
               required
-            ><%= (announcement && announcement.contenu) ? announcement.contenu : '' %></textarea>
+            ><%= (announcement && announcement.content) ? announcement.content : '' %></textarea>
 
             <!-- Zone de prévisualisation (cachée par défaut) -->
             <div id="previewPane" class="md-preview markdown-body" style="display:none;">
@@ -127,12 +127,12 @@
           </div>
           <div class="card-body">
             <div class="form-group">
-              <label class="form-label" for="statut">Statut</label>
-              <select id="statut" name="statut" class="form-input">
-                <option value="brouillon" <%= (!announcement || announcement.statut === 'brouillon') ? 'selected' : '' %>>
+              <label class="form-label" for="status">Statut</label>
+              <select id="status" name="status" class="form-input">
+                <option value="draft" <%= (!announcement || announcement.status === 'draft') ? 'selected' : '' %>>
                   📝 Brouillon
                 </option>
-                <option value="publie" <%= (announcement && announcement.statut === 'publie') ? 'selected' : '' %>>
+                <option value="published" <%= (announcement && announcement.status === 'published') ? 'selected' : '' %>>
                   ✅ Publié
                 </option>
               </select>
@@ -193,7 +193,7 @@
 (function () {
   'use strict';
 
-  const textarea   = document.getElementById('contenu');
+  const textarea   = document.getElementById('content');
   const previewPane = document.getElementById('previewPane');
   const btnPreview = document.getElementById('btnPreview');
   let   isPreviewing = false;
@@ -256,7 +256,7 @@
           'Content-Type':   'application/x-www-form-urlencoded',
           'X-CSRF-Token':   csrfToken,
         },
-        body: 'contenu=' + encodeURIComponent(textarea.value),
+        body: 'content=' + encodeURIComponent(textarea.value),
       });
       const data = await resp.json();
       previewPane.innerHTML = data.html || '<p class="md-preview-placeholder">Aucun contenu.</p>';

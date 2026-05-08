@@ -40,11 +40,11 @@
   /* Carte rencontre */
   .battle-card { border: 1px solid var(--color-border); border-radius: 8px; margin-bottom: var(--space-sm);
                   padding: var(--space-md); background: var(--color-surface); }
-  .battle-card.statut-file_attente { border-left: 4px solid #f59e0b; }
-  .battle-card.statut-planifie     { border-left: 4px solid #3b82f6; }
-  .battle-card.statut-installation   { border-left: 4px solid #8b5cf6; }
-  .battle-card.statut-en_cours     { border-left: 4px solid #10b981; }
-  .battle-card.statut-termine      { border-left: 4px solid #6b7280; opacity: .7; }
+  .battle-card.status-queue        { border-left: 4px solid #f59e0b; }
+  .battle-card.status-planned      { border-left: 4px solid #3b82f6; }
+  .battle-card.status-setup        { border-left: 4px solid #8b5cf6; }
+  .battle-card.status-in_progress  { border-left: 4px solid #10b981; }
+  .battle-card.status-ended        { border-left: 4px solid #6b7280; opacity: .7; }
   .battle-card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: .5rem; }
   .battle-duration { font-size: .82rem; color: var(--color-text-muted); margin-top: .4rem; }
   .battle-duration-item { display: inline-flex; align-items: center; gap: .35rem; margin-right: 1rem; }
@@ -86,14 +86,14 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-swords"></i> Rencontres — <%= event.nom %>
+        <i class="fas fa-swords"></i> Rencontres — <%= event.name %>
       </h1>
       <p class="admin-subtitle">
         <i class="fas fa-calendar-alt"></i>
-        <%= new Date(event.date_heure).toLocaleDateString('fr-FR', {
+        <%= new Date(event.start_at).toLocaleDateString(locale, {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
         }) %>
-        &nbsp;—&nbsp;<i class="fas fa-location-dot"></i> <%= event.lieu %>
+        &nbsp;—&nbsp;<i class="fas fa-location-dot"></i> <%= event.location %>
       </p>
     </div>
     <div class="admin-header-actions">
@@ -112,23 +112,23 @@
   <!-- Statistiques -->
   <div class="battles-stats">
     <div class="battles-stat color-queue">
-      <div class="stat-num"><%= stats.file_attente %></div>
+      <div class="stat-num"><%= stats.queue %></div>
       <div class="stat-lbl"><i class="fas fa-hourglass-half"></i> File d'attente</div>
     </div>
     <div class="battles-stat color-plan">
-      <div class="stat-num"><%= stats.planifie %></div>
+      <div class="stat-num"><%= stats.planned %></div>
       <div class="stat-lbl"><i class="fas fa-clock"></i> Planifiées</div>
     </div>
     <div class="battles-stat color-wait">
-      <div class="stat-num"><%= stats.installation %></div>
+      <div class="stat-num"><%= stats.setup %></div>
       <div class="stat-lbl"><i class="fas fa-users"></i> Installation</div>
     </div>
     <div class="battles-stat color-live">
-      <div class="stat-num"><%= stats.en_cours %></div>
+      <div class="stat-num"><%= stats.in_progress %></div>
       <div class="stat-lbl"><i class="fas fa-play-circle"></i> En cours</div>
     </div>
     <div class="battles-stat color-done">
-      <div class="stat-num"><%= stats.termine %></div>
+      <div class="stat-num"><%= stats.ended %></div>
       <div class="stat-lbl"><i class="fas fa-flag-checkered"></i> Terminées</div>
     </div>
   </div>
@@ -140,11 +140,11 @@
     <div class="card-body">
       <div style="display:flex; gap:.75rem; flex-wrap:wrap;">
         <% rooms.forEach(function(room) { %>
-          <div class="room-pill" style="opacity:<%= room.actif ? 1 : .5 %>;">
-            <div style="font-weight:600;"><i class="fas fa-door-open"></i> <%= room.nom %></div>
+          <div class="room-pill" style="opacity:<%= room.is_active ? 1 : .5 %>;">
+            <div style="font-weight:600;"><i class="fas fa-door-open"></i> <%= room.name %></div>
             <div class="room-pill-meta">
-              <%= room.type_rencontre %> •
-              <% if (!room.actif) { %>
+              <%= room.match_type %> •
+              <% if (!room.is_active) { %>
                 <span style="color:#ef4444;">Inactive</span>
               <% } else if (room.battles_actives > 0) { %>
                 <span style="color:#f59e0b;">Occupée</span>
@@ -169,7 +169,7 @@
     </div>
     <div class="card-body">
       <%
-        const active = battles.filter(b => b.statut !== 'termine');
+        const active = battles.filter(b => b.status !== 'ended');
       %>
       <% if (active.length === 0) { %>
         <p class="table-empty" style="text-align:center; padding: var(--space-lg);">
@@ -178,23 +178,23 @@
         </p>
       <% } else { %>
         <% active.forEach(function(b) { %>
-          <div class="battle-card statut-<%= b.statut %>">
+          <div class="battle-card status-<%= b.status %>">
             <div class="battle-card-header">
               <div>
-                <span class="badge badge--<%= {file_attente:'warning', planifie:'info', installation:'purple', en_cours:'success', termine:'muted'}[b.statut] || 'muted' %>">
-                  <% const statutLabels = { file_attente: 'File d\'attente', planifie: 'Planifiée', installation: 'Installation', en_cours: 'En cours', termine: 'Terminée' }; %>
-                  <%= statutLabels[b.statut] || b.statut %>
+                <span class="badge badge--<%= {queue:'warning', planned:'info', setup:'purple', in_progress:'success', ended:'muted'}[b.status] || 'muted' %>">
+                  <% const statusLabels = { queue: 'File d\'attente', planned: 'Planifiée', setup: 'Installation', in_progress: 'En cours', ended: 'Terminée' }; %>
+                  <%= statusLabels[b.status] || b.status %>
                 </span>
-                <strong style="margin-left:.5rem;"><%= b.game_nom %></strong>
+                <strong style="margin-left:.5rem;"><%= b.game_name %></strong>
                 <span style="color:var(--color-text-muted); font-size:.85rem;">
-                  — <%= b.game_console %> — <%= b.type_rencontre %>
+                  — <%= b.game_console %> — <%= b.match_type %>
                 </span>
               </div>
               <div style="text-align:right; font-size:.82rem; color:var(--color-text-muted);">
                 #<%= b.id %>
-                <% if (b.room_nom) { %>
-                  &nbsp;|&nbsp;<i class="fas fa-door-open"></i> <strong><%= b.room_nom %></strong>
-                <% } else if (b.statut === 'file_attente') { %>
+                <% if (b.room_name) { %>
+                  &nbsp;|&nbsp;<i class="fas fa-door-open"></i> <strong><%= b.room_name %></strong>
+                <% } else if (b.status === 'queue') { %>
                   &nbsp;|&nbsp;<i class="fas fa-hourglass-half" style="color:#f59e0b;"></i> En attente d'une salle
                 <% } else if (b.room_id) { %>
                   &nbsp;|&nbsp;<i class="fas fa-door-open"></i> <strong>Salle #<%= b.room_id %></strong>
@@ -205,7 +205,7 @@
             </div>
 
             <!-- Durée de jeu -->
-            <% if (b.statut === 'en_cours' && b.started_at) { %>
+            <% if (b.status === 'in_progress' && b.started_at) { %>
               <div class="battle-duration">
                 <div class="battle-duration-item">
                   <i class="fas fa-hourglass-start"></i>
@@ -213,7 +213,7 @@
                   <span class="battle-duration-value"><%= getGameElapsedTime(b.started_at) %></span>
                 </div>
               </div>
-            <% } else if (b.statut === 'termine' && b.started_at && b.ended_at) { %>
+            <% } else if (b.status === 'ended' && b.started_at && b.ended_at) { %>
               <div class="battle-duration">
                 <div class="battle-duration-item">
                   <i class="fas fa-hourglass-end"></i>
@@ -225,32 +225,32 @@
 
             <!-- Joueurs -->
             <div class="battle-players">
-              <% if (b.type_rencontre === '2v2') { %>
+              <% if (b.match_type === '2v2') { %>
                 <div class="battle-team">
                   <div class="battle-team-label">Équipe 1</div>
-                  <% b.players.filter(p => p.equipe === 1).forEach(function(p) { %>
-                    <span class="player-chip <%= p.est_gagnant ? 'winner' : '' %>">
-                      <i class="fas fa-circle-user"></i> <%= p.pseudo %>
-                      <% if (p.est_gagnant) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
+                  <% b.players.filter(p => p.team === 1).forEach(function(p) { %>
+                    <span class="player-chip <%= p.is_winner ? 'winner' : '' %>">
+                      <i class="fas fa-circle-user"></i> <%= p.username %>
+                      <% if (p.is_winner) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
                     </span>
                   <% }); %>
                 </div>
                 <div style="align-self:center; font-weight:700; color:var(--color-text-muted);">VS</div>
                 <div class="battle-team">
                   <div class="battle-team-label">Équipe 2</div>
-                  <% b.players.filter(p => p.equipe === 2).forEach(function(p) { %>
-                    <span class="player-chip <%= p.est_gagnant ? 'winner' : '' %>">
-                      <i class="fas fa-circle-user"></i> <%= p.pseudo %>
-                      <% if (p.est_gagnant) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
+                  <% b.players.filter(p => p.team === 2).forEach(function(p) { %>
+                    <span class="player-chip <%= p.is_winner ? 'winner' : '' %>">
+                      <i class="fas fa-circle-user"></i> <%= p.username %>
+                      <% if (p.is_winner) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
                     </span>
                   <% }); %>
                 </div>
               <% } else { %>
                 <div class="battle-team">
                   <% b.players.forEach(function(p) { %>
-                    <span class="player-chip <%= p.est_gagnant ? 'winner' : '' %>">
-                      <i class="fas fa-circle-user"></i> <%= p.pseudo %>
-                      <% if (p.est_gagnant) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
+                    <span class="player-chip <%= p.is_winner ? 'winner' : '' %>">
+                      <i class="fas fa-circle-user"></i> <%= p.username %>
+                      <% if (p.is_winner) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
                     </span>
                   <% }); %>
                 </div>
@@ -259,7 +259,7 @@
 
             <!-- Actions -->
             <div class="battle-actions">
-              <% if (b.statut === 'installation') { %>
+              <% if (b.status === 'setup') { %>
                 <form action="/battles/<%= b.id %>/start" method="POST" class="form-inline">
                   <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                   <button type="submit" class="btn btn--success btn--sm">
@@ -267,15 +267,15 @@
                   </button>
                 </form>
               <% } %>
-              <% if (['installation', 'en_cours'].includes(b.statut)) { %>
+              <% if (['setup', 'in_progress'].includes(b.status)) { %>
                 <button type="button" class="btn btn--warning btn--sm btn-open-result"
                         data-battle-id="<%= b.id %>"
                         data-players="<%- JSON.stringify(b.players).replace(/"/g, '&quot;') %>"
-                        data-type="<%= b.type_rencontre %>">
+                        data-type="<%= b.match_type %>">
                   <i class="fas fa-flag-checkered"></i> Terminer & résultat
                 </button>
               <% } %>
-              <% if (['file_attente', 'planifie'].includes(b.statut)) { %>
+              <% if (['queue', 'planned'].includes(b.status)) { %>
                 <form action="/battles/<%= b.id %>?_method=DELETE" method="POST" class="form-inline"
                       onsubmit="return confirm('Annuler cette rencontre ?')">
                   <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
@@ -292,7 +292,7 @@
   </div>
 
   <!-- Rencontres terminées -->
-  <% const done = battles.filter(b => b.statut === 'termine'); %>
+  <% const done = battles.filter(b => b.status === 'ended'); %>
   <% if (done.length > 0) { %>
   <details class="card" style="margin-bottom: var(--space-lg);">
     <summary style="cursor:pointer; padding: var(--space-md); font-weight:600; list-style:none; display:flex; align-items:center; gap:.5rem;">
@@ -301,17 +301,17 @@
     </summary>
     <div class="card-body" style="padding-top:0;">
       <% done.forEach(function(b) { %>
-        <div class="battle-card statut-termine">
+        <div class="battle-card status-ended">
           <div class="battle-card-header">
             <div>
               <span class="badge badge--muted">Terminée</span>
-              <strong style="margin-left:.5rem;"><%= b.game_nom %></strong>
+              <strong style="margin-left:.5rem;"><%= b.game_name %></strong>
               <span style="color:var(--color-text-muted); font-size:.85rem;"> — <%= b.game_console %></span>
               <% if (b.score) { %><span style="margin-left:.5rem; font-weight:600; color:var(--color-primary);">Score : <%= b.score %></span><% } %>
             </div>
             <div style="font-size:.82rem; color:var(--color-text-muted);">
               #<%= b.id %>
-              <% if (b.room_nom) { %>&nbsp;|&nbsp;<i class="fas fa-door-open"></i> <%= b.room_nom %><% } %>
+              <% if (b.room_name) { %>&nbsp;|&nbsp;<i class="fas fa-door-open"></i> <%= b.room_name %><% } %>
             </div>
           </div>
           <% if (b.started_at && b.ended_at) { %>
@@ -325,9 +325,9 @@
           <% } %>
           <div class="battle-players" style="margin-top:.4rem;">
             <% b.players.forEach(function(p) { %>
-              <span class="player-chip <%= p.est_gagnant ? 'winner' : '' %>">
-                <i class="fas fa-circle-user"></i> <%= p.pseudo %>
-                <% if (p.est_gagnant) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
+              <span class="player-chip <%= p.is_winner ? 'winner' : '' %>">
+                <i class="fas fa-circle-user"></i> <%= p.username %>
+                <% if (p.is_winner) { %><i class="fas fa-trophy" style="color:#f59e0b;"></i><% } %>
               </span>
             <% }); %>
           </div>
@@ -384,26 +384,26 @@
    * Ouvre le modal de résultat en lisant les données depuis les attributs data-*
    * du bouton cliqué, évitant ainsi toute injection JSON inline.
    */
-  function openResultModal(battleId, players, typeRencontre) {
+  function openResultModal(battleId, players, matchType) {
     resultForm.action = '/battles/' + battleId + '/result';
     scoreInput.value  = '';
     winnersList.innerHTML = '';
 
     // Génère les checkboxes des joueurs selon le format
-    if (typeRencontre === '2v2') {
-      [1, 2].forEach(function(equipe) {
-        const teamPlayers = players.filter(function(p) { return p.equipe === equipe; });
+    if (matchType === '2v2') {
+      [1, 2].forEach(function(team) {
+        const teamPlayers = players.filter(function(p) { return p.team === team; });
         if (teamPlayers.length === 0) return;
         const label = document.createElement('div');
         label.style.fontWeight = '600';
         label.style.marginTop = '.5rem';
-        label.textContent = 'Équipe ' + equipe;
+        label.textContent = 'Équipe ' + team;
         winnersList.appendChild(label);
         teamPlayers.forEach(function(p) {
           const wrap  = document.createElement('label');
           const input = document.createElement('input');
           const icon  = document.createElement('i');
-          const text  = document.createTextNode(' ' + p.pseudo);
+          const text  = document.createTextNode(' ' + p.username);
           input.type  = 'checkbox';
           input.name  = 'winner_ids[]';
           input.value = p.user_id;
@@ -420,7 +420,7 @@
         const wrap  = document.createElement('label');
         const input = document.createElement('input');
         const icon  = document.createElement('i');
-        const text  = document.createTextNode(' ' + p.pseudo);
+        const text  = document.createTextNode(' ' + p.username);
         input.type  = 'checkbox';
         input.name  = 'winner_ids[]';
         input.value = p.user_id;

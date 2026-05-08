@@ -159,12 +159,18 @@ function _setRestClient(client) {
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 /**
- * Formate une date pour l'affichage en français.
+ * Formate une date selon la locale configurée dans app_settings.
+ * Replie sur 'fr-FR' si la locale n'est pas disponible.
  * @param {Date|string} date
- * @returns {string}
+ * @returns {Promise<string>}
  */
-function formatDate(date) {
-  return new Date(date).toLocaleDateString('fr-FR', {
+async function formatDate(date) {
+  let locale = 'fr-FR';
+  try {
+    const AppSettings = require('../models/AppSettings');
+    locale = (await AppSettings.get('locale')) || 'fr-FR';
+  } catch (_) { /* fallback silencieux */ }
+  return new Date(date).toLocaleDateString(locale, {
     weekday: 'long',
     day:     'numeric',
     month:   'long',
@@ -252,7 +258,7 @@ async function resolveBattleChannel(event) {
 
 /**
  * Notifie la création d'un nouvel événement LAN.
- * @param {{ id: number, nom: string, date_heure: string|Date, lieu: string, statut: string, discord_notifications_enabled?: any }} event
+ * @param {{ id: number, name: string, start_at: string|Date, location: string, status: string, discord_notifications_enabled?: any }} event
  * @returns {Promise<void>}
  */
 async function notifyEventCreated(event) {
@@ -264,12 +270,12 @@ async function notifyEventCreated(event) {
   const eventUrl = config.appUrl ? `${config.appUrl}/events/${event.id}` : null;
 
   const embed = {
-    title:       `📅 Nouvel événement : ${event.nom}`,
+    title:       `📅 Nouvel événement : ${event.name}`,
     description: `Un nouvel événement vient d'être planifié ! Marquez la date dans votre agenda.`,
     color:       0x5865F2, // Bleu Discord
     fields: [
-      { name: '📍 Lieu',    value: event.lieu,               inline: true },
-      { name: '🕐 Date',    value: formatDate(event.date_heure), inline: true },
+      { name: '📍 Lieu',    value: event.location,               inline: true },
+      { name: '🕐 Date',    value: await formatDate(event.start_at), inline: true },
       { name: '📊 Statut', value: '🗓️ Planifié',              inline: true },
     ],
     footer: { text: 'LANPartyManager' },
@@ -301,11 +307,11 @@ async function notifyEventStarted(event) {
   const eventUrl = config.appUrl ? `${config.appUrl}/events/${event.id}` : null;
 
   const embed = {
-    title:       `🟢 C'est parti ! ${event.nom}`,
+    title:       `🟢 C'est parti ! ${event.name}`,
     description: `L'événement vient de commencer ! Rejoignez-nous dès maintenant.`,
     color:       0x57F287, // Vert Discord
     fields: [
-      { name: '📍 Lieu', value: event.lieu, inline: true },
+      { name: '📍 Lieu', value: event.location, inline: true },
       { name: '📊 Statut', value: '🟢 En cours', inline: true },
     ],
     footer: { text: 'LANPartyManager' },
@@ -319,7 +325,7 @@ async function notifyEventStarted(event) {
   await sendEmbed(
     channelId,
     embed,
-    `@everyone 🚀 **${event.nom}** vient de commencer !`
+    `@everyone 🚀 **${event.name}** vient de commencer !`
   );
 }
 
@@ -330,7 +336,7 @@ function buildRankingField(rankings = []) {
 
   return rankings
     .slice(0, 10)
-    .map((entry, index) => `${index + 1}. ${entry.pseudo} — ${entry.points} pts`)
+    .map((entry, index) => `${index + 1}. ${entry.username} — ${entry.points} pts`)
     .join('\n');
 }
 
@@ -348,11 +354,11 @@ async function notifyEventEnded(event, rankings = []) {
   const channelId = await resolveBattleChannel(event);
 
   const embed = {
-    title:       `🏁 Fin de l'événement : ${event.nom}`,
+    title:       `🏁 Fin de l'événement : ${event.name}`,
     description: `L'événement est maintenant terminé. Merci à tous les participants ! À bientôt pour la prochaine LAN ! 🎮`,
     color:       0xED4245, // Rouge Discord
     fields: [
-      { name: '📍 Lieu', value: event.lieu, inline: true },
+      { name: '📍 Lieu', value: event.location, inline: true },
       { name: '📊 Statut', value: '🏁 Terminé', inline: true },
       { name: '🏆 Classement final', value: buildRankingField(rankings), inline: false },
     ],
@@ -363,7 +369,7 @@ async function notifyEventEnded(event, rankings = []) {
   await sendEmbed(
     channelId,
     embed,
-    `@everyone 🏁 **${event.nom}** est terminé !`
+    `@everyone 🏁 **${event.name}** est terminé !`
   );
 }
 
@@ -383,14 +389,14 @@ async function notifyUserRegistered({ event, user, registrationCount = 0 }) {
   const eventUrl = config.appUrl ? `${config.appUrl}/events/${event.id}` : null;
 
   const embed = {
-    title:       `✅ Nouvelle inscription — ${event.nom}`,
-    description: `**${user.pseudo}** vient de s'inscrire à l'événement !`,
+    title:       `✅ Nouvelle inscription — ${event.name}`,
+    description: `**${user.username}** vient de s'inscrire à l'événement !`,
     color:       0x57F287, // Vert Discord
     fields: [
-      { name: '👤 Participant', value: user.pseudo,                           inline: true },
+      { name: '👤 Participant', value: user.username,                          inline: true },
       { name: '👥 Inscrits',   value: `${registrationCount} participant(s)`, inline: true },
-      { name: '📍 Lieu',       value: event.lieu,                            inline: true },
-      { name: '🕐 Date',       value: formatDate(event.date_heure),          inline: true },
+      { name: '📍 Lieu',       value: event.location,                         inline: true },
+      { name: '🕐 Date',       value: await formatDate(event.start_at),             inline: true },
     ],
     footer: { text: 'LANPartyManager' },
     timestamp: new Date().toISOString(),
@@ -429,7 +435,7 @@ function notifyUserRegisteredAsync(eventId, userId, event) {
 
 /**
  * Notifie la publication d'une nouvelle actualité.
- * @param {{ id: number, titre: string, contenu: string }} announcement
+ * @param {{ id: number, title: string, content: string }} announcement
  * @returns {Promise<void>}
  */
 async function notifyNewsPublished(announcement) {
@@ -444,7 +450,7 @@ async function notifyNewsPublished(announcement) {
   //      sur des données utilisateur non contrôlées (contenu de l'annonce)
   //   2. Convertit les liens [texte](url) en conservant uniquement le texte
   //   3. Supprime les symboles Markdown restants
-  let description = (announcement.contenu || '').slice(0, MAX_NEWS_CONTENT_LEN)
+  let description = (announcement.content || '').slice(0, MAX_NEWS_CONTENT_LEN)
     .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // [texte](url) → texte
     .replace(/[#*_~`>!]/g, '')               // titres, gras, italic, barré, code, blockquote, images
     .replace(/\s+/g, ' ')                    // normalise les espaces multiples
@@ -457,7 +463,7 @@ async function notifyNewsPublished(announcement) {
   }
 
   const embed = {
-    title:       `📰 ${announcement.titre}`,
+    title:       `📰 ${announcement.title}`,
     description,
     color:       0xFEE75C, // Jaune Discord
     footer:      { text: 'LANPartyManager — Actualités' },
@@ -473,7 +479,7 @@ async function notifyNewsPublished(announcement) {
   await sendEmbed(
     channelNews,
     embed,
-    `📢 **Nouvelle actualité publiée !** — ${announcement.titre}`
+    `📢 **Nouvelle actualité publiée !** — ${announcement.title}`
   );
 }
 
@@ -486,11 +492,11 @@ function buildBattlePlayersField(players = []) {
 
   const teams = new Map();
   for (const player of players) {
-    const team = Number(player.equipe) || 1;
-    // Mention réelle si discord_user_id disponible, sinon @pseudo en texte
+    const team = Number(player.team) || 1;
+    // Mention réelle si discord_user_id disponible, sinon @username en texte
     const display = player.discord_user_id
       ? `<@${player.discord_user_id}>`
-      : '@' + (player.pseudo || `Joueur #${player.user_id || '?'}`).toString().trim();
+      : '@' + (player.username || `Joueur #${player.user_id || '?'}`).toString().trim();
     if (!teams.has(team)) {
       teams.set(team, []);
     }
@@ -522,10 +528,10 @@ function isWinningPlayer(value) {
 
 function buildBattleWinnersField(players = []) {
   const winners = (players || [])
-    .filter(player => isWinningPlayer(player.est_gagnant))
+    .filter(player => isWinningPlayer(player.is_winner))
     .map(player => player.discord_user_id
       ? `<@${player.discord_user_id}>`
-      : '@' + (player.pseudo || `Joueur #${player.user_id || '?'}`).toString().trim()
+      : '@' + (player.username || `Joueur #${player.user_id || '?'}`).toString().trim()
     );
 
   if (winners.length === 0) {
@@ -541,17 +547,17 @@ function battleBaseEmbed(event, battle, color) {
     fields: [
       {
         name: 'Evenement',
-        value: event && event.nom ? event.nom : `Evenement #${battle && battle.event_id ? battle.event_id : '?'}`,
+        value: event && event.name ? event.name : `Evenement #${battle && battle.event_id ? battle.event_id : '?'}`,
         inline: false,
       },
       {
         name: 'Jeu',
-        value: battle && battle.game_nom ? `${battle.game_nom}${battle.game_console ? ` (${battle.game_console})` : ''}` : 'Non renseigne',
+        value: battle && battle.game_name ? `${battle.game_name}${battle.game_console ? ` (${battle.game_console})` : ''}` : 'Non renseigne',
         inline: true,
       },
       {
         name: 'Salle',
-        value: battle && battle.room_nom ? battle.room_nom : 'Aucune (file d\'attente)',
+        value: battle && battle.room_name ? battle.room_name : 'Aucune (file d\'attente)',
         inline: true,
       },
       {
@@ -579,7 +585,7 @@ async function notifyBattleCreated({ event, battle }) {
   if (isEventNotificationsDisabled(event)) return;
 
   const channelId = await resolveBattleChannel(event);
-  const isQueued = battle.statut === 'file_attente';
+  const isQueued = battle.status === 'queue';
 
   const embed = battleBaseEmbed(event, battle, isQueued ? 0xFEE75C : 0x5865F2);
   embed.title = isQueued

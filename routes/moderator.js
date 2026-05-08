@@ -59,7 +59,7 @@ router.get('/events/:id/scan', async (req, res) => {
     const registrations = await EventRegistration.findByEvent(eventId);
 
     res.render('moderator/scan', {
-      title:        `Contrôle — ${event.nom}`,
+      title:        `Contrôle — ${event.name}`,
       pageClass:    'page-moderator',
       event,
       registrations,
@@ -106,7 +106,7 @@ router.get('/verify/:token', async (req, res) => {
     }
 
     logger.info(
-      `[MODERATOR] Vérification badge token=${token} par #${req.session.userId} — membre=${member ? member.pseudo : 'INCONNU'} inscrit=${isRegistered}`
+      `[MODERATOR] Vérification badge token=${token} par #${req.session.userId} — membre=${member ? member.username : 'INCONNU'} inscrit=${isRegistered}`
     );
 
     res.render('moderator/verify', {
@@ -183,15 +183,15 @@ router.post('/verify', async (req, res) => {
     }
 
     logger.info(
-      `[MODERATOR] Vérification AJAX badge token=${token} par #${req.session.userId} — membre=${member.pseudo} inscrit=${isRegistered}`
+      `[MODERATOR] Vérification AJAX badge token=${token} par #${req.session.userId} — membre=${member.username} inscrit=${isRegistered}`
     );
 
     return res.json({
       valid:        true,
-      pseudo:       member.pseudo,
-      nom:          `${member.prenom} ${member.nom}`,
+      pseudo:       member.username,
+      nom:          `${member.first_name} ${member.last_name}`,
       isRegistered,
-      event_nom:    event ? event.nom : null,
+      event_nom:    event ? event.name : null,
     });
   } catch (err) {
     logger.error(`[MODERATOR] Erreur vérification AJAX badge token=${token} :`, err);

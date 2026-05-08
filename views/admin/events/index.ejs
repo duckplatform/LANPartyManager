@@ -10,16 +10,16 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-calendar-days"></i> Gestion des événements
+        <i class="fas fa-calendar-days"></i> <%= t('admin.events_title') %>
       </h1>
-      <p class="admin-subtitle">Créez et gérez les événements de l'association.</p>
+      <p class="admin-subtitle"><%= t('admin.events_subtitle') %></p>
     </div>
     <div class="admin-header-actions">
       <a href="/admin" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Tableau de bord
+        <i class="fas fa-arrow-left"></i> <%= t('admin.dashboard') %>
       </a>
       <a href="/admin/events/create" class="btn btn--primary btn--sm">
-        <i class="fas fa-plus"></i> Nouvel événement
+        <i class="fas fa-plus"></i> <%= t('common.create') %> <%= t('admin.events') %>
       </a>
     </div>
   </div>
@@ -27,7 +27,7 @@
   <!-- Tableau des événements -->
   <div class="card admin-users-card">
     <div class="card-header admin-card-header">
-      <h2><i class="fas fa-list"></i> Liste des événements (<%= events.length %>)</h2>
+      <h2><i class="fas fa-list"></i> <%= t('admin.events_list_title') %> (<%= events.length %>)</h2>
     </div>
     <div class="card-body">
       <div class="table-responsive">
@@ -35,66 +35,66 @@
           <thead>
             <tr>
               <th>ID</th>
-              <th>Nom</th>
-              <th>Date / Heure</th>
-              <th>Lieu</th>
-              <th>Statut</th>
-              <th>Inscrits</th>
-              <th>Actions</th>
+              <th><%= t('admin.event_name') %></th>
+              <th><%= t('admin.event_date_time') %></th>
+              <th><%= t('event.location') %></th>
+              <th><%= t('moderator.status_label') %></th>
+              <th><%= t('admin.event_registered') %></th>
+              <th><%= t('common.actions') %></th>
             </tr>
           </thead>
           <tbody>
             <% if (events.length === 0) { %>
               <tr>
                 <td colspan="7" class="table-empty">
-                  <i class="fas fa-inbox"></i> Aucun événement.
-                  <a href="/admin/events/create">Créer le premier</a>
+                  <i class="fas fa-inbox"></i> <%= t('admin.no_events') %>
+                  <a href="/admin/events/create"><%= t('admin.create_first_event') %></a>
                 </td>
               </tr>
             <% } else { %>
               <% events.forEach(function(ev) { %>
                 <tr>
                   <td class="td-id">#<%= ev.id %></td>
-                  <td><strong><%= ev.nom %></strong></td>
+                  <td><strong><%= ev.name %></strong></td>
                   <td class="td-date">
-                    <%= new Date(ev.date_heure).toLocaleDateString('fr-FR', {
+                    <%= new Date(ev.start_at).toLocaleDateString(locale, {
                       day: '2-digit', month: '2-digit', year: 'numeric'
                     }) %>
-                    <%= new Date(ev.date_heure).toLocaleTimeString('fr-FR', {
+                    <%= new Date(ev.start_at).toLocaleTimeString(locale, {
                       hour: '2-digit', minute: '2-digit'
                     }) %>
                   </td>
-                  <td><%= ev.lieu %></td>
+                  <td><%= ev.location %></td>
                   <td>
-                    <% if (ev.statut === 'planifie') { %>
-                      <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> Planifié</span>
-                    <% } else if (ev.statut === 'en_cours') { %>
-                      <span class="badge badge--member"><i class="fas fa-circle-play"></i> En cours</span>
+                    <% if (ev.status === 'planned') { %>
+                      <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> <%= t('status.planned') %></span>
+                    <% } else if (ev.status === 'in_progress') { %>
+                      <span class="badge badge--member"><i class="fas fa-circle-play"></i> <%= t('status.in_progress') %></span>
                     <% } else { %>
-                      <span class="badge badge--draft"><i class="fas fa-circle-check"></i> Terminé</span>
+                      <span class="badge badge--draft"><i class="fas fa-circle-check"></i> <%= t('status.ended') %></span>
                     <% } %>
                   </td>
                   <td class="text-center">
-                    <a href="/admin/events/<%= ev.id %>/registrations" class="badge badge--member" title="Voir les inscrits">
+                    <a href="/admin/events/<%= ev.id %>/registrations" class="badge badge--member" title="<%= t('admin.event_registered') %>">
                       <i class="fas fa-users"></i> <%= ev.registrationCount %>
                     </a>
                   </td>
                   <td class="td-actions">
                     <!-- Voir les inscrits -->
                     <a href="/admin/events/<%= ev.id %>/registrations" class="btn btn--xs btn--info">
-                      <i class="fas fa-users"></i> Inscrits
+                      <i class="fas fa-users"></i> <%= t('admin.event_registered') %>
                     </a>
                     <!-- Modifier -->
                     <a href="/admin/events/<%= ev.id %>/edit" class="btn btn--xs btn--warning">
-                      <i class="fas fa-edit"></i> Modifier
+                      <i class="fas fa-edit"></i> <%= t('admin.event_edit') %>
                     </a>
                     <!-- Supprimer -->
                     <form action="/admin/events/<%= ev.id %>/delete" method="POST" class="inline-form">
                       <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                       <button type="submit"
                               class="btn btn--xs btn--danger"
-                              onclick="return confirm('Supprimer définitivement l\'événement «\u00A0<%= ev.nom %>\u00A0» et toutes ses inscriptions ?')">
-                        <i class="fas fa-trash"></i> Supprimer
+                              onclick="return confirm('<%= t("admin.event_delete_confirmation", { name: ev.name }) %>')">
+                        <i class="fas fa-trash"></i> <%= t('admin.event_delete') %>
                       </button>
                     </form>
                   </td>

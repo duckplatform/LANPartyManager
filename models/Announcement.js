@@ -15,9 +15,9 @@ const Announcement = {
    * @returns {Promise<Array>}
    */
   async findAll({ onlyPublished = false } = {}) {
-    const where = onlyPublished ? 'WHERE statut = \'publie\'' : '';
+    const where = onlyPublished ? "WHERE status = 'published'" : '';
     const [rows] = await db.pool.execute(
-      `SELECT id, titre, statut, created_at, updated_at
+      `SELECT id, title, status, created_at, updated_at
          FROM announcements
          ${where}
          ORDER BY created_at DESC`
@@ -40,9 +40,9 @@ const Announcement = {
       : db.pool.execute.bind(db.pool);
 
     const [rows] = await runQuery(
-      `SELECT id, titre, contenu, created_at
+      `SELECT id, title, content, created_at
          FROM announcements
-         WHERE statut = 'publie'
+         WHERE status = 'published'
          ORDER BY created_at DESC
          LIMIT ${safeLimit}`
     );
@@ -67,11 +67,11 @@ const Announcement = {
    * @param {{ titre: string, contenu: string, statut: string }} data
    * @returns {Promise<number>} ID de la nouvelle annonce
    */
-  async create({ titre, contenu, statut = 'brouillon' }) {
+  async create({ title, content, status = 'draft' }) {
     const [result] = await db.pool.execute(
-      `INSERT INTO announcements (titre, contenu, statut)
+      `INSERT INTO announcements (title, content, status)
        VALUES (?, ?, ?)`,
-      [titre.trim(), contenu, statut]
+      [title.trim(), content, status]
     );
     return result.insertId;
   },
@@ -82,12 +82,12 @@ const Announcement = {
    * @param {{ titre: string, contenu: string, statut: string }} data
    * @returns {Promise<boolean>}
    */
-  async update(id, { titre, contenu, statut }) {
+  async update(id, { title, content, status }) {
     const [result] = await db.pool.execute(
       `UPDATE announcements
-          SET titre = ?, contenu = ?, statut = ?, updated_at = NOW()
+          SET title = ?, content = ?, status = ?, updated_at = NOW()
         WHERE id = ?`,
-      [titre.trim(), contenu, statut, id]
+      [title.trim(), content, status, id]
     );
     return result.affectedRows > 0;
   },
@@ -122,7 +122,7 @@ const Announcement = {
    */
   async countPublished() {
     const [rows] = await db.pool.execute(
-      "SELECT COUNT(*) AS total FROM announcements WHERE statut = 'publie'"
+      "SELECT COUNT(*) AS total FROM announcements WHERE status = 'published'"
     );
     return rows[0].total;
   },

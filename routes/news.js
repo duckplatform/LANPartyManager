@@ -47,7 +47,7 @@ router.get('/:id', async (req, res) => {
     const announcement = await Announcement.findById(id);
 
     // Annonce inexistante ou brouillon non accessible au public
-    if (!announcement || announcement.statut !== 'publie') {
+    if (!announcement || announcement.status !== 'published') {
       return res.status(404).render('errors/404', {
         title:     'Page introuvable',
         pageClass: 'page-error',
@@ -55,10 +55,10 @@ router.get('/:id', async (req, res) => {
     }
 
     // Rendu Markdown sécurisé
-    announcement.contenuHtml = renderMarkdown(announcement.contenu);
+    announcement.contentHtml = renderMarkdown(announcement.content);
 
     res.render('news/show', {
-      title:        announcement.titre,
+      title:        announcement.title,
       pageClass:    'page-news',
       announcement,
     });

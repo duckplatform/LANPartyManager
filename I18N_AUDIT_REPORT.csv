@@ -1,0 +1,35 @@
+Status,Fichier Vue,Section,Priorité,Notes Techniques
+✅,views/errors/404.ejs,Erreurs,Haute,COMPLÉTÉ - Page 404 i18nnisée
+✅,views/badge.ejs,Badge,Très Haute,COMPLÉTÉ - Badge électronique
+✅,views/profile.ejs,Profil,Très Haute,COMPLÉTÉ - Onglets profil + badges admin/mod/member
+✅,views/admin/dashboard.ejs,Admin,Très Haute,COMPLÉTÉ - Stats + table utilisateurs
+✅,views/admin/games/index.ejs,Admin,Haute,COMPLÉTÉ - Liste des jeux CRUD
+✅,views/admin/events/index.ejs,Admin,Très Haute,COMPLÉTÉ - Liste événements avec statuts
+✅,views/admin/news/index.ejs,Admin,Haute,COMPLÉTÉ - Gestion annonces
+✅,views/events/index.ejs,Public,Très Haute,COMPLÉTÉ - Page événements publique
+✅,views/news/index.ejs,Public,Haute,COMPLÉTÉ - Actualités publiques
+✅,views/moderator/index.ejs,Moderation,Haute,COMPLÉTÉ - Contrôle billets
+⏳,views/index.ejs,Homepage,Très Haute,EN COURS - Texte héros + inscriptions chrono
+⏳,views/admin/_sidebar.ejs,Admin,Haute,À TRAITER - Navigation admin (Members,Annonces,Jeux,etc)
+⏳,views/admin/settings.ejs,Admin,Haute,À TRAITER - Paramètres identité org,slogan,logo
+⏳,views/admin/events/form.ejs,Admin,Haute,À TRAITER - Création/édition événement
+⏳,views/admin/events/registrations.ejs,Admin,Moyenne,À TRAITER - Liste des inscrits à un événement
+⏳,views/admin/rooms/create.ejs,Admin,Haute,À TRAITER - Création salle + types console/simulation
+⏳,views/admin/rooms/edit.ejs,Admin,Haute,À TRAITER - Édition salle (similaire create)
+⏳,views/admin/games/create.ejs,Admin,Moyenne,À TRAITER - Création jeu
+⏳,views/admin/games/edit.ejs,Admin,Moyenne,À TRAITER - Édition jeu
+⏳,views/admin/news/form.ejs,Admin,Moyenne,À TRAITER - Création/édition annonce avec markdown
+⏳,views/partials/footer.ejs,Partiel,Moyenne,PARTIELLEMENT FAIT - Reste les sociaux + liens
+⏳,views/partials/flash.ejs,Partiel,Basse,À TRAITER - Messages flash
+⏳,views/events/show.ejs,Public,Très Haute,À TRAITER - Page événement détail + classement
+⏳,views/news/show.ejs,Public,Moyenne,À TRAITER - Page article détail
+⏳,views/moderator/scan.ejs,Moderation,Haute,À TRAITER - Scan badges QR code
+⏳,views/moderator/verify.ejs,Moderation,Moyenne,À TRAITER - Vérification tickets
+⏳,views/moderator/battles/index.ejs,Moderation,Très Haute,À TRAITER - Gestion rencontres
+⏳,views/moderator/battles/announce.ejs,Moderation,Haute,À TRAITER - Annonce rencontre
+⏳,views/moderator/battles/create-step1.ejs,Moderation,Haute,À TRAITER - Création rencontre step1
+⏳,views/moderator/battles/create-step2.ejs,Moderation,Haute,À TRAITER - Création rencontre step2
+⏳,views/auth/login.ejs,Auth,Moyenne,À TRAITER - Formulaire connexion
+⏳,views/auth/register.ejs,Auth,Moyenne,À TRAITER - Formulaire inscription
+⏳,views/auth/discord-complete.ejs,Auth,Basse,À TRAITER - Complétion profil Discord
+⏳,views/admin/discord-test.ejs,Admin,Basse,À TRAITER - Test Discord (optionnel)

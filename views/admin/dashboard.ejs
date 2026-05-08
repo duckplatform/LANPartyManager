@@ -8,9 +8,9 @@
       <div class="admin-header">
         <div>
           <h1 class="admin-title">
-            <i class="fas fa-shield-halved"></i> Panneau d'administration
+            <i class="fas fa-shield-halved"></i> <%= t('admin.panel_title') %>
           </h1>
-          <p class="admin-subtitle">Gestion des membres de l'association</p>
+          <p class="admin-subtitle"><%= t('admin.member_management') %></p>
         </div>
       </div>
 
@@ -19,49 +19,49 @@
           <div class="stat-icon stat-icon--total"><i class="fas fa-users"></i></div>
           <div class="stat-info">
             <span class="stat-number"><%= totalUsers %></span>
-            <span class="stat-label">Membres total</span>
+            <span class="stat-label"><%= t('admin.total_members') %></span>
           </div>
         </a>
         <a href="/admin#users-table" class="stat-card stat-card--link" aria-label="Voir les administrateurs">
           <div class="stat-icon stat-icon--admin"><i class="fas fa-shield-halved"></i></div>
           <div class="stat-info">
             <span class="stat-number"><%= stats.admins %></span>
-            <span class="stat-label">Administrateurs</span>
+            <span class="stat-label"><%= t('admin.total_admins') %></span>
           </div>
         </a>
         <a href="/admin#users-table" class="stat-card stat-card--link" aria-label="Voir les modérateurs">
           <div class="stat-icon stat-icon--moderator"><i class="fas fa-user-shield"></i></div>
           <div class="stat-info">
             <span class="stat-number"><%= stats.moderators %></span>
-            <span class="stat-label">Modérateurs</span>
+            <span class="stat-label"><%= t('admin.total_moderators') %></span>
           </div>
         </a>
         <a href="/admin#users-table" class="stat-card stat-card--link" aria-label="Voir les membres standard">
           <div class="stat-icon stat-icon--member"><i class="fas fa-user"></i></div>
           <div class="stat-info">
             <span class="stat-number"><%= stats.members %></span>
-            <span class="stat-label">Membres</span>
+            <span class="stat-label"><%= t('admin.total_members_label') %></span>
           </div>
         </a>
         <a href="/admin/news" class="stat-card stat-card--link" aria-label="Accéder au CRUD des annonces">
           <div class="stat-icon stat-icon--news"><i class="fas fa-newspaper"></i></div>
           <div class="stat-info">
             <span class="stat-number"><%= totalAnnouncements %></span>
-            <span class="stat-label">Annonces</span>
+            <span class="stat-label"><%= t('admin.announcements_count') %></span>
           </div>
         </a>
         <a href="/admin/events" class="stat-card stat-card--link" aria-label="Accéder au CRUD des événements">
           <div class="stat-icon stat-icon--total"><i class="fas fa-calendar-days"></i></div>
           <div class="stat-info">
             <span class="stat-number"><%= totalEvents %></span>
-            <span class="stat-label">Événements</span>
+            <span class="stat-label"><%= t('admin.events_count') %></span>
           </div>
         </a>
       </div>
 
       <div class="card admin-users-card" id="users-table">
         <div class="card-header admin-card-header">
-          <h2><i class="fas fa-users-gear"></i> Liste des utilisateurs</h2>
+          <h2><i class="fas fa-users-gear"></i> <%= t('admin.users_table_title') %></h2>
         </div>
         <div class="card-body">
           <div class="table-responsive">
@@ -69,18 +69,18 @@
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Pseudo</th>
-                  <th>Nom complet</th>
-                  <th>Email</th>
-                  <th>Rôle</th>
-                  <th>Inscription</th>
-                  <th>Actions</th>
+                  <th><%= t('admin.table_user_pseudo') %></th>
+                  <th><%= t('admin.table_full_name') %></th>
+                  <th><%= t('admin.table_email') %></th>
+                  <th><%= t('admin.table_role') %></th>
+                  <th><%= t('admin.table_registration_date') %></th>
+                  <th><%= t('common.actions') %></th>
                 </tr>
               </thead>
               <tbody>
                 <% if (users.length === 0) { %>
                   <tr>
-                    <td colspan="7" class="table-empty">Aucun utilisateur trouvé.</td>
+                    <td colspan="7" class="table-empty"><%= t('admin.no_users_found') %></td>
                   </tr>
                 <% } else { %>
                   <% users.forEach(function(u) { %>
@@ -88,13 +88,13 @@
                       <td class="td-id">#<%= u.id %></td>
                       <td>
                         <span class="user-pseudo">
-                          <i class="fas fa-circle-user"></i> <%= u.pseudo %>
+                          <i class="fas fa-circle-user"></i> <%= u.username %>
                         </span>
                         <% if (u.id === currentUser.id) { %>
-                          <span class="badge badge--you">Vous</span>
+                          <span class="badge badge--you"><%= t('admin.table_you') %></span>
                         <% } %>
                       </td>
-                      <td><%= u.prenom %> <%= u.nom %></td>
+                      <td><%= u.first_name %> <%= u.last_name %></td>
                       <td><a href="mailto:<%= u.email %>" class="link-muted"><%= u.email %></a></td>
                       <td>
                         <% if (u.is_admin) { %>
@@ -106,7 +106,7 @@
                         <% } %>
                       </td>
                       <td class="td-date">
-                        <%= new Date(u.created_at).toLocaleDateString('fr-FR') %>
+                        <%= new Date(u.created_at).toLocaleDateString(locale) %>
                       </td>
                       <td class="td-actions">
                         <a href="/admin/users/<%= u.id %>/badge" class="btn btn--xs btn--ghost" title="Voir le badge membre">
@@ -119,7 +119,7 @@
                             <button type="submit"
                                     class="btn btn--xs <%= u.is_admin ? 'btn--warning' : 'btn--info' %>"
                                     title="<%= u.is_admin ? 'Retirer les droits admin' : 'Promouvoir en admin' %>"
-                                    onclick="return confirm('<%= u.is_admin ? 'Retirer les droits administrateur à ' + u.pseudo + ' ?' : 'Promouvoir ' + u.pseudo + ' en administrateur ?' %>')">
+                                    onclick="return confirm('<%= u.is_admin ? 'Retirer les droits administrateur à ' + u.username + ' ?' : 'Promouvoir ' + u.username + ' en administrateur ?' %>')">
                               <i class="fas <%= u.is_admin ? 'fa-user-minus' : 'fa-user-shield' %>"></i>
                               <%= u.is_admin ? 'Rétrograder Admin' : 'Promouvoir Admin' %>
                             </button>
@@ -131,7 +131,7 @@
                             <button type="submit"
                                     class="btn btn--xs <%= u.is_moderator ? 'btn--warning' : 'btn--secondary' %>"
                                     title="<%= u.is_moderator ? 'Retirer le rôle modérateur' : 'Attribuer le rôle modérateur' %>"
-                                    onclick="return confirm('<%= u.is_moderator ? 'Retirer le rôle modérateur de ' + u.pseudo + ' ?' : 'Attribuer le rôle modérateur à ' + u.pseudo + ' ?' %>')">
+                                    onclick="return confirm('<%= u.is_moderator ? 'Retirer le rôle modérateur de ' + u.username + ' ?' : 'Attribuer le rôle modérateur à ' + u.username + ' ?' %>')">
                               <i class="fas <%= u.is_moderator ? 'fa-user-minus' : 'fa-user-check' %>"></i>
                               <%= u.is_moderator ? 'Rétrograder Modo' : 'Promouvoir Modo' %>
                             </button>
@@ -143,7 +143,7 @@
                             <button type="submit"
                                     class="btn btn--xs btn--danger"
                                     title="Supprimer l'utilisateur"
-                                    onclick="return confirm('Supprimer définitivement <%= u.pseudo %> ?')">
+                                    onclick="return confirm('Supprimer définitivement <%= u.username %> ?')">
                               <i class="fas fa-trash"></i> Supprimer
                             </button>
                           </form>

@@ -6,14 +6,14 @@
       <i class="fas fa-circle-user"></i>
     </div>
     <div class="profile-info">
-      <h1 class="profile-name"><%= user.pseudo %></h1>
-      <p class="profile-meta"><%= user.prenom %> <%= user.nom %></p>
+      <h1 class="profile-name"><%= user.username %></h1>
+      <p class="profile-meta"><%= user.first_name %> <%= user.last_name %></p>
       <% if (user.is_admin) { %>
-        <span class="badge badge--admin"><i class="fas fa-shield-halved"></i> Administrateur</span>
+        <span class="badge badge--admin"><i class="fas fa-shield-halved"></i> <%= t('profile.badge_admin') %></span>
       <% } else if (user.is_moderator) { %>
-        <span class="badge badge--moderator"><i class="fas fa-user-shield"></i> Modérateur</span>
+        <span class="badge badge--moderator"><i class="fas fa-user-shield"></i> <%= t('profile.badge_moderator') %></span>
       <% } else { %>
-        <span class="badge badge--member"><i class="fas fa-user"></i> Membre</span>
+        <span class="badge badge--member"><i class="fas fa-user"></i> <%= t('profile.badge_member') %></span>
       <% } %>
     </div>
   </div>
@@ -22,19 +22,19 @@
   <div class="profile-tabs" role="tablist">
     <button class="tab-btn<%= (typeof activeTab === 'undefined' || activeTab === 'info') ? ' active' : '' %>"
             role="tab" data-tab="tab-info" aria-selected="<%= (typeof activeTab === 'undefined' || activeTab === 'info') ? 'true' : 'false' %>">
-      <i class="fas fa-user-pen"></i> Informations
+      <i class="fas fa-user-pen"></i> <%= t('profile.tab_info') %>
     </button>
     <button class="tab-btn<%= (typeof activeTab !== 'undefined' && activeTab === 'password') ? ' active' : '' %>"
             role="tab" data-tab="tab-password" aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'password') ? 'true' : 'false' %>">
-      <i class="fas fa-key"></i> Mot de passe
+      <i class="fas fa-key"></i> <%= t('profile.tab_password') %>
     </button>
     <button class="tab-btn<%= (typeof activeTab !== 'undefined' && activeTab === 'events') ? ' active' : '' %>"
             role="tab" data-tab="tab-events" aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'events') ? 'true' : 'false' %>">
-      <i class="fas fa-calendar-days"></i> Événements
+      <i class="fas fa-calendar-days"></i> <%= t('profile.tab_events') %>
     </button>
     <button class="tab-btn<%= (typeof activeTab !== 'undefined' && activeTab === 'badge') ? ' active' : '' %>"
             role="tab" data-tab="tab-badge" aria-selected="<%= (typeof activeTab !== 'undefined' && activeTab === 'badge') ? 'true' : 'false' %>">
-      <i class="fas fa-id-card"></i> Mon badge
+      <i class="fas fa-id-card"></i> <%= t('profile.tab_badge') %>
     </button>
   </div>
 
@@ -59,23 +59,23 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="nom" class="form-label">Nom</label>
-              <input type="text" id="nom" name="nom" class="form-input"
-                     value="<%= user.nom || '' %>" required maxlength="100" />
+              <label for="last_name" class="form-label">Nom</label>
+              <input type="text" id="last_name" name="last_name" class="form-input"
+                value="<%= user.last_name || '' %>" required maxlength="100" />
             </div>
             <div class="form-group">
-              <label for="prenom" class="form-label">Prénom</label>
-              <input type="text" id="prenom" name="prenom" class="form-input"
-                     value="<%= user.prenom || '' %>" required maxlength="100" />
+              <label for="first_name" class="form-label">Prénom</label>
+              <input type="text" id="first_name" name="first_name" class="form-input"
+                value="<%= user.first_name || '' %>" required maxlength="100" />
             </div>
           </div>
 
           <div class="form-group">
-            <label for="pseudo" class="form-label">
+                 <label for="username" class="form-label">
               <i class="fas fa-gamepad"></i> Pseudo (jeu ou Discord)
             </label>
-            <input type="text" id="pseudo" name="pseudo" class="form-input"
-                   value="<%= user.pseudo || '' %>" required minlength="2" maxlength="50" />
+                 <input type="text" id="username" name="username" class="form-input"
+                   value="<%= user.username || '' %>" required minlength="2" maxlength="50" />
             <small class="form-hint">Ce pseudo est utilise pour identifier les joueurs dans les annonces de rencontres Discord.</small>
           </div>
 
@@ -175,18 +175,18 @@
         <h2><i class="fas fa-calendar-star"></i> Prochain événement</h2>
       </div>
       <div class="card-body">
-        <h3 style="margin-bottom: var(--space-sm);"><%= activeEvent.nom %></h3>
+        <h3 style="margin-bottom: var(--space-sm);"><%= activeEvent.name %></h3>
         <p>
           <i class="fas fa-calendar-alt"></i>
-          <%= new Date(activeEvent.date_heure).toLocaleDateString('fr-FR', {
+          <%= new Date(activeEvent.start_at).toLocaleDateString(locale, {
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
           }) %>
           à
-          <%= new Date(activeEvent.date_heure).toLocaleTimeString('fr-FR', {
+          <%= new Date(activeEvent.start_at).toLocaleTimeString(locale, {
             hour: '2-digit', minute: '2-digit'
           }) %>
         </p>
-        <p><i class="fas fa-location-dot"></i> <%= activeEvent.lieu %></p>
+        <p><i class="fas fa-location-dot"></i> <%= activeEvent.location %></p>
 
         <% if (isRegistered) { %>
           <div class="event-registered-badge" style="margin: var(--space-md) 0;">
@@ -256,24 +256,24 @@
               <tbody>
                 <% userRegistrations.forEach(function(r) { %>
                   <tr>
-                    <td><strong><%= r.nom %></strong></td>
+                    <td><strong><%= r.name %></strong></td>
                     <td class="td-date">
-                      <%= new Date(r.date_heure).toLocaleDateString('fr-FR', {
+                      <%= new Date(r.start_at).toLocaleDateString(locale, {
                         day: '2-digit', month: '2-digit', year: 'numeric'
                       }) %>
                     </td>
-                    <td><%= r.lieu %></td>
+                    <td><%= r.location %></td>
                     <td>
-                      <% if (r.statut === 'planifie') { %>
+                      <% if (r.status === 'planned') { %>
                         <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> Planifié</span>
-                      <% } else if (r.statut === 'en_cours') { %>
+                      <% } else if (r.status === 'in_progress') { %>
                         <span class="badge badge--member"><i class="fas fa-circle-play"></i> En cours</span>
                       <% } else { %>
                         <span class="badge badge--draft"><i class="fas fa-circle-check"></i> Terminé</span>
                       <% } %>
                     </td>
                     <td class="td-date">
-                      <%= new Date(r.created_at).toLocaleDateString('fr-FR') %>
+                      <%= new Date(r.created_at).toLocaleDateString(locale) %>
                     </td>
                   </tr>
                 <% }); %>
@@ -318,12 +318,12 @@
     <div class="card-body profile-meta-info">
       <div class="meta-item">
         <span class="meta-label"><i class="fas fa-calendar-plus"></i> Membre depuis</span>
-        <span class="meta-value"><%= new Date(user.created_at).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+        <span class="meta-value"><%= new Date(user.created_at).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
       </div>
       <% if (user.updated_at) { %>
       <div class="meta-item">
         <span class="meta-label"><i class="fas fa-pen-to-square"></i> Dernière modification</span>
-        <span class="meta-value"><%= new Date(user.updated_at).toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+        <span class="meta-value"><%= new Date(user.updated_at).toLocaleDateString(locale, { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
       </div>
       <% } %>
     </div>

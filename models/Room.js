@@ -9,10 +9,10 @@
 const db = require('../config/database');
 
 /** Types de salles autorisés */
-const TYPES_SALLE = ['console', 'simulation'];
+const ROOM_TYPES = ['console', 'simulation'];
 
 /** Types de rencontre autorisés */
-const TYPES_RENCONTRE = ['1v1', '2v2', 'solo'];
+const MATCH_TYPES = ['1v1', '2v2', 'solo'];
 
 /**
  * Noms de salles auto-générés, inspirés de jeux vidéo iconiques.
@@ -37,14 +37,14 @@ const Room = {
    */
   async findByEvent(eventId) {
     const [rows] = await db.pool.execute(
-      `SELECT r.id, r.nom, r.type, r.type_rencontre, r.actif,
+      `SELECT r.id, r.name, r.type, r.match_type, r.is_active,
               r.event_id, r.created_at, r.updated_at,
               (SELECT COUNT(*) FROM battles b
                 WHERE b.room_id = r.id
-                  AND b.statut IN ('planifie','installation','en_cours')) AS battles_actives
+                  AND b.status IN ('planned','setup','in_progress')) AS battles_actives
          FROM rooms r
         WHERE r.event_id = ?
-        ORDER BY r.nom ASC`,
+        ORDER BY r.name ASC`,
       [eventId]
     );
     return rows;
@@ -70,20 +70,20 @@ const Room = {
    * @param {'1v1'|'2v2'} typeRencontre
    * @returns {Promise<Array>}
    */
-  async findAvailable(eventId, typeRencontre) {
+  async findAvailable(eventId, matchType) {
     const [rows] = await db.pool.execute(
-      `SELECT r.id, r.nom, r.type, r.type_rencontre, r.actif
+      `SELECT r.id, r.name, r.type, r.match_type, r.is_active
          FROM rooms r
         WHERE r.event_id = ?
-          AND r.type_rencontre = ?
-          AND r.actif = 1
+          AND r.match_type = ?
+          AND r.is_active = 1
           AND NOT EXISTS (
             SELECT 1 FROM battles b
              WHERE b.room_id = r.id
-               AND b.statut IN ('planifie', 'installation', 'en_cours')
+               AND b.status IN ('planned', 'setup', 'in_progress')
           )
-        ORDER BY r.nom ASC`,
-      [eventId, typeRencontre]
+        ORDER BY r.name ASC`,
+      [eventId, matchType]
     );
     return rows;
   },
@@ -97,10 +97,10 @@ const Room = {
    */
   async generateName(eventId) {
     const [rows] = await db.pool.execute(
-      'SELECT nom FROM rooms WHERE event_id = ?',
+      'SELECT name FROM rooms WHERE event_id = ?',
       [eventId]
     );
-    const usedNames = new Set(rows.map(r => r.nom));
+    const usedNames = new Set(rows.map(r => r.name));
 
     for (const name of ROOM_NAMES) {
       if (!usedNames.has(name)) return name;
@@ -117,17 +117,17 @@ const Room = {
    * @param {{ nom?: string, type: string, type_rencontre: string, actif?: number, event_id: number }} data
    * @returns {Promise<number>} ID de la nouvelle salle
    */
-  async create({ nom, type = 'console', type_rencontre = '1v1', actif = 1, event_id }) {
-    const typeFinal = TYPES_SALLE.includes(type) ? type : 'console';
-    const typeRFinal = TYPES_RENCONTRE.includes(type_rencontre) ? type_rencontre : '1v1';
+  async create({ name, type = 'console', match_type = '1v1', is_active = 1, event_id }) {
+    const typeFinal = ROOM_TYPES.includes(type) ? type : 'console';
+    const typeRFinal = MATCH_TYPES.includes(match_type) ? match_type : '1v1';
 
     // Génère un nom automatique si non fourni
-    const nomFinal = nom ? nom.trim() : await Room.generateName(event_id);
+    const nameFinal = name ? name.trim() : await Room.generateName(event_id);
 
     const [result] = await db.pool.execute(
-      `INSERT INTO rooms (nom, type, type_rencontre, actif, event_id)
+      `INSERT INTO rooms (name, type, match_type, is_active, event_id)
        VALUES (?, ?, ?, ?, ?)`,
-      [nomFinal, typeFinal, typeRFinal, actif ? 1 : 0, event_id]
+      [nameFinal, typeFinal, typeRFinal, is_active ? 1 : 0, event_id]
     );
     return result.insertId;
   },
@@ -138,14 +138,14 @@ const Room = {
    * @param {{ nom: string, type: string, type_rencontre: string, actif: number }} data
    * @returns {Promise<boolean>}
    */
-  async update(id, { nom, type = 'console', type_rencontre = '1v1', actif = 1 }) {
-    const typeFinal = TYPES_SALLE.includes(type) ? type : 'console';
-    const typeRFinal = TYPES_RENCONTRE.includes(type_rencontre) ? type_rencontre : '1v1';
+  async update(id, { name, type = 'console', match_type = '1v1', is_active = 1 }) {
+    const typeFinal = ROOM_TYPES.includes(type) ? type : 'console';
+    const typeRFinal = MATCH_TYPES.includes(match_type) ? match_type : '1v1';
     const [result] = await db.pool.execute(
       `UPDATE rooms
-          SET nom = ?, type = ?, type_rencontre = ?, actif = ?, updated_at = NOW()
+          SET name = ?, type = ?, match_type = ?, is_active = ?, updated_at = NOW()
         WHERE id = ?`,
-      [nom.trim(), typeFinal, typeRFinal, actif ? 1 : 0, id]
+      [name.trim(), typeFinal, typeRFinal, is_active ? 1 : 0, id]
     );
     return result.affectedRows > 0;
   },
@@ -156,10 +156,10 @@ const Room = {
    * @param {boolean} actif
    * @returns {Promise<boolean>}
    */
-  async setActif(id, actif) {
+  async setActive(id, isActive) {
     const [result] = await db.pool.execute(
-      'UPDATE rooms SET actif = ?, updated_at = NOW() WHERE id = ?',
-      [actif ? 1 : 0, id]
+      'UPDATE rooms SET is_active = ?, updated_at = NOW() WHERE id = ?',
+      [isActive ? 1 : 0, id]
     );
     return result.affectedRows > 0;
   },
@@ -178,9 +178,9 @@ const Room = {
   },
 
   /** Types de salles autorisés */
-  TYPES_SALLE,
+  ROOM_TYPES,
   /** Types de rencontre autorisés */
-  TYPES_RENCONTRE,
+  MATCH_TYPES,
   /** Liste des noms de salles */
   ROOM_NAMES,
 };

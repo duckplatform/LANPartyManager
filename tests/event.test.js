@@ -33,8 +33,8 @@ describe('Event Model', function () {
   describe('findAll()', function () {
     it('doit retourner tous les événements', async function () {
       const fakeRows = [
-        { id: 1, nom: 'LAN Spring', date_heure: new Date(), lieu: 'Paris', statut: 'planifie' },
-        { id: 2, nom: 'LAN Summer', date_heure: new Date(), lieu: 'Lyon',  statut: 'termine'  },
+        { id: 1, name: 'LAN Spring', start_at: new Date(), location: 'Paris', status: 'planned' },
+        { id: 2, name: 'LAN Summer', start_at: new Date(), location: 'Lyon',  status: 'ended'  },
       ];
       poolStub.execute.resolves([fakeRows]);
 
@@ -42,7 +42,7 @@ describe('Event Model', function () {
       expect(result).to.deep.equal(fakeRows);
       expect(poolStub.execute.calledOnce).to.be.true;
       const query = poolStub.execute.firstCall.args[0];
-      expect(query).to.include('statut');
+      expect(query).to.include('status');
     });
   });
 
@@ -50,7 +50,7 @@ describe('Event Model', function () {
 
   describe('findById()', function () {
     it('doit retourner un événement si trouvé', async function () {
-      const fakeEvent = { id: 1, nom: 'LAN Test', date_heure: new Date(), lieu: 'Paris', statut: 'planifie' };
+      const fakeEvent = { id: 1, name: 'LAN Test', start_at: new Date(), location: 'Paris', status: 'planned' };
       poolStub.execute.resolves([[fakeEvent]]);
 
       const result = await Event.findById(1);
@@ -68,18 +68,18 @@ describe('Event Model', function () {
 
   describe('findActive()', function () {
     it('doit prioritiser l\'événement en_cours', async function () {
-      const live = { id: 1, nom: 'LAN Live', date_heure: new Date(), lieu: 'Paris', statut: 'en_cours' };
+      const live = { id: 1, name: 'LAN Live', start_at: new Date(), location: 'Paris', status: 'in_progress' };
       poolStub.execute.resolves([[live]]);
 
       const result = await Event.findActive();
       expect(result).to.deep.equal(live);
       const query = poolStub.execute.firstCall.args[0];
-      expect(query).to.include('en_cours');
-      expect(query).to.include('planifie');
+      expect(query).to.include('in_progress');
+      expect(query).to.include('planned');
     });
 
     it('doit retourner un événement planifie si aucun n\'est en_cours', async function () {
-      const upcoming = { id: 2, nom: 'LAN Upcoming', date_heure: new Date(Date.now() + 86400000), lieu: 'Lyon', statut: 'planifie' };
+      const upcoming = { id: 2, name: 'LAN Upcoming', start_at: new Date(Date.now() + 86400000), location: 'Lyon', status: 'planned' };
       poolStub.execute.resolves([[upcoming]]);
 
       const result = await Event.findActive();
@@ -100,10 +100,10 @@ describe('Event Model', function () {
       poolStub.execute.resolves([{ insertId: 42 }]);
 
       const id = await Event.create({
-        nom:        'LAN Hiver',
-        date_heure: '2025-12-20 18:00:00',
-        lieu:       'Salle des fêtes',
-        statut:     'planifie',
+        name:             'LAN Hiver',
+        start_at: '2025-12-20 18:00:00',
+        location:       'Salle des fêtes',
+        status:     'planned',
       });
 
       expect(id).to.equal(42);
@@ -112,36 +112,36 @@ describe('Event Model', function () {
       expect(query).to.include('INSERT INTO events');
     });
 
-    it('doit utiliser "planifie" par défaut si statut absent', async function () {
+    it('doit utiliser "planned" par défaut si status absent', async function () {
       poolStub.execute.resolves([{ insertId: 5 }]);
 
       await Event.create({
-        nom:        'LAN Défaut',
-        date_heure: '2025-01-01 10:00:00',
-        lieu:       'Quelque part',
+        name:             'LAN Défaut',
+        start_at: '2025-01-01 10:00:00',
+        location:       'Quelque part',
       });
 
       const args = poolStub.execute.firstCall.args[1];
-      expect(args[4]).to.equal('planifie');
+      expect(args[4]).to.equal('planned');
     });
 
-    it('doit rejeter un statut invalide et utiliser "planifie"', async function () {
+    it('doit rejeter un status invalide et utiliser "planned"', async function () {
       poolStub.execute.resolves([{ insertId: 7 }]);
 
       await Event.create({
-        nom:        'LAN Invalide',
-        date_heure: '2025-01-01 10:00:00',
-        lieu:       'Quelque part',
-        statut:     'inexistant',
+        name:             'LAN Invalide',
+        start_at: '2025-01-01 10:00:00',
+        location:       'Quelque part',
+        status:     'inexistant',
       });
 
       const args = poolStub.execute.firstCall.args[1];
-      expect(args[4]).to.equal('planifie');
+      expect(args[4]).to.equal('planned');
     });
 
     it('doit trim le nom et le lieu', async function () {
       poolStub.execute.resolves([{ insertId: 1 }]);
-      await Event.create({ nom: '  LAN  ', date_heure: '2025-01-01', lieu: '  Paris  ' });
+      await Event.create({ name: '  LAN  ', start_at: '2025-01-01', location: '  Paris  ' });
       const args = poolStub.execute.firstCall.args[1];
       expect(args[0]).to.equal('LAN');
       expect(args[2]).to.equal('Paris');
@@ -151,10 +151,10 @@ describe('Event Model', function () {
       poolStub.execute.resolves([{ insertId: 11 }]);
 
       await Event.create({
-        nom: 'LAN Discord',
-        date_heure: '2026-01-01 12:00:00',
-        lieu: 'Paris',
-        statut: 'planifie',
+        name: 'LAN Discord',
+        start_at: '2026-01-01 12:00:00',
+        location: 'Paris',
+        status: 'planned',
         discord_channel_id: '123456789012345678',
       });
 
@@ -166,10 +166,10 @@ describe('Event Model', function () {
       poolStub.execute.resolves([{ insertId: 12 }]);
 
       await Event.create({
-        nom: 'LAN Sans Canal',
-        date_heure: '2026-01-01 12:00:00',
-        lieu: 'Paris',
-        statut: 'planifie',
+        name: 'LAN Sans Canal',
+        start_at: '2026-01-01 12:00:00',
+        location: 'Paris',
+        status: 'planned',
         discord_channel_id: '   ',
       });
 
@@ -178,15 +178,15 @@ describe('Event Model', function () {
     });
 
     it('doit refuser la creation d\'un 2e evenement en_cours', async function () {
-      poolStub.execute.onFirstCall().resolves([[{ id: 99, nom: 'LAN Active' }]]);
+      poolStub.execute.onFirstCall().resolves([[{ id: 99, name: 'LAN Active' }]]);
 
       let thrown;
       try {
         await Event.create({
-          nom: 'LAN Concurrent',
-          date_heure: '2026-01-01 10:00:00',
-          lieu: 'Paris',
-          statut: 'en_cours',
+          name: 'LAN Concurrent',
+          start_at: '2026-01-01 10:00:00',
+          location: 'Paris',
+          status: 'in_progress',
         });
       } catch (err) {
         thrown = err;
@@ -205,10 +205,10 @@ describe('Event Model', function () {
       poolStub.execute.resolves([{ affectedRows: 1 }]);
 
       const result = await Event.update(1, {
-        nom:        'LAN Modifié',
-        date_heure: '2025-06-15 14:00:00',
-        lieu:       'Lyon',
-        statut:     'planifie',
+        name:             'LAN Modifié',
+        start_at: '2025-06-15 14:00:00',
+        location:       'Lyon',
+        status:     'planned',
       });
       expect(result).to.be.true;
       // Une seule requête UPDATE
@@ -216,25 +216,25 @@ describe('Event Model', function () {
       const query = poolStub.execute.firstCall.args[0];
       expect(query).to.include('UPDATE events');
       expect(query).to.include('discord_channel_id');
-      expect(query).to.include('statut');
+      expect(query).to.include('status');
     });
 
     it('doit retourner false si aucune ligne affectée', async function () {
       poolStub.execute.resolves([{ affectedRows: 0 }]);
-      const result = await Event.update(999, { nom: 'X', date_heure: '2025-01-01', lieu: 'Y', statut: 'planifie', discord_channel_id: null });
+      const result = await Event.update(999, { name: 'X', start_at: '2025-01-01', location: 'Y', status: 'planned', discord_channel_id: null });
       expect(result).to.be.false;
     });
 
     it('doit refuser de passer en_cours si un autre evenement est deja actif', async function () {
-      poolStub.execute.onFirstCall().resolves([[{ id: 2, nom: 'LAN Déjà Active' }]]);
+      poolStub.execute.onFirstCall().resolves([[{ id: 2, name: 'LAN Déjà Active' }]]);
 
       let thrown;
       try {
         await Event.update(1, {
-          nom: 'LAN A',
-          date_heure: '2026-01-02 12:00:00',
-          lieu: 'Lyon',
-          statut: 'en_cours',
+          name: 'LAN A',
+          start_at: '2026-01-02 12:00:00',
+          location: 'Lyon',
+          status: 'in_progress',
         });
       } catch (err) {
         thrown = err;
@@ -250,10 +250,10 @@ describe('Event Model', function () {
       poolStub.execute.onSecondCall().resolves([{ affectedRows: 1 }]);
 
       const result = await Event.update(1, {
-        nom: 'LAN A',
-        date_heure: '2026-01-02 12:00:00',
-        lieu: 'Lyon',
-        statut: 'en_cours',
+        name: 'LAN A',
+        start_at: '2026-01-02 12:00:00',
+        location: 'Lyon',
+        status: 'in_progress',
       });
 
       expect(result).to.be.true;
@@ -264,10 +264,10 @@ describe('Event Model', function () {
       poolStub.execute.resolves([{ affectedRows: 1 }]);
 
       await Event.update(1, {
-        nom: 'LAN A',
-        date_heure: '2026-01-02 12:00:00',
-        lieu: 'Lyon',
-        statut: 'planifie',
+        name: 'LAN A',
+        start_at: '2026-01-02 12:00:00',
+        location: 'Lyon',
+        status: 'planned',
         discord_channel_id: ' 123456789012345678 ',
       });
 

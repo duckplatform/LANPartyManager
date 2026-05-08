@@ -7,8 +7,8 @@
       <div class="auth-icon">
         <i class="fas fa-user-plus"></i>
       </div>
-      <h1 class="auth-title">Inscription</h1>
-      <p class="auth-subtitle">Rejoignez notre communauté gaming</p>
+      <h1 class="auth-title"><%= t('auth.register') %></h1>
+      <p class="auth-subtitle"><%= t('auth.subtitle_register') %></p>
     </div>
 
     <!-- Erreurs de validation -->
@@ -26,15 +26,15 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label for="nom" class="form-label">
-            <i class="fas fa-id-card"></i> Nom
+          <label for="last_name" class="form-label">
+            <i class="fas fa-id-card"></i> <%= t('auth.last_name') %>
           </label>
           <input
             type="text"
-            id="nom"
-            name="nom"
+            id="last_name"
+            name="last_name"
             class="form-input"
-            value="<%= old.nom || '' %>"
+            value="<%= old.last_name || '' %>"
             placeholder="Dupont"
             required
             autocomplete="family-name"
@@ -43,15 +43,15 @@
         </div>
 
         <div class="form-group">
-          <label for="prenom" class="form-label">
-            <i class="fas fa-id-card"></i> Prénom
+          <label for="first_name" class="form-label">
+            <i class="fas fa-id-card"></i> <%= t('auth.first_name') %>
           </label>
           <input
             type="text"
-            id="prenom"
-            name="prenom"
+            id="first_name"
+            name="first_name"
             class="form-input"
-            value="<%= old.prenom || '' %>"
+            value="<%= old.first_name || '' %>"
             placeholder="Jean"
             required
             autocomplete="given-name"
@@ -61,27 +61,27 @@
       </div>
 
       <div class="form-group">
-        <label for="pseudo" class="form-label">
-          <i class="fas fa-gamepad"></i> Pseudo (surnom en jeu)
+        <label for="username" class="form-label">
+          <i class="fas fa-gamepad"></i> <%= t('auth.username_label') %>
         </label>
         <input
           type="text"
-          id="pseudo"
-          name="pseudo"
+          id="username"
+          name="username"
           class="form-input"
-          value="<%= old.pseudo || '' %>"
+          value="<%= old.username || '' %>"
           placeholder="ProGamer42"
           required
           minlength="2"
           maxlength="50"
           autocomplete="nickname"
         />
-        <small class="form-hint">2 à 50 caractères, lettres, chiffres, tirets et espaces.</small>
+        <small class="form-hint"><%= t('auth.username_hint') %></small>
       </div>
 
       <div class="form-group">
         <label for="email" class="form-label">
-          <i class="fas fa-envelope"></i> Adresse e-mail
+          <i class="fas fa-envelope"></i> <%= t('auth.email') %>
         </label>
         <input
           type="email"
@@ -97,7 +97,7 @@
 
       <div class="form-group">
         <label for="password" class="form-label">
-          <i class="fas fa-lock"></i> Mot de passe
+          <i class="fas fa-lock"></i> <%= t('auth.password') %>
         </label>
         <div class="input-password-wrap">
           <input
@@ -110,16 +110,16 @@
             minlength="8"
             autocomplete="new-password"
           />
-          <button type="button" class="password-toggle" aria-label="Afficher/masquer le mot de passe">
+          <button type="button" class="password-toggle" aria-label="<%= t('auth.toggle_password_visibility') %>">
             <i class="fas fa-eye"></i>
           </button>
         </div>
-        <small class="form-hint">Minimum 8 caractères, une majuscule et un chiffre.</small>
+        <small class="form-hint"><%= t('auth.password_hint') %></small>
       </div>
 
       <div class="form-group">
         <label for="password_confirm" class="form-label">
-          <i class="fas fa-lock"></i> Confirmer le mot de passe
+          <i class="fas fa-lock"></i> <%= t('auth.password_confirm') %>
         </label>
         <div class="input-password-wrap">
           <input
@@ -131,32 +131,32 @@
             required
             autocomplete="new-password"
           />
-          <button type="button" class="password-toggle" aria-label="Afficher/masquer le mot de passe">
+          <button type="button" class="password-toggle" aria-label="<%= t('auth.toggle_password_visibility') %>">
             <i class="fas fa-eye"></i>
           </button>
         </div>
       </div>
 
       <button type="submit" class="btn btn--primary btn--full">
-        <i class="fas fa-user-plus"></i> Créer mon compte
+        <i class="fas fa-user-plus"></i> <%= t('auth.create_my_account') %>
       </button>
     </form>
 
     <% if (discordEnabled) { %>
       <!-- Séparateur -->
       <div class="auth-divider">
-        <span>ou</span>
+        <span><%= t('auth.or') %></span>
       </div>
 
       <!-- Inscription via Discord -->
       <a href="/auth/discord" class="btn btn--discord btn--full">
-        <i class="fab fa-discord"></i> S'inscrire avec Discord
+        <i class="fab fa-discord"></i> <%= t('auth.register_with_discord') %>
       </a>
     <% } %>
 
     <!-- Lien vers la connexion -->
     <div class="auth-switch">
-      <p>Déjà membre ? <a href="/auth/login" class="link-accent">Se connecter</a></p>
+      <p><%= t('auth.already_member') %> <a href="/auth/login" class="link-accent"><%= t('auth.sign_in') %></a></p>
     </div>
   </div>
 </div>

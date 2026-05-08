@@ -36,17 +36,17 @@
           <!-- ── Colonne principale ── -->
           <div class="news-form-main">
 
-            <!-- Section Identité de l'association -->
+            <!-- Section Identité du site -->
             <div class="card" style="margin-bottom: var(--space-lg);">
               <div class="card-header">
-                <h2><i class="fas fa-building"></i> Identité de l'association</h2>
+                <h2><i class="fas fa-building"></i> Identité du site</h2>
               </div>
               <div class="card-body">
 
-                <!-- Nom de l'association -->
+                <!-- Nom du site -->
                 <div class="form-group">
                   <label class="form-label" for="organization_name">
-                    <i class="fas fa-heading"></i> Nom de l'association
+                    <i class="fas fa-heading"></i> Nom du site
                   </label>
                   <input
                     type="text"
@@ -59,7 +59,7 @@
                     required
                   />
                   <span class="form-hint">
-                    Nom de votre association affiché sur toutes les pages publiques.
+                    Nom de votre site affiché sur toutes les pages publiques.
                   </span>
                 </div>
 
@@ -78,7 +78,7 @@
                     maxlength="255"
                   />
                   <span class="form-hint">
-                    Slogan ou tagline de votre association (affiché si configuré).
+                    Slogan ou tagline de votre site (affiché si configuré).
                   </span>
                 </div>
 
@@ -97,7 +97,7 @@
                     maxlength="500"
                   />
                   <span class="form-hint">
-                    URL du logo de votre association. Format recommandé: PNG ou SVG, dimensions au moins 200x200px.
+                    URL du logo de votre site. Format recommandé: PNG ou SVG, dimensions au moins 200x200px.
                     <% if (settings && settings.organization_logo) { %>
                       <div style="margin-top: var(--space-sm);">
                         <img src="<%= settings.organization_logo %>" alt="Logo" style="max-height: 60px; max-width: 200px; border: 1px solid var(--color-border); border-radius: 4px; padding: 4px;" />
@@ -206,12 +206,83 @@
                     id="community_link_website"
                     name="community_link_website"
                     class="form-input"
-                    placeholder="Ex. : https://votre-association.com"
+                    placeholder="Ex. : https://votre-site.com"
                     value="<%= (settings && settings.community_link_website) ? settings.community_link_website : '' %>"
                     maxlength="500"
                   />
                   <span class="form-hint">
-                    Lien vers le site web officiel de votre association.
+                    Lien vers le site web officiel de votre site.
+                  </span>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Section Langue et localisation -->
+            <div class="card" style="margin-bottom: var(--space-lg);">
+              <div class="card-header">
+                <h2><i class="fas fa-language"></i> Langue et localisation</h2>
+              </div>
+              <div class="card-body">
+
+                <!-- Langue de l'interface -->
+                <div class="form-group">
+                  <label class="form-label" for="language">
+                    <i class="fas fa-globe"></i> Langue de l'interface
+                  </label>
+                  <select id="language" name="language" class="form-input">
+                    <option value="fr" <%= (!settings || !settings.language || settings.language === 'fr') ? 'selected' : '' %>>
+                      🇫🇷 Français
+                    </option>
+                    <option value="en" <%= (settings && settings.language === 'en') ? 'selected' : '' %>>
+                      🇬🇧 English
+                    </option>
+                  </select>
+                  <span class="form-hint">
+                    Langue de l'interface utilisée dans les vues publiques et les menus de navigation.
+                    Les textes administrateur restent en français.
+                  </span>
+                </div>
+
+                <!-- Locale BCP 47 pour les dates -->
+                <div class="form-group">
+                  <label class="form-label" for="locale">
+                    <i class="fas fa-calendar-days"></i> Format régional (locale)
+                  </label>
+                  <input
+                    type="text"
+                    id="locale"
+                    name="locale"
+                    class="form-input"
+                    placeholder="Ex. : fr-FR, en-US, de-DE, es-ES"
+                    value="<%= (settings && settings.locale) ? settings.locale : 'fr-FR' %>"
+                    maxlength="20"
+                    pattern="[a-zA-Z]{2,3}(-[a-zA-Z]{2,4})?"
+                  />
+                  <span class="form-hint">
+                    Code de locale <strong>BCP 47</strong> utilisé pour le formatage des dates et heures dans
+                    toutes les pages (ex. : <code>fr-FR</code>, <code>en-US</code>, <code>de-DE</code>).
+                    <% if (settings && settings.locale) { %>
+                      <br>Aperçu date : <strong id="localePreview">…</strong>
+                      <script>
+                        (function() {
+                          const input   = document.getElementById('locale');
+                          const preview = document.getElementById('localePreview');
+                          function updatePreview() {
+                            try {
+                              preview.textContent = new Date().toLocaleDateString(
+                                input.value.trim() || 'fr-FR',
+                                { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
+                              );
+                            } catch(e) {
+                              preview.textContent = '(locale invalide)';
+                            }
+                          }
+                          input.addEventListener('input', updatePreview);
+                          updatePreview();
+                        })();
+                      </script>
+                    <% } %>
                   </span>
                 </div>
 

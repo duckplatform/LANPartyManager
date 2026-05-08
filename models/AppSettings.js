@@ -9,8 +9,8 @@
  *
  * Clés reconnues :
  *   
- *   # Identité de l'association
- *   organization_name         — Nom de l'association (ex: "LANPartyManager")
+ *   # Identité du site
+ *   organization_name         — Nom du site (ex: "LANPartyManager")
  *   organization_logo         — URL du logo (PNG, SVG recommandé)
  *   organization_slogan       — Slogan ou tagline
  *   
@@ -28,6 +28,10 @@
  *   discord_client_id         — Client ID OAuth2 Discord (connexion utilisateur)
  *   discord_client_secret     — Client Secret OAuth2 Discord (connexion utilisateur)
  *   discord_application_public_key — Clé publique hex (interactions endpoint / slash commands)
+ *   
+ *   # Internationalisation
+ *   language  — Code de langue de l'interface ('fr' | 'en'), défaut : 'fr'
+ *   locale    — Code de locale BCP 47 pour les dates/heures ('fr-FR', 'en-US'…), défaut : 'fr-FR'
  */
 
 const db     = require('../config/database');
@@ -62,11 +66,11 @@ const AppSettings = {
 
     try {
       const [rows] = await db.pool.execute(
-        'SELECT `cle`, `valeur` FROM `app_settings`'
+        'SELECT `key`, `value` FROM `app_settings`'
       );
       _cache     = {};
       for (const row of rows) {
-        _cache[row.cle] = row.valeur;
+        _cache[row['key']] = row['value'];
       }
       _cacheTime = now;
       return _cache;
@@ -98,7 +102,7 @@ const AppSettings = {
    */
   async set(key, value) {
     await db.pool.execute(
-      'INSERT INTO `app_settings` (`cle`, `valeur`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `valeur` = VALUES(`valeur`)',
+      'INSERT INTO `app_settings` (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)',
       [key, value ?? null]
     );
     AppSettings.clearCache(); // Invalidation après l'écriture réussie
@@ -116,7 +120,7 @@ const AppSettings = {
       await conn.beginTransaction();
       for (const [key, value] of Object.entries(settings)) {
         await conn.execute(
-          'INSERT INTO `app_settings` (`cle`, `valeur`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `valeur` = VALUES(`valeur`)',
+          'INSERT INTO `app_settings` (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)',
           [key, value ?? null]
         );
       }

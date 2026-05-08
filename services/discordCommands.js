@@ -140,12 +140,18 @@ function verifySignature(rawBody, signature, timestamp, publicKeyHex) {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
- * Formate une date pour l'affichage en français.
+ * Formate une date selon la locale configurée dans app_settings.
+ * Replie sur 'fr-FR' si la locale n'est pas disponible.
  * @param {Date|string} date
- * @returns {string}
+ * @returns {Promise<string>}
  */
-function formatDate(date) {
-  return new Date(date).toLocaleDateString('fr-FR', {
+async function formatDate(date) {
+  let locale = 'fr-FR';
+  try {
+    const AppSettings = require('../models/AppSettings');
+    locale = (await AppSettings.get('locale')) || 'fr-FR';
+  } catch (_) { /* fallback silencieux */ }
+  return new Date(date).toLocaleDateString(locale, {
     weekday: 'long',
     day:     'numeric',
     month:   'long',
@@ -185,7 +191,7 @@ async function handleClassement() {
 
   const event = await Event.findActive();
 
-  if (!event || event.statut !== 'en_cours') {
+  if (!event || event.status !== 'in_progress') {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
@@ -207,17 +213,17 @@ async function handleClassement() {
     rankingText = rankings
       .map(entry => {
         const medal = getMedalForRank(entry.rang);
-        return `${medal} **${entry.pseudo}** — ${entry.points} pts (${entry.wins} victoire${entry.wins > 1 ? 's' : ''})`;
+        return `${medal} **${entry.username}** — ${entry.points} pts (${entry.wins} victoire${entry.wins > 1 ? 's' : ''})`;
       })
       .join('\n');
   }
 
   const embed = {
-    title:       `🏆 Classement — ${event.nom}`,
+    title:       `🏆 Classement — ${event.name}`,
     description: rankingText,
     color:       0x5865F2,
     fields: [
-      { name: '📍 Lieu', value: event.lieu, inline: true },
+      { name: '📍 Lieu', value: event.location, inline: true },
     ],
     footer:    { text: 'LANPartyManager • Classement en temps réel' },
     timestamp: new Date().toISOString(),
@@ -268,7 +274,7 @@ async function handlePosition(discordUserId) {
 
   const event = await Event.findActive();
 
-  if (!event || event.statut !== 'en_cours') {
+  if (!event || event.status !== 'in_progress') {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
@@ -285,7 +291,7 @@ async function handlePosition(discordUserId) {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: `📊 Vous n'êtes pas encore classé(e) dans **${event.nom}**. Participez à des rencontres pour apparaître au classement !`,
+        content: `📊 Vous n'êtes pas encore classé(e) dans **${event.name}**. Participez à des rencontres pour apparaître au classement !`,
         flags: EPHEMERAL_FLAG,
       },
     };
@@ -297,7 +303,7 @@ async function handlePosition(discordUserId) {
   return {
     type: InteractionResponseType.ChannelMessageWithSource,
     data: {
-      content: `${medal} **${user.pseudo}**, vous êtes actuellement **${myEntry.rang}e** dans **${event.nom}** avec **${myEntry.points} point${myEntry.points > 1 ? 's' : ''}** et **${myEntry.wins} victoire${myEntry.wins > 1 ? 's' : ''}** sur ${battles} rencontre${battles > 1 ? 's' : ''}.`,
+      content: `${medal} **${user.username}**, vous êtes actuellement **${myEntry.rang}e** dans **${event.name}** avec **${myEntry.points} point${myEntry.points > 1 ? 's' : ''}** et **${myEntry.wins} victoire${myEntry.wins > 1 ? 's' : ''}** sur ${battles} rencontre${battles > 1 ? 's' : ''}.`,
       flags: EPHEMERAL_FLAG,
     },
   };
@@ -340,7 +346,7 @@ async function handleStatistiques(discordUserId) {
 
   const event = await Event.findActive();
 
-  if (!event || event.statut !== 'en_cours') {
+  if (!event || event.status !== 'in_progress') {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
@@ -357,10 +363,10 @@ async function handleStatistiques(discordUserId) {
   const profileUrl = appUrl ? `${appUrl}/profile` : null;
 
   const embed = {
-    title:  `📊 Statistiques de ${user.pseudo}`,
+    title:  `📊 Statistiques de ${user.username}`,
     color:  0x5865F2,
     fields: [
-      { name: '🎮 Événement', value: event.nom, inline: false },
+      { name: '🎮 Événement', value: event.name, inline: false },
     ],
     footer:    { text: 'LANPartyManager' },
     timestamp: new Date().toISOString(),
@@ -425,18 +431,18 @@ async function handleEvenement() {
   let statusLabel = 'Planifié';
   let color       = 0x5865F2;
 
-  if (event.statut === 'en_cours') {
+  if (event.status === 'in_progress') {
     statusEmoji = '🟢';
     statusLabel = 'En cours';
     color       = 0x57F287;
   }
 
   const embed = {
-    title:  `${statusEmoji} ${event.nom}`,
+    title:  `${statusEmoji} ${event.name}`,
     color,
     fields: [
-      { name: '📍 Lieu',        value: event.lieu,                         inline: true },
-      { name: '🕐 Date',        value: formatDate(event.date_heure),       inline: true },
+      { name: '📍 Lieu',        value: event.location,                     inline: true },
+      { name: '🕐 Date',        value: await formatDate(event.start_at),         inline: true },
       { name: '📊 Statut',      value: `${statusEmoji} ${statusLabel}`,    inline: true },
       { name: '👥 Inscrits',    value: `${registrationCount} participant(s)`, inline: true },
     ],
@@ -448,18 +454,18 @@ async function handleEvenement() {
 
   let content = '';
 
-  if (event.statut === 'en_cours') {
-    content = `🎮 **L'événement ${event.nom} est en cours !**`;
-  } else if (event.statut === 'planifie') {
+  if (event.status === 'in_progress') {
+    content = `🎮 **L'événement ${event.name} est en cours !**`;
+  } else if (event.status === 'planned') {
     if (isRegistrationOpen && eventUrl) {
       embed.fields.push({
         name:   '📝 Inscription',
         value:  `[Inscrivez-vous maintenant !](${eventUrl})`,
         inline: false,
       });
-      content = `📣 **${event.nom}** arrive bientôt ! Les inscriptions sont ouvertes.`;
+      content = `📣 **${event.name}** arrive bientôt ! Les inscriptions sont ouvertes.`;
     } else {
-      content = `📣 **${event.nom}** arrive bientôt !`;
+      content = `📣 **${event.name}** arrive bientôt !`;
     }
   }
 
