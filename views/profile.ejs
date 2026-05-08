@@ -201,7 +201,7 @@
             <form action="/profile/events/<%= activeEvent.id %>/unregister" method="POST">
               <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
               <button type="submit" class="btn btn--ghost btn--sm"
-                      onclick="return confirm('<%= t(\'profile.confirm_unregister_event\') %>')">
+                      onclick='return confirm(<%- JSON.stringify(t("profile.confirm_unregister_event")) %>)'>
                 <i class="fas fa-user-minus"></i> <%= t('profile.cancel_registration_btn') %>
               </button>
             </form>

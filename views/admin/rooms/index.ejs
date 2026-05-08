@@ -127,7 +127,7 @@
                       </form>
                       <form action="/admin/rooms/<%= room.id %>?_method=DELETE" method="POST"
                             class="form-inline"
-                            onsubmit="return confirm('<%= t(\'admin.confirm_delete_room\').replace(\'{{name}}\', room.name) %>')">
+                            onsubmit='return confirm(<%- JSON.stringify(t("admin.confirm_delete_room").replace("{{name}}", room.name)) %>)'>
                         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                         <button type="submit" class="btn btn--danger btn--xs" title="Supprimer">
                           <i class="fas fa-trash"></i>

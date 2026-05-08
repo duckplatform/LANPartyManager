@@ -75,7 +75,7 @@
         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
         <input type="hidden" name="game_id" value="<%= game.id %>" />
 
-        <%
+        <%=
           // Génère les slots joueurs selon le type de rencontre
           const slots = [];
           if (game.match_type === '2v2') {
