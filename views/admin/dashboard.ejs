@@ -109,8 +109,8 @@
                         <%= new Date(u.created_at).toLocaleDateString(locale) %>
                       </td>
                       <td class="td-actions">
-                        <a href="/admin/users/<%= u.id %>/badge" class="btn btn--xs btn--ghost" title="Voir le badge membre">
-                          <i class="fas fa-id-card"></i> Voir badge
+                        <a href="/admin/users/<%= u.id %>/badge" class="btn btn--xs btn--ghost" title="<%= t('admin.view_badge') %>">
+                          <i class="fas fa-id-card"></i> <%= t('admin.view_badge') %>
                         </a>
 
                         <% if (u.id !== currentUser.id) { %>
@@ -118,10 +118,10 @@
                             <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                             <button type="submit"
                                     class="btn btn--xs <%= u.is_admin ? 'btn--warning' : 'btn--info' %>"
-                                    title="<%= u.is_admin ? 'Retirer les droits admin' : 'Promouvoir en admin' %>"
-                                    onclick="return confirm('<%= u.is_admin ? 'Retirer les droits administrateur à ' + u.username + ' ?' : 'Promouvoir ' + u.username + ' en administrateur ?' %>')">
+                                    title="<%= u.is_admin ? t('admin.demote_admin') : t('admin.promote_admin') %>"
+                                  onclick='return confirm(<%- JSON.stringify(u.is_admin ? t("admin.confirm_demote_admin").replace("{{name}}", u.username) : t("admin.confirm_promote_admin").replace("{{name}}", u.username)) %>)'>
                               <i class="fas <%= u.is_admin ? 'fa-user-minus' : 'fa-user-shield' %>"></i>
-                              <%= u.is_admin ? 'Rétrograder Admin' : 'Promouvoir Admin' %>
+                              <%= u.is_admin ? t('admin.demote_admin') : t('admin.promote_admin') %>
                             </button>
                           </form>
 
@@ -130,10 +130,10 @@
                             <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                             <button type="submit"
                                     class="btn btn--xs <%= u.is_moderator ? 'btn--warning' : 'btn--secondary' %>"
-                                    title="<%= u.is_moderator ? 'Retirer le rôle modérateur' : 'Attribuer le rôle modérateur' %>"
-                                    onclick="return confirm('<%= u.is_moderator ? 'Retirer le rôle modérateur de ' + u.username + ' ?' : 'Attribuer le rôle modérateur à ' + u.username + ' ?' %>')">
+                                    title="<%= u.is_moderator ? t('admin.demote_moderator') : t('admin.promote_moderator') %>"
+                                  onclick='return confirm(<%- JSON.stringify(u.is_moderator ? t("admin.confirm_demote_mod").replace("{{name}}", u.username) : t("admin.confirm_promote_mod").replace("{{name}}", u.username)) %>)'>
                               <i class="fas <%= u.is_moderator ? 'fa-user-minus' : 'fa-user-check' %>"></i>
-                              <%= u.is_moderator ? 'Rétrograder Modo' : 'Promouvoir Modo' %>
+                              <%= u.is_moderator ? t('admin.demote_moderator') : t('admin.promote_moderator') %>
                             </button>
                           </form>
                           <% } %>
@@ -142,9 +142,9 @@
                             <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                             <button type="submit"
                                     class="btn btn--xs btn--danger"
-                                    title="Supprimer l'utilisateur"
-                                    onclick="return confirm('Supprimer définitivement <%= u.username %> ?')">
-                              <i class="fas fa-trash"></i> Supprimer
+                                    title="<%= t('admin.delete_user_title') %>"
+                                    onclick='return confirm(<%- JSON.stringify(t("admin.confirm_delete_user").replace("{{name}}", u.username)) %>)'>
+                              <i class="fas fa-trash"></i> <%= t('common.delete') %>
                             </button>
                           </form>
                         <% } else { %>

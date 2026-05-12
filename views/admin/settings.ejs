@@ -10,10 +10,10 @@
       <div class="admin-header">
         <div>
           <h1 class="admin-title">
-            <i class="fas fa-sliders"></i> Paramètres de l'application
+            <i class="fas fa-sliders"></i> <%= t('settings.page_title') %>
           </h1>
           <p class="admin-subtitle">
-            Configurez l'identité et les intégrations de votre LANPartyManager.
+            <%= t('settings.page_subtitle') %>
           </p>
         </div>
       </div>
@@ -39,65 +39,65 @@
             <!-- Section Identité du site -->
             <div class="card" style="margin-bottom: var(--space-lg);">
               <div class="card-header">
-                <h2><i class="fas fa-building"></i> Identité du site</h2>
+                <h2><i class="fas fa-building"></i> <%= t('settings.section_identity') %></h2>
               </div>
               <div class="card-body">
 
                 <!-- Nom du site -->
                 <div class="form-group">
                   <label class="form-label" for="organization_name">
-                    <i class="fas fa-heading"></i> Nom du site
+                    <i class="fas fa-heading"></i> <%= t('settings.field_org_name') %>
                   </label>
                   <input
                     type="text"
                     id="organization_name"
                     name="organization_name"
                     class="form-input"
-                    placeholder="Ex. : LANPartyManager"
+                    placeholder="<%= t('settings.field_org_name_placeholder') %>"
                     value="<%= (settings && settings.organization_name) ? settings.organization_name : 'LANPartyManager' %>"
                     maxlength="255"
                     required
                   />
                   <span class="form-hint">
-                    Nom de votre site affiché sur toutes les pages publiques.
+                    <%= t('settings.field_org_name_hint') %>
                   </span>
                 </div>
 
                 <!-- Slogan -->
                 <div class="form-group">
                   <label class="form-label" for="organization_slogan">
-                    <i class="fas fa-quote-left"></i> Slogan
+                    <i class="fas fa-quote-left"></i> <%= t('settings.field_slogan') %>
                   </label>
                   <input
                     type="text"
                     id="organization_slogan"
                     name="organization_slogan"
                     class="form-input"
-                    placeholder="Ex. : Le meilleur événement gaming de la région"
+                    placeholder="<%= t('settings.field_slogan_placeholder') %>"
                     value="<%= (settings && settings.organization_slogan) ? settings.organization_slogan : '' %>"
                     maxlength="255"
                   />
                   <span class="form-hint">
-                    Slogan ou tagline de votre site (affiché si configuré).
+                    <%= t('settings.field_slogan_hint') %>
                   </span>
                 </div>
 
                 <!-- Logo -->
                 <div class="form-group">
                   <label class="form-label" for="organization_logo">
-                    <i class="fas fa-image"></i> Logo (URL)
+                    <i class="fas fa-image"></i> <%= t('settings.field_logo') %>
                   </label>
                   <input
                     type="url"
                     id="organization_logo"
                     name="organization_logo"
                     class="form-input"
-                    placeholder="Ex. : https://votre-domaine.com/logo.png"
+                    placeholder="<%= t('settings.field_logo_placeholder') %>"
                     value="<%= (settings && settings.organization_logo) ? settings.organization_logo : '' %>"
                     maxlength="500"
                   />
                   <span class="form-hint">
-                    URL du logo de votre site. Format recommandé: PNG ou SVG, dimensions au moins 200x200px.
+                    <%= t('settings.field_logo_hint') %>
                     <% if (settings && settings.organization_logo) { %>
                       <div style="margin-top: var(--space-sm);">
                         <img src="<%= settings.organization_logo %>" alt="Logo" style="max-height: 60px; max-width: 200px; border: 1px solid var(--color-border); border-radius: 4px; padding: 4px;" />
@@ -112,12 +112,11 @@
             <!-- Section Liens communautés -->
             <div class="card" style="margin-bottom: var(--space-lg);">
               <div class="card-header">
-                <h2><i class="fas fa-share-alt"></i> Liens des communautés</h2>
+                <h2><i class="fas fa-share-alt"></i> <%= t('settings.section_community') %></h2>
               </div>
               <div class="card-body">
                 <p class="form-hint" style="margin-bottom: var(--space-md);">
-                  Configurez les liens de vos communautés pour qu'ils s'affichent sur le site.
-                  Laissez vide pour masquer un lien.
+                  <%= t('settings.section_community_hint') %>
                 </p>
 
                 <!-- Discord -->
@@ -130,12 +129,12 @@
                     id="community_link_discord"
                     name="community_link_discord"
                     class="form-input"
-                    placeholder="Ex. : https://discord.gg/invite-code"
+                    placeholder="<%= t('settings.field_discord_link_placeholder') %>"
                     value="<%= (settings && settings.community_link_discord) ? settings.community_link_discord : '' %>"
                     maxlength="500"
                   />
                   <span class="form-hint">
-                    Lien d'invitation vers votre serveur Discord.
+                    <%= t('settings.field_discord_link_hint') %>
                   </span>
                 </div>
 
@@ -149,12 +148,12 @@
                     id="community_link_twitter"
                     name="community_link_twitter"
                     class="form-input"
-                    placeholder="Ex. : https://twitter.com/votre_compte"
+                    placeholder="<%= t('settings.field_twitter_placeholder') %>"
                     value="<%= (settings && settings.community_link_twitter) ? settings.community_link_twitter : '' %>"
                     maxlength="500"
                   />
                   <span class="form-hint">
-                    Lien vers votre profil Twitter/X.
+                    <%= t('settings.field_twitter_hint') %>
                   </span>
                 </div>
 
@@ -168,12 +167,12 @@
                     id="community_link_twitch"
                     name="community_link_twitch"
                     class="form-input"
-                    placeholder="Ex. : https://www.twitch.tv/votre_canal"
+                    placeholder="<%= t('settings.field_twitch_placeholder') %>"
                     value="<%= (settings && settings.community_link_twitch) ? settings.community_link_twitch : '' %>"
                     maxlength="500"
                   />
                   <span class="form-hint">
-                    Lien vers votre chaîne Twitch.
+                    <%= t('settings.field_twitch_hint') %>
                   </span>
                 </div>
 
@@ -187,31 +186,31 @@
                     id="community_link_youtube"
                     name="community_link_youtube"
                     class="form-input"
-                    placeholder="Ex. : https://www.youtube.com/@votre_chaine"
+                    placeholder="<%= t('settings.field_youtube_placeholder') %>"
                     value="<%= (settings && settings.community_link_youtube) ? settings.community_link_youtube : '' %>"
                     maxlength="500"
                   />
                   <span class="form-hint">
-                    Lien vers votre chaîne YouTube.
+                    <%= t('settings.field_youtube_hint') %>
                   </span>
                 </div>
 
                 <!-- Website -->
                 <div class="form-group">
                   <label class="form-label" for="community_link_website">
-                    <i class="fas fa-globe"></i> Site web
+                    <i class="fas fa-globe"></i> <%= t('settings.field_website') %>
                   </label>
                   <input
                     type="url"
                     id="community_link_website"
                     name="community_link_website"
                     class="form-input"
-                    placeholder="Ex. : https://votre-site.com"
+                    placeholder="<%= t('settings.field_website_placeholder') %>"
                     value="<%= (settings && settings.community_link_website) ? settings.community_link_website : '' %>"
                     maxlength="500"
                   />
                   <span class="form-hint">
-                    Lien vers le site web officiel de votre site.
+                    <%= t('settings.field_website_hint') %>
                   </span>
                 </div>
 
@@ -221,14 +220,14 @@
             <!-- Section Langue et localisation -->
             <div class="card" style="margin-bottom: var(--space-lg);">
               <div class="card-header">
-                <h2><i class="fas fa-language"></i> Langue et localisation</h2>
+                <h2><i class="fas fa-language"></i> <%= t('settings.section_localization') %></h2>
               </div>
               <div class="card-body">
 
                 <!-- Langue de l'interface -->
                 <div class="form-group">
                   <label class="form-label" for="language">
-                    <i class="fas fa-globe"></i> Langue de l'interface
+                    <i class="fas fa-globe"></i> <%= t('settings.field_language') %>
                   </label>
                   <select id="language" name="language" class="form-input">
                     <option value="fr" <%= (!settings || !settings.language || settings.language === 'fr') ? 'selected' : '' %>>
@@ -239,31 +238,29 @@
                     </option>
                   </select>
                   <span class="form-hint">
-                    Langue de l'interface utilisée dans les vues publiques et les menus de navigation.
-                    Les textes administrateur restent en français.
+                    <%= t('settings.field_language_hint') %>
                   </span>
                 </div>
 
                 <!-- Locale BCP 47 pour les dates -->
                 <div class="form-group">
                   <label class="form-label" for="locale">
-                    <i class="fas fa-calendar-days"></i> Format régional (locale)
+                    <i class="fas fa-calendar-days"></i> <%= t('settings.locale') %>
                   </label>
                   <input
                     type="text"
                     id="locale"
                     name="locale"
                     class="form-input"
-                    placeholder="Ex. : fr-FR, en-US, de-DE, es-ES"
+                    placeholder="<%= t('settings.locale_placeholder') %>"
                     value="<%= (settings && settings.locale) ? settings.locale : 'fr-FR' %>"
                     maxlength="20"
                     pattern="[a-zA-Z]{2,3}(-[a-zA-Z]{2,4})?"
                   />
                   <span class="form-hint">
-                    Code de locale <strong>BCP 47</strong> utilisé pour le formatage des dates et heures dans
-                    toutes les pages (ex. : <code>fr-FR</code>, <code>en-US</code>, <code>de-DE</code>).
+                    <%- t('settings.field_locale_hint_full') %>
                     <% if (settings && settings.locale) { %>
-                      <br>Aperçu date : <strong id="localePreview">…</strong>
+                      <br><%= t('settings.locale_preview_label') %> <strong id="localePreview">…</strong>
                       <script>
                         (function() {
                           const input   = document.getElementById('locale');
@@ -275,7 +272,7 @@
                                 { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
                               );
                             } catch(e) {
-                              preview.textContent = '(locale invalide)';
+                              preview.textContent = "<%= t('settings.locale_invalid') %>";
                             }
                           }
                           input.addEventListener('input', updatePreview);
@@ -292,14 +289,14 @@
             <!-- Section Discord -->
             <div class="card" style="margin-bottom: var(--space-lg);">
               <div class="card-header">
-                <h2><i class="fab fa-discord"></i> Intégration Discord</h2>
+                <h2><i class="fab fa-discord"></i> <%= t('settings.section_discord') %></h2>
               </div>
               <div class="card-body">
 
                 <!-- Activer/désactiver Discord -->
                 <div class="form-group">
                   <label class="form-label">
-                    <i class="fas fa-toggle-on"></i> Activation globale Discord
+                    <i class="fas fa-toggle-on"></i> <%= t('settings.field_discord_toggle') %>
                   </label>
                   <div style="display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-xs);">
                     <input
@@ -311,46 +308,44 @@
                       style="width: 1.2rem; height: 1.2rem; cursor: pointer;"
                     />
                     <label for="discord_enabled" style="cursor: pointer; font-weight: normal;">
-                      Activer les fonctionnalités Discord (notifications et connexion OAuth2)
+                      <%= t('settings.field_discord_toggle_text') %>
                     </label>
                   </div>
                   <span class="form-hint">
-                    Si désactivé, les notifications Discord et la connexion via Discord seront
-                    complètement désactivées. Les options Discord des événements seront masquées.
+                    <%= t('settings.field_discord_toggle_hint') %>
                   </span>
                 </div>
 
                 <!-- Token bot -->
                 <div class="form-group">
                   <label class="form-label" for="discord_bot_token">
-                    <i class="fas fa-robot"></i> Token du bot Discord
+                    <i class="fas fa-robot"></i> <%= t('settings.field_bot_token') %>
                   </label>
                   <input
                     type="password"
                     id="discord_bot_token"
                     name="discord_bot_token"
                     class="form-input"
-                    placeholder="<%= (settings && settings.discord_bot_token) ? '••••••••••••••••••••••••••••••••••' : 'Entrez le token du bot Discord…' %>"
+                    placeholder="<%= (settings && settings.discord_bot_token) ? '••••••••••••••••••••••••••••••••••' : t('settings.field_bot_token_placeholder') %>"
                     maxlength="200"
                     autocomplete="off"
                   />
                   <span class="form-hint">
-                    Token du bot Discord utilisé pour envoyer des notifications.
-                    Laissez vide pour conserver la valeur actuelle.
+                    <%= t('settings.field_bot_token_hint') %>
                     <% if (settings && settings.discord_bot_token) { %>
                       <span style="color: var(--color-success);">
-                        <i class="fas fa-check-circle"></i> Token configuré.
+                        <i class="fas fa-check-circle"></i> <%= t('settings.token_configured') %>
                       </span>
                     <% } else { %>
                       <span style="color: var(--color-warning);">
-                        <i class="fas fa-exclamation-triangle"></i> Non configuré.
+                        <i class="fas fa-exclamation-triangle"></i> <%= t('settings.not_configured') %>
                       </span>
                     <% } %>
                   </span>
                   <% if (settings && settings.discord_bot_token) { %>
                     <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: var(--space-xs); font-size: 0.85rem; cursor: pointer; color: var(--color-danger);">
                       <input type="checkbox" name="clear_discord_bot_token" id="clear_discord_bot_token" value="1" />
-                      Réinitialiser le token (effacer la valeur actuelle)
+                      <%= t('settings.reset_token') %>
                     </label>
                   <% } %>
                 </div>
@@ -358,14 +353,14 @@
                 <!-- Canal actualités -->
                 <div class="form-group">
                   <label class="form-label" for="discord_channel_news">
-                    <i class="fas fa-newspaper"></i> ID canal Discord — Actualités
+                    <i class="fas fa-newspaper"></i> <%= t('settings.field_news_channel') %>
                   </label>
                   <input
                     type="text"
                     id="discord_channel_news"
                     name="discord_channel_news"
                     class="form-input"
-                    placeholder="Ex. : 987654321098765432"
+                    placeholder="<%= t('settings.field_news_channel_placeholder') %>"
                     value="<%= (settings && settings.discord_channel_news) ? settings.discord_channel_news : '' %>"
                     maxlength="20"
                     inputmode="numeric"
@@ -373,8 +368,7 @@
                     autocomplete="off"
                   />
                   <span class="form-hint">
-                    ID du canal Discord où seront publiées les notifications d'actualités.
-                    Laissez vide pour désactiver les notifications d'actualités.
+                    <%= t('settings.field_news_channel_hint') %>
                   </span>
                 </div>
 
@@ -382,17 +376,15 @@
 
                 <!-- OAuth2 Discord -->
                 <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: var(--space-md);">
-                  <i class="fas fa-key"></i> Connexion OAuth2 Discord
+                  <i class="fas fa-key"></i> <%= t('settings.section_oauth2') %>
                 </h3>
                 <p class="form-hint" style="margin-bottom: var(--space-md);">
-                  Optionnel — permet aux membres de se connecter via leur compte Discord.
-                  Non requis pour les notifications bot. Nécessite une application Discord créée dans le
-                  <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer">Developer Portal</a>.
+                  <%- t('settings.section_oauth2_hint') %>
                 </p>
                 <% if (settings && settings.discord_enabled === '1' && (!settings.discord_client_id || !settings.discord_client_secret)) { %>
                   <div style="background: var(--color-warning-bg, #fff8e1); border: 1px solid var(--color-warning, #f0b429); border-radius: var(--radius-sm, 4px); padding: var(--space-sm); margin-bottom: var(--space-md); font-size: 0.875rem;">
                     <i class="fas fa-exclamation-triangle" style="color: var(--color-warning, #f0b429);"></i>
-                    La connexion via Discord (OAuth2) est désactivée — renseignez le Client ID et le Client Secret pour l'activer.
+                    <%= t('settings.oauth2_warning') %>
                   </div>
                 <% } %>
 
@@ -414,10 +406,10 @@
                     autocomplete="off"
                   />
                   <span class="form-hint">
-                    ID de l'application Discord (OAuth2 → General Information → Application ID).
+                    <%= t('settings.field_client_id_hint') %>
                     <% if (settings && settings.discord_client_id) { %>
                       <span style="color: var(--color-success);">
-                        <i class="fas fa-check-circle"></i> Configuré.
+                        <i class="fas fa-check-circle"></i> <%= t('settings.configured') %>
                       </span>
                     <% } %>
                   </span>
@@ -433,28 +425,27 @@
                     id="discord_client_secret"
                     name="discord_client_secret"
                     class="form-input"
-                    placeholder="<%= (settings && settings.discord_client_secret) ? '••••••••••••••••••••••••••••••••' : 'Entrez le Client Secret…' %>"
+                    placeholder="<%= (settings && settings.discord_client_secret) ? '••••••••••••••••••••••••••••••••' : t('settings.field_client_secret_placeholder') %>"
                     maxlength="100"
                     autocomplete="off"
                     data-configured="<%= (settings && settings.discord_client_secret) ? 'true' : 'false' %>"
                   />
                   <span class="form-hint">
-                    Secret de l'application Discord (OAuth2 → Client Information → Client Secret).
-                    Laissez vide pour conserver la valeur actuelle.
+                    <%= t('settings.field_client_secret_hint') %>
                     <% if (settings && settings.discord_client_secret) { %>
                       <span style="color: var(--color-success);">
-                        <i class="fas fa-check-circle"></i> Secret configuré.
+                        <i class="fas fa-check-circle"></i> <%= t('settings.secret_configured') %>
                       </span>
                     <% } else { %>
                       <span style="color: var(--color-warning);">
-                        <i class="fas fa-exclamation-triangle"></i> Non configuré.
+                        <i class="fas fa-exclamation-triangle"></i> <%= t('settings.not_configured') %>
                       </span>
                     <% } %>
                   </span>
                   <% if (settings && settings.discord_client_secret) { %>
                     <label style="display: flex; align-items: center; gap: 0.5rem; margin-top: var(--space-xs); font-size: 0.85rem; cursor: pointer; color: var(--color-danger);">
                       <input type="checkbox" name="clear_discord_client_secret" id="clear_discord_client_secret" value="1" />
-                      Réinitialiser le secret (effacer la valeur actuelle)
+                      <%= t('settings.reset_secret') %>
                     </label>
                   <% } %>
                 </div>
@@ -463,26 +454,23 @@
 
                 <!-- Slash Commands -->
                 <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: var(--space-md);">
-                  <i class="fas fa-terminal"></i> Commandes Slash Discord
+                  <i class="fas fa-terminal"></i> <%= t('settings.section_slash_commands') %>
                 </h3>
                 <p class="form-hint" style="margin-bottom: var(--space-md);">
-                  Permet aux membres d'utiliser les commandes <code>/classement</code>, <code>/position</code>,
-                  <code>/statistiques</code> et <code>/evenement</code> dans votre serveur Discord.
-                  Nécessite la configuration de la <strong>Clé publique</strong> et de l'URL d'interaction
-                  dans le <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer">Developer Portal</a>.
+                  <%- t('settings.slash_commands_desc') %>
                 </p>
 
                 <!-- Clé publique -->
                 <div class="form-group">
                   <label class="form-label" for="discord_application_public_key">
-                    <i class="fas fa-shield-alt"></i> Clé publique de l'application
+                    <i class="fas fa-shield-alt"></i> <%= t('settings.field_public_key') %>
                   </label>
                   <input
                     type="text"
                     id="discord_application_public_key"
                     name="discord_application_public_key"
                     class="form-input"
-                    placeholder="Ex. : a1b2c3d4e5f6… (64 caractères hexadécimaux)"
+                    placeholder="<%= t('settings.field_public_key_placeholder') %>"
                     value="<%= (settings && settings.discord_application_public_key) ? settings.discord_application_public_key : '' %>"
                     maxlength="64"
                     pattern="[0-9a-fA-F]{64}"
@@ -490,19 +478,18 @@
                     style="font-family: monospace; font-size: 0.85rem;"
                   />
                   <span class="form-hint">
-                    Clé publique Ed25519 (Discord Developer Portal → General Information → Public Key).
-                    Utilisée pour vérifier les requêtes entrantes de Discord (interactions / slash commands).
+                    <%= t('settings.field_public_key_hint') %>
                     <% if (settings && settings.discord_application_public_key) { %>
                       <span style="color: var(--color-success);">
-                        <i class="fas fa-check-circle"></i> Clé configurée.
+                        <i class="fas fa-check-circle"></i> <%= t('settings.public_key_configured') %>
                       </span>
                     <% } else { %>
                       <span style="color: var(--color-warning);">
-                        <i class="fas fa-exclamation-triangle"></i> Non configurée — les commandes slash ne fonctionneront pas.
+                        <i class="fas fa-exclamation-triangle"></i> <%= t('settings.public_key_not_configured') %>
                       </span>
                     <% } %>
                     <br>
-                    URL d'interaction à renseigner dans Discord Developer Portal :<br>
+                    <%= t('settings.interaction_url_label') %><br>
                     <code style="font-size: 0.75rem; word-break: break-all;">
                       <%= appUrl || 'https://votre-domaine.example.com' %>/discord/interactions
                     </code>
@@ -520,17 +507,17 @@
             <!-- Actions -->
             <div class="card sidebar-card">
               <div class="card-header">
-                <h2><i class="fas fa-save"></i> Enregistrer</h2>
+                <h2><i class="fas fa-save"></i> <%= t('settings.save_card') %></h2>
               </div>
               <div class="card-body">
                 <div class="form-actions">
                   <button type="submit" class="btn btn--primary btn--full">
-                    <i class="fas fa-save"></i> Enregistrer
+                    <i class="fas fa-save"></i> <%= t('settings.save_button') %>
                   </button>
                 </div>
                 <div style="margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--color-border);">
                   <a href="/admin" class="btn btn--ghost btn--full btn--sm">
-                    <i class="fas fa-arrow-left"></i> Retour
+                    <i class="fas fa-arrow-left"></i> <%= t('settings.back') %>
                   </a>
                 </div>
               </div>
@@ -539,15 +526,14 @@
             <!-- Commandes Slash -->
             <div class="card sidebar-card">
               <div class="card-header">
-                <h2><i class="fas fa-terminal"></i> Commandes Slash</h2>
+                <h2><i class="fas fa-terminal"></i> <%= t('settings.slash_commands_card') %></h2>
               </div>
               <div class="card-body">
                 <p style="font-size: 0.875rem; margin-bottom: var(--space-sm);">
-                  Enregistrez les slash commands sur Discord pour qu'elles apparaissent
-                  dans la liste des commandes de votre serveur.
+                  <%= t('settings.slash_commands_register_desc') %>
                 </p>
                 <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: var(--space-md);">
-                  Commandes disponibles : <code>/classement</code>, <code>/position</code>,
+                  <%= t('settings.slash_commands_available') %> <code>/classement</code>, <code>/position</code>,
                   <code>/statistiques</code>, <code>/evenement</code>
                 </p>
                 <% if (settings && settings.discord_client_id && (settings.discord_bot_token || process.env.DISCORD_BOT_TOKEN)) { %>
@@ -557,12 +543,12 @@
                     form="discordRegisterCommandsForm"
                     formnovalidate
                   >
-                    <i class="fab fa-discord"></i> Enreg. les commandes
+                    <i class="fab fa-discord"></i> <%= t('settings.register_commands_btn') %>
                   </button>
                 <% } else { %>
                   <p style="font-size: 0.8rem; color: var(--color-warning);">
                     <i class="fas fa-exclamation-triangle"></i>
-                    Configurez d'abord le <strong>Client ID</strong> et le <strong>Token bot</strong>.
+                    <%- t('settings.slash_commands_missing_config') %>
                   </p>
                 <% } %>
               </div>
@@ -571,31 +557,31 @@
             <!-- Guide Discord -->
             <div class="card sidebar-card">
               <div class="card-header">
-                <h2><i class="fas fa-circle-info"></i> Guide Discord</h2>
+                <h2><i class="fas fa-circle-info"></i> <%= t('settings.discord_guide_card') %></h2>
               </div>
               <div class="card-body">
                 <ol style="padding-left: var(--space-md); font-size: 0.875rem; line-height: 1.6;">
-                  <li>Créez une application sur le <a href="https://discord.com/developers/applications" target="_blank" rel="noopener noreferrer">Discord Developer Portal</a></li>
-                  <li>Copiez le <strong>Client ID</strong> et le <strong>Client Secret</strong></li>
-                  <li>Ajoutez l'URI de redirection OAuth2 :<br>
+                  <li><%- t('settings.discord_guide_step1') %></li>
+                  <li><%- t('settings.discord_guide_step2') %></li>
+                  <li><%- t('settings.discord_guide_step3') %><br>
                     <code style="font-size: 0.75rem; word-break: break-all;">
                       <%= appUrl || 'https://votre-domaine.example.com' %>/auth/discord/callback
                     </code>
                   </li>
-                  <li>Créez un <strong>Bot</strong>, copiez son <strong>Token</strong></li>
-                  <li>Copiez la <strong>Public Key</strong> (General Information)</li>
-                  <li>Renseignez l'<strong>Interactions Endpoint URL</strong> :<br>
+                  <li><%- t('settings.discord_guide_step4') %></li>
+                  <li><%- t('settings.discord_guide_step5') %></li>
+                  <li><%- t('settings.discord_guide_step6') %><br>
                     <code style="font-size: 0.75rem; word-break: break-all;">
                       <%= appUrl || 'https://votre-domaine.example.com' %>/discord/interactions
                     </code>
                   </li>
-                  <li>Invitez le bot sur votre serveur Discord</li>
-                  <li>Activez le <em>Mode développeur</em> dans Discord pour obtenir les IDs de canaux (Paramètres → Avancés → Mode développeur)</li>
-                  <li>Cliquez sur <strong>Enregistrer les commandes</strong> dans la section « Commandes Slash »</li>
+                  <li><%- t('settings.discord_guide_step7') %></li>
+                  <li><%- t('settings.discord_guide_step8') %></li>
+                  <li><%- t('settings.discord_guide_step9') %></li>
                 </ol>
                 <div style="margin-top: var(--space-sm);">
                   <a href="/admin/discord-test" class="btn btn--ghost btn--full btn--sm">
-                    <i class="fab fa-discord"></i> Tester les notifications
+                    <i class="fab fa-discord"></i> <%= t('settings.test_notifications_btn') %>
                   </a>
                 </div>
               </div>
@@ -628,7 +614,7 @@
 
             if (wantsDiscordEnabled && (!hasClientId || !hasClientSecret)) {
               event.preventDefault();
-              alert('Pour activer la connexion Discord (OAuth2), renseignez le Client ID et le Client Secret.');
+              alert("<%= t('settings.oauth2_alert') %>");
               (hasClientId ? clientSecretInput : clientIdInput).focus();
             }
           });

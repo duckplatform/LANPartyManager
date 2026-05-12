@@ -51,7 +51,7 @@
   <div id="tab-info" class="tab-panel<%= (typeof activeTab === 'undefined' || activeTab === 'info') ? ' active' : '' %>" role="tabpanel">
     <div class="card">
       <div class="card-header">
-        <h2><i class="fas fa-user-pen"></i> Modifier mes informations</h2>
+        <h2><i class="fas fa-user-pen"></i> <%= t('profile.edit_info') %></h2>
       </div>
       <div class="card-body">
         <form action="/profile" method="POST" class="profile-form" novalidate>
@@ -59,12 +59,12 @@
 
           <div class="form-row">
             <div class="form-group">
-              <label for="last_name" class="form-label">Nom</label>
+              <label for="last_name" class="form-label"><%= t('profile.field_last_name') %></label>
               <input type="text" id="last_name" name="last_name" class="form-input"
                 value="<%= user.last_name || '' %>" required maxlength="100" />
             </div>
             <div class="form-group">
-              <label for="first_name" class="form-label">Prénom</label>
+              <label for="first_name" class="form-label"><%= t('profile.field_first_name') %></label>
               <input type="text" id="first_name" name="first_name" class="form-input"
                 value="<%= user.first_name || '' %>" required maxlength="100" />
             </div>
@@ -72,16 +72,16 @@
 
           <div class="form-group">
                  <label for="username" class="form-label">
-              <i class="fas fa-gamepad"></i> Pseudo (jeu ou Discord)
+              <i class="fas fa-gamepad"></i> <%= t('profile.field_username') %>
             </label>
                  <input type="text" id="username" name="username" class="form-input"
                    value="<%= user.username || '' %>" required minlength="2" maxlength="50" />
-            <small class="form-hint">Ce pseudo est utilise pour identifier les joueurs dans les annonces de rencontres Discord.</small>
+            <small class="form-hint"><%= t('profile.field_username_hint') %></small>
           </div>
 
           <div class="form-group">
             <label for="email" class="form-label">
-              <i class="fas fa-envelope"></i> Adresse e-mail
+              <i class="fas fa-envelope"></i> <%= t('profile.field_email') %>
             </label>
             <input type="email" id="email" name="email" class="form-input"
                    value="<%= user.email || '' %>" required autocomplete="email" />
@@ -89,20 +89,19 @@
 
           <div class="form-group">
             <label for="discord_user_id" class="form-label">
-              <i class="fab fa-discord"></i> ID Discord (optionnel)
+              <i class="fab fa-discord"></i> <%= t('profile.field_discord_id') %>
             </label>
             <input type="text" id="discord_user_id" name="discord_user_id" class="form-input font-monospace"
                    value="<%= user.discord_user_id || '' %>" maxlength="20"
                    placeholder="ex: 123456789012345678" autocomplete="off" />
             <small class="form-hint">
-              Permet de vous mentionner (<code>@vous</code>) dans les notifications Discord lors des rencontres.
-              Pour trouver votre ID : activez le <em>Mode développeur</em> dans Discord → clic droit sur votre avatar → <em>Copier l'identifiant</em>.
+              <%- t('profile.field_discord_id_hint') %>
             </small>
           </div>
 
           <div class="form-actions">
             <button type="submit" class="btn btn--primary">
-              <i class="fas fa-floppy-disk"></i> Sauvegarder
+              <i class="fas fa-floppy-disk"></i> <%= t('profile.save') %>
             </button>
           </div>
         </form>
@@ -114,42 +113,42 @@
   <div id="tab-password" class="tab-panel<%= (typeof activeTab !== 'undefined' && activeTab === 'password') ? ' active' : '' %>" role="tabpanel">
     <div class="card">
       <div class="card-header">
-        <h2><i class="fas fa-key"></i> Changer mon mot de passe</h2>
+        <h2><i class="fas fa-key"></i> <%= t('profile.change_password_title') %></h2>
       </div>
       <div class="card-body">
         <form action="/profile/password" method="POST" class="profile-form" novalidate>
           <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
 
           <div class="form-group">
-            <label for="current_password" class="form-label">Mot de passe actuel</label>
+            <label for="current_password" class="form-label"><%= t('profile.field_current_password') %></label>
             <div class="input-password-wrap">
               <input type="password" id="current_password" name="current_password"
                      class="form-input" placeholder="••••••••" required autocomplete="current-password" />
-              <button type="button" class="password-toggle" aria-label="Afficher/masquer">
+              <button type="button" class="password-toggle" aria-label="<%= t('profile.show_hide_password') %>">
                 <i class="fas fa-eye"></i>
               </button>
             </div>
           </div>
 
           <div class="form-group">
-            <label for="new_password" class="form-label">Nouveau mot de passe</label>
+            <label for="new_password" class="form-label"><%= t('profile.field_new_password') %></label>
             <div class="input-password-wrap">
               <input type="password" id="new_password" name="new_password"
                      class="form-input" placeholder="••••••••" required minlength="8"
                      autocomplete="new-password" />
-              <button type="button" class="password-toggle" aria-label="Afficher/masquer">
+              <button type="button" class="password-toggle" aria-label="<%= t('profile.show_hide_password') %>">
                 <i class="fas fa-eye"></i>
               </button>
             </div>
-            <small class="form-hint">Minimum 8 caractères, une majuscule et un chiffre.</small>
+            <small class="form-hint"><%= t('profile.field_new_password_hint') %></small>
           </div>
 
           <div class="form-group">
-            <label for="new_password_confirm" class="form-label">Confirmer le nouveau mot de passe</label>
+            <label for="new_password_confirm" class="form-label"><%= t('profile.field_confirm_password') %></label>
             <div class="input-password-wrap">
               <input type="password" id="new_password_confirm" name="new_password_confirm"
                      class="form-input" placeholder="••••••••" required autocomplete="new-password" />
-              <button type="button" class="password-toggle" aria-label="Afficher/masquer">
+              <button type="button" class="password-toggle" aria-label="<%= t('profile.show_hide_password') %>">
                 <i class="fas fa-eye"></i>
               </button>
             </div>
@@ -157,7 +156,7 @@
 
           <div class="form-actions">
             <button type="submit" class="btn btn--primary">
-              <i class="fas fa-key"></i> Changer le mot de passe
+              <i class="fas fa-key"></i> <%= t('profile.change_password_btn') %>
             </button>
           </div>
         </form>
@@ -172,7 +171,7 @@
     <% if (activeEvent) { %>
     <div class="card" style="margin-bottom: var(--space-md);">
       <div class="card-header">
-        <h2><i class="fas fa-calendar-star"></i> Prochain événement</h2>
+        <h2><i class="fas fa-calendar-star"></i> <%= t('profile.next_event') %></h2>
       </div>
       <div class="card-body">
         <h3 style="margin-bottom: var(--space-sm);"><%= activeEvent.name %></h3>
@@ -181,7 +180,7 @@
           <%= new Date(activeEvent.start_at).toLocaleDateString(locale, {
             weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
           }) %>
-          à
+          <%= t('common.at') %>
           <%= new Date(activeEvent.start_at).toLocaleTimeString(locale, {
             hour: '2-digit', minute: '2-digit'
           }) %>
@@ -190,34 +189,34 @@
 
         <% if (isRegistered) { %>
           <div class="event-registered-badge" style="margin: var(--space-md) 0;">
-            <i class="fas fa-circle-check"></i> Vous êtes inscrit à cet événement !
+            <i class="fas fa-circle-check"></i> <%= t('profile.registered_badge') %>
           </div>
           <!-- Bouton d'accès au badge électronique -->
           <div style="margin-bottom: var(--space-md);">
             <a href="/profile/events/<%= activeEvent.id %>/badge" class="btn btn--primary btn--sm">
-              <i class="fas fa-ticket"></i> Voir mon badge électronique
+              <i class="fas fa-ticket"></i> <%= t('profile.view_electronic_badge') %>
             </a>
           </div>
           <% if (registrationOpen) { %>
             <form action="/profile/events/<%= activeEvent.id %>/unregister" method="POST">
               <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
               <button type="submit" class="btn btn--ghost btn--sm"
-                      onclick="return confirm('Annuler votre inscription à cet événement ?')">
-                <i class="fas fa-user-minus"></i> Annuler mon inscription
+                      onclick='return confirm(<%- JSON.stringify(t("profile.confirm_unregister_event")) %>)'>
+                <i class="fas fa-user-minus"></i> <%= t('profile.cancel_registration_btn') %>
               </button>
             </form>
           <% } else { %>
-            <p class="form-hint"><i class="fas fa-lock"></i> Les inscriptions sont closes (l'événement a déjà commencé ou n'est plus disponible).</p>
+            <p class="form-hint"><i class="fas fa-lock"></i> <%= t('profile.registrations_closed_hint') %></p>
           <% } %>
         <% } else if (registrationOpen) { %>
           <form action="/profile/events/<%= activeEvent.id %>/register" method="POST">
             <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
             <button type="submit" class="btn btn--primary">
-              <i class="fas fa-user-plus"></i> S'inscrire à cet événement
+              <i class="fas fa-user-plus"></i> <%= t('profile.register_btn') %>
             </button>
           </form>
         <% } else { %>
-          <p class="form-hint"><i class="fas fa-lock"></i> Les inscriptions sont closes (l'événement a déjà commencé ou n'est plus disponible).</p>
+            <p class="form-hint"><i class="fas fa-lock"></i> <%= t('profile.registrations_closed_hint') %></p>
         <% } %>
       </div>
     </div>
@@ -225,7 +224,7 @@
     <div class="card" style="margin-bottom: var(--space-md);">
       <div class="card-body">
         <p class="text-muted text-center">
-          <i class="fas fa-calendar-xmark"></i> Aucun événement en cours ou à venir pour le moment.
+          <i class="fas fa-calendar-xmark"></i> <%= t('profile.no_active_event') %>
         </p>
       </div>
     </div>
@@ -234,23 +233,23 @@
     <!-- Historique des inscriptions -->
     <div class="card">
       <div class="card-header">
-        <h2><i class="fas fa-history"></i> Mes inscriptions</h2>
+        <h2><i class="fas fa-history"></i> <%= t('profile.my_registrations') %></h2>
       </div>
       <div class="card-body">
         <% if (!userRegistrations || userRegistrations.length === 0) { %>
           <p class="text-muted text-center">
-            <i class="fas fa-inbox"></i> Vous n'êtes inscrit à aucun événement.
+            <i class="fas fa-inbox"></i> <%= t('profile.no_registrations_msg') %>
           </p>
         <% } else { %>
           <div class="table-responsive">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Événement</th>
-                  <th>Date</th>
-                  <th>Lieu</th>
-                  <th>Statut</th>
-                  <th>Inscrit le</th>
+                  <th><%= t('profile.col_event') %></th>
+                  <th><%= t('profile.col_date') %></th>
+                  <th><%= t('profile.col_location') %></th>
+                  <th><%= t('profile.col_status') %></th>
+                  <th><%= t('profile.col_registered_on') %></th>
                 </tr>
               </thead>
               <tbody>
@@ -265,11 +264,11 @@
                     <td><%= r.location %></td>
                     <td>
                       <% if (r.status === 'planned') { %>
-                        <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> Planifié</span>
+                        <span class="badge badge--admin"><i class="fas fa-calendar-check"></i> <%= t('status.planned') %></span>
                       <% } else if (r.status === 'in_progress') { %>
-                        <span class="badge badge--member"><i class="fas fa-circle-play"></i> En cours</span>
+                        <span class="badge badge--member"><i class="fas fa-circle-play"></i> <%= t('status.in_progress') %></span>
                       <% } else { %>
-                        <span class="badge badge--draft"><i class="fas fa-circle-check"></i> Terminé</span>
+                        <span class="badge badge--draft"><i class="fas fa-circle-check"></i> <%= t('status.ended') %></span>
                       <% } %>
                     </td>
                     <td class="td-date">
@@ -290,24 +289,23 @@
   <div id="tab-badge" class="tab-panel<%= (typeof activeTab !== 'undefined' && activeTab === 'badge') ? ' active' : '' %>" role="tabpanel">
     <div class="card">
       <div class="card-header">
-        <h2><i class="fas fa-id-card"></i> Mon badge de membre</h2>
+        <h2><i class="fas fa-id-card"></i> <%= t('profile.my_badge_title') %></h2>
       </div>
       <div class="card-body" style="text-align: center; padding: var(--space-xl);">
         <p class="form-hint" style="margin-bottom: var(--space-lg);">
           <i class="fas fa-circle-info"></i>
-          Votre badge de membre contient un QR code unique et personnel.
-          Présentez-le à l'entrée de chaque événement auquel vous êtes inscrit.
+          <%= t('profile.badge_description') %>
         </p>
         <div style="display: flex; gap: var(--space-sm); justify-content: center; flex-wrap: wrap;">
           <a href="/profile/badge" class="btn btn--primary">
-            <i class="fas fa-id-card"></i> Voir mon badge
+            <i class="fas fa-id-card"></i> <%= t('profile.view_badge_btn') %>
           </a>
           <a href="/profile/badge" target="_blank" class="btn btn--ghost">
-            <i class="fas fa-external-link-alt"></i> Ouvrir dans un nouvel onglet
+            <i class="fas fa-external-link-alt"></i> <%= t('profile.open_new_tab') %>
           </a>
         </div>
         <p class="form-hint" style="margin-top: var(--space-md);">
-          <i class="fas fa-print"></i> Imprimez ou sauvegardez en PDF depuis la page du badge.
+          <i class="fas fa-print"></i> <%= t('profile.print_pdf_hint') %>
         </p>
       </div>
     </div>

@@ -176,9 +176,9 @@
                 </option>
               </select>
               <span class="form-hint">
-                <strong>Planifié</strong> : l'événement est affiché sur le site et les inscriptions sont ouvertes jusqu'à la date de début.<br />
-                <strong>En cours</strong> : l'événement est affiché, les inscriptions sont fermées.<br />
-                <strong>Terminé</strong> : l'événement n'est plus mis en avant.
+                <%- t('admin.event_form_status_hint_planned') %><br />
+                <%- t('admin.event_form_status_hint_in_progress') %><br />
+                <%- t('admin.event_form_status_hint_ended') %>
               </span>
             </div>
 
@@ -207,8 +207,7 @@
           <div class="card-body">
             <p class="form-hint">
               <i class="fas fa-clock"></i>
-              Les inscriptions sont automatiquement <strong>fermées à l'heure de début</strong>
-              de l'événement, ou dès que le statut passe à « En cours » ou « Terminé ».
+              <%- t('admin.event_form_registration_auto_close') %>
             </p>
             <% if (event && event.id) { %>
               <div style="margin-top: var(--space-sm);">
