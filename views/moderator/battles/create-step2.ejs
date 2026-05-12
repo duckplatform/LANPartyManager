@@ -75,7 +75,7 @@
         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
         <input type="hidden" name="game_id" value="<%= game.id %>" />
 
-        <%=
+        <%
           // Génère les slots joueurs selon le type de rencontre
           const slots = [];
           if (game.match_type === '2v2') {
@@ -192,7 +192,7 @@
     if (streams[slot]) stopCamera(slot);
 
     if (!window._nativeDetector && typeof window.jsQR !== 'function') {
-      alert('<%= t('moderator.qr_unavailable') %>');
+      alert("<%= t('moderator.qr_unavailable') %>");
       return;
     }
 
@@ -251,7 +251,7 @@
         rafIds[slot] = requestAnimationFrame(scan);
       }
     } catch (err) {
-      alert('<%= t('moderator.camera_access_error') %> ' + err.message);
+      alert("<%= t('moderator.camera_access_error') %> " + err.message);
     }
   }
 
@@ -263,7 +263,7 @@
       });
     } else {
       btn.disabled = true;
-      btn.title    = '<%= t('moderator.camera_unavailable_https') %>';
+      btn.title    = "<%= t('moderator.camera_unavailable_https') %>";
     }
   });
 

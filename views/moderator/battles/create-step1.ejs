@@ -109,10 +109,10 @@
     previewType.textContent    = game.match_type;
     previewType.className      = 'badge badge--' + (game.match_type === '2v2' ? 'info' : game.match_type === 'solo' ? 'warning' : 'primary');
     previewInfo.textContent    = game.match_type === '2v2'
-      ? '<%= t('moderator.preview_2v2') %>'
+      ? "<%= t('moderator.preview_2v2') %>"
       : game.match_type === 'solo'
-        ? '<%= t('moderator.preview_solo') %>'
-        : '<%= t('moderator.preview_1v1') %>';
+        ? "<%= t('moderator.preview_solo') %>"
+        : "<%= t('moderator.preview_1v1') %>";
     preview.style.display = 'block';
   }
 

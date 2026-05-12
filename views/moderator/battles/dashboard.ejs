@@ -181,7 +181,8 @@
           <div class="battle-card status-<%= b.status %>">
             <div class="battle-card-header">
               <div>
-                <span class="badge badge--<%= {queue:'warning', planned:'info', setup:'purple', in_progress:'success', ended:'muted'}[b.status] || 'muted' %>">
+                <% const badgeClasses = { queue: 'warning', planned: 'info', setup: 'purple', in_progress: 'success', ended: 'muted' }; %>
+                <span class="badge badge--<%= badgeClasses[b.status] || 'muted' %>">
                   <% const statusLabels = { queue: t('status.queue'), planned: t('status.planned'), setup: t('status.setup'), in_progress: t('status.in_progress'), ended: t('status.ended') }; %>
                   <%= statusLabels[b.status] || b.status %>
                 </span>
@@ -276,8 +277,8 @@
                 </button>
               <% } %>
               <% if (['queue', 'planned'].includes(b.status)) { %>
-                <form action="/battles/<%= b.id %>?_method=DELETE" method="POST" class="form-inline"
-                      onsubmit="return confirm('<%= t(\'moderator.confirm_cancel_battle\') %>')">
+                        <form action="/battles/<%= b.id %>?_method=DELETE" method="POST" class="form-inline"
+                          onsubmit="return confirm('<%= t("moderator.confirm_cancel_battle") %>')">
                   <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                   <button type="submit" class="btn btn--danger btn--sm">
                     <i class="fas fa-times"></i> <%= t('common.cancel') %>
@@ -397,7 +398,7 @@
         const label = document.createElement('div');
         label.style.fontWeight = '600';
         label.style.marginTop = '.5rem';
-        label.textContent = '<%= t('moderator.team_label_prefix') %> ' + team;
+        label.textContent = "<%= t('moderator.team_label_prefix') %> " + team;
         winnersList.appendChild(label);
         teamPlayers.forEach(function(p) {
           const wrap  = document.createElement('label');

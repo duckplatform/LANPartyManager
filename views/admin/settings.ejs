@@ -272,7 +272,7 @@
                                 { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }
                               );
                             } catch(e) {
-                              preview.textContent = '<%= t('settings.locale_invalid') %>';
+                              preview.textContent = "<%= t('settings.locale_invalid') %>";
                             }
                           }
                           input.addEventListener('input', updatePreview);
@@ -614,7 +614,7 @@
 
             if (wantsDiscordEnabled && (!hasClientId || !hasClientSecret)) {
               event.preventDefault();
-              alert('<%= t('settings.oauth2_alert') %>');
+              alert("<%= t('settings.oauth2_alert') %>");
               (hasClientId ? clientSecretInput : clientIdInput).focus();
             }
           });
