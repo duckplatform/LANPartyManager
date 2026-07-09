@@ -10,13 +10,13 @@
   <div class="admin-header">
     <div>
       <h1 class="admin-title">
-        <i class="fas fa-door-open"></i> Salles de jeu
+        <i class="fas fa-door-open"></i> <%= t('admin.rooms_title') %>
       </h1>
-      <p class="admin-subtitle">Gérez les espaces de jeu par événement</p>
+      <p class="admin-subtitle"><%= t('admin.rooms_subtitle') %></p>
     </div>
     <div class="admin-header-actions">
       <a href="/admin/rooms/create<%= eventId ? '?event_id=' + eventId : '' %>" class="btn btn--primary btn--sm">
-        <i class="fas fa-plus"></i> Ajouter une salle
+        <i class="fas fa-plus"></i> <%= t('admin.add_room') %>
       </a>
       <a href="/admin" class="btn btn--ghost btn--sm">
         <i class="fas fa-arrow-left"></i> Administration
@@ -33,7 +33,7 @@
         </label>
         <select name="event_id" id="event_id" class="form-select" style="min-width:250px;"
                 onchange="this.form.submit()">
-          <option value="">— Sélectionner un événement —</option>
+          <option value=""><%= t('admin.select_event_filter') %></option>
           <% events.forEach(function(e) { %>
             <option value="<%= e.id %>" <%= eventId === e.id ? 'selected' : '' %>>
               <%= e.name %> (<%= e.status %>)
@@ -67,20 +67,19 @@
           <table class="data-table">
             <thead>
               <tr>
-                <th>Nom</th>
-                <th>Type</th>
-                <th>Format</th>
-                <th>Disponibilité</th>
-                <th>Statut</th>
-                <th>Actions</th>
+                <th><%= t('admin.room_name') %></th>
+                <th><%= t('admin.room_type') %></th>
+                <th><%= t('admin.room_match_format') %></th>
+                <th><%= t('admin.room_availability') %></th>
+                <th><%= t('common.col_status') %></th>
+                <th><%= t('common.actions') %></th>
               </tr>
             </thead>
             <tbody>
               <% if (rooms.length === 0) { %>
                 <tr>
                   <td colspan="6" class="table-empty">
-                    <i class="fas fa-inbox"></i> Aucune salle configurée pour cet événement.
-                    <a href="/admin/rooms/create?event_id=<%= eventId %>">Ajouter une salle</a>.
+                    <i class="fas fa-inbox"></i> <%= t('admin.no_rooms_for_event') %> <a href="/admin/rooms/create?event_id=<%= eventId %>"><%= t('admin.add_room_link') %></a>
                   </td>
                 </tr>
               <% } else { %>
@@ -89,7 +88,7 @@
                     <td><strong><%= room.name %></strong></td>
                     <td>
                       <i class="fas <%= room.type === 'simulation' ? 'fa-steering-wheel' : 'fa-tv' %>"></i>
-                      <%= room.type === 'simulation' ? 'Simulation' : 'Console' %>
+                      <%= room.type === 'simulation' ? t('admin.room_type_simulation') : t('admin.room_type_console') %>
                     </td>
                     <td>
                       <span class="badge badge--<%= room.match_type === '2v2' ? 'info' : room.match_type === 'solo' ? 'warning' : 'primary' %>">
@@ -99,20 +98,20 @@
                     <td>
                       <% if (!room.is_active) { %>
                         <%/* Salle inactive → toujours "Hors service" */%>
-                        <span class="badge badge--muted"><i class="fas fa-times-circle"></i> Hors service</span>
+                        <span class="badge badge--muted"><i class="fas fa-times-circle"></i> <%= t('admin.room_out_of_service') %></span>
                       <% } else if (room.active_battles > 0) { %>
                         <%/* Salle active avec battle en cours ou planifiée → Occupée */%>
-                        <span class="badge badge--warning"><i class="fas fa-lock"></i> Occupée</span>
+                        <span class="badge badge--warning"><i class="fas fa-lock"></i> <%= t('admin.room_occupied') %></span>
                       <% } else { %>
                         <%/* Salle active et aucune battle → Libre */%>
-                        <span class="badge badge--success"><i class="fas fa-unlock"></i> Libre</span>
+                        <span class="badge badge--success"><i class="fas fa-unlock"></i> <%= t('admin.room_free') %></span>
                       <% } %>
                     </td>
                     <td>
                       <% if (room.is_active) { %>
-                        <span class="badge badge--success"><i class="fas fa-circle"></i> Active</span>
+                        <span class="badge badge--success"><i class="fas fa-circle"></i> <%= t('status.active') %></span>
                       <% } else { %>
-                        <span class="badge badge--muted"><i class="fas fa-circle"></i> Inactive</span>
+                        <span class="badge badge--muted"><i class="fas fa-circle"></i> <%= t('status.inactive') %></span>
                       <% } %>
                     </td>
                     <td class="td-actions">
@@ -122,13 +121,13 @@
                       <form action="/admin/rooms/<%= room.id %>/toggle" method="POST" class="form-inline">
                         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                         <button type="submit" class="btn btn--<%= room.is_active ? 'warning' : 'success' %> btn--xs"
-                                title="<%= room.is_active ? 'Désactiver' : 'Activer' %>">
+                                title="<%= room.is_active ? t('admin.room_deactivate') : t('admin.room_activate') %>">
                           <i class="fas fa-<%= room.is_active ? 'ban' : 'check' %>"></i>
                         </button>
                       </form>
                       <form action="/admin/rooms/<%= room.id %>?_method=DELETE" method="POST"
                             class="form-inline"
-                            onsubmit="return confirm('Supprimer la salle <%= room.name %> ?')">
+                            onsubmit='return confirm(<%- JSON.stringify(t("admin.confirm_delete_room").replace("{{name}}", room.name)) %>)'>
                         <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                         <button type="submit" class="btn btn--danger btn--xs" title="Supprimer">
                           <i class="fas fa-trash"></i>
@@ -147,7 +146,7 @@
     <div class="card">
       <div class="card-body" style="text-align:center; color:var(--color-text-muted); padding: var(--space-xl);">
         <i class="fas fa-hand-pointer" style="font-size:2rem; margin-bottom:.75rem; display:block;"></i>
-        Sélectionnez un événement ci-dessus pour voir ses salles.
+        <%= t('admin.select_event_first') %>
       </div>
     </div>
   <% } %>

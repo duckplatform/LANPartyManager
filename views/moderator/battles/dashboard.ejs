@@ -98,13 +98,13 @@
     </div>
     <div class="admin-header-actions">
       <a href="/battles/events/<%= event.id %>/announce" class="btn btn--ghost btn--sm" target="_blank">
-        <i class="fas fa-bullhorn"></i> Ecran d'annonce
+        <i class="fas fa-bullhorn"></i> <%= t('moderator.dashboard_announce_screen') %>
       </a>
       <a href="/battles/events/<%= event.id %>/create" class="btn btn--primary btn--sm">
-        <i class="fas fa-plus"></i> Nouvelle rencontre
+        <i class="fas fa-plus"></i> <%= t('moderator.new_match') %>
       </a>
       <a href="/battles" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Retour
+        <i class="fas fa-arrow-left"></i> <%= t('common.back') %>
       </a>
     </div>
   </div>
@@ -113,23 +113,23 @@
   <div class="battles-stats">
     <div class="battles-stat color-queue">
       <div class="stat-num"><%= stats.queue %></div>
-      <div class="stat-lbl"><i class="fas fa-hourglass-half"></i> File d'attente</div>
+      <div class="stat-lbl"><i class="fas fa-hourglass-half"></i> <%= t('moderator.dashboard_queue_label') %></div>
     </div>
     <div class="battles-stat color-plan">
       <div class="stat-num"><%= stats.planned %></div>
-      <div class="stat-lbl"><i class="fas fa-clock"></i> Planifiées</div>
+      <div class="stat-lbl"><i class="fas fa-clock"></i> <%= t('moderator.kpi_planned') %></div>
     </div>
     <div class="battles-stat color-wait">
       <div class="stat-num"><%= stats.setup %></div>
-      <div class="stat-lbl"><i class="fas fa-users"></i> Installation</div>
+      <div class="stat-lbl"><i class="fas fa-users"></i> <%= t('moderator.kpi_setup') %></div>
     </div>
     <div class="battles-stat color-live">
       <div class="stat-num"><%= stats.in_progress %></div>
-      <div class="stat-lbl"><i class="fas fa-play-circle"></i> En cours</div>
+      <div class="stat-lbl"><i class="fas fa-play-circle"></i> <%= t('moderator.kpi_in_game') %></div>
     </div>
     <div class="battles-stat color-done">
       <div class="stat-num"><%= stats.ended %></div>
-      <div class="stat-lbl"><i class="fas fa-flag-checkered"></i> Terminées</div>
+      <div class="stat-lbl"><i class="fas fa-flag-checkered"></i> <%= t('moderator.kpi_results') %></div>
     </div>
   </div>
 
@@ -156,7 +156,7 @@
         <% }); %>
       </div>
       <p style="margin-top:.5rem; font-size:.8rem; color:var(--color-text-muted);">
-        <a href="/admin/rooms?event_id=<%= event.id %>"><i class="fas fa-cog"></i> Gérer les salles</a>
+        <a href="/admin/rooms?event_id=<%= event.id %>"><i class="fas fa-cog"></i> <%= t('moderator.dashboard_manage_rooms') %></a>
       </p>
     </div>
   </div>
@@ -165,7 +165,7 @@
   <!-- Liste des rencontres actives -->
   <div class="card" style="margin-bottom: var(--space-lg);">
     <div class="card-header">
-      <h2><i class="fas fa-list"></i> Rencontres actives</h2>
+      <h2><i class="fas fa-list"></i> <%= t('moderator.dashboard_active_battles') %></h2>
     </div>
     <div class="card-body">
       <%
@@ -173,16 +173,17 @@
       %>
       <% if (active.length === 0) { %>
         <p class="table-empty" style="text-align:center; padding: var(--space-lg);">
-          <i class="fas fa-inbox"></i> Aucune rencontre active.
-          <a href="/battles/events/<%= event.id %>/create">Créer la première rencontre</a>.
+          <i class="fas fa-inbox"></i> <%= t('moderator.dashboard_no_active') %>
+          <a href="/battles/events/<%= event.id %>/create"><%= t('moderator.dashboard_create_first') %></a>
         </p>
       <% } else { %>
         <% active.forEach(function(b) { %>
           <div class="battle-card status-<%= b.status %>">
             <div class="battle-card-header">
               <div>
-                <span class="badge badge--<%= {queue:'warning', planned:'info', setup:'purple', in_progress:'success', ended:'muted'}[b.status] || 'muted' %>">
-                  <% const statusLabels = { queue: 'File d\'attente', planned: 'Planifiée', setup: 'Installation', in_progress: 'En cours', ended: 'Terminée' }; %>
+                <% const badgeClasses = { queue: 'warning', planned: 'info', setup: 'purple', in_progress: 'success', ended: 'muted' }; %>
+                <span class="badge badge--<%= badgeClasses[b.status] || 'muted' %>">
+                  <% const statusLabels = { queue: t('status.queue'), planned: t('status.planned'), setup: t('status.setup'), in_progress: t('status.in_progress'), ended: t('status.ended') }; %>
                   <%= statusLabels[b.status] || b.status %>
                 </span>
                 <strong style="margin-left:.5rem;"><%= b.game_name %></strong>
@@ -195,11 +196,11 @@
                 <% if (b.room_name) { %>
                   &nbsp;|&nbsp;<i class="fas fa-door-open"></i> <strong><%= b.room_name %></strong>
                 <% } else if (b.status === 'queue') { %>
-                  &nbsp;|&nbsp;<i class="fas fa-hourglass-half" style="color:#f59e0b;"></i> En attente d'une salle
+                  &nbsp;|&nbsp;<i class="fas fa-hourglass-half" style="color:#f59e0b;"></i> <%= t('moderator.dashboard_waiting_room') %>
                 <% } else if (b.room_id) { %>
                   &nbsp;|&nbsp;<i class="fas fa-door-open"></i> <strong>Salle #<%= b.room_id %></strong>
                 <% } else { %>
-                  &nbsp;|&nbsp;<i class="fas fa-triangle-exclamation" style="color:#ef4444;"></i> Salle non attribuee (incoherence)
+                  &nbsp;|&nbsp;<i class="fas fa-triangle-exclamation" style="color:#ef4444;"></i> <%= t('moderator.dashboard_no_room_assigned') %>
                 <% } %>
               </div>
             </div>
@@ -217,7 +218,7 @@
               <div class="battle-duration">
                 <div class="battle-duration-item">
                   <i class="fas fa-hourglass-end"></i>
-                  <span class="battle-duration-label">Durée totale:</span>
+                  <span class="battle-duration-label"><%= t('moderator.dashboard_duration_total') %></span>
                   <span class="battle-duration-value"><%= getGameDuration(b.started_at, b.ended_at) %></span>
                 </div>
               </div>
@@ -227,7 +228,7 @@
             <div class="battle-players">
               <% if (b.match_type === '2v2') { %>
                 <div class="battle-team">
-                  <div class="battle-team-label">Équipe 1</div>
+                  <div class="battle-team-label"><%= t('moderator.team_label_prefix') %> 1</div>
                   <% b.players.filter(p => p.team === 1).forEach(function(p) { %>
                     <span class="player-chip <%= p.is_winner ? 'winner' : '' %>">
                       <i class="fas fa-circle-user"></i> <%= p.username %>
@@ -235,9 +236,9 @@
                     </span>
                   <% }); %>
                 </div>
-                <div style="align-self:center; font-weight:700; color:var(--color-text-muted);">VS</div>
+                <div style="align-self:center; font-weight:700; color:var(--color-text-muted);"><%= t('common.vs') %></div>
                 <div class="battle-team">
-                  <div class="battle-team-label">Équipe 2</div>
+                  <div class="battle-team-label"><%= t('moderator.team_label_prefix') %> 2</div>
                   <% b.players.filter(p => p.team === 2).forEach(function(p) { %>
                     <span class="player-chip <%= p.is_winner ? 'winner' : '' %>">
                       <i class="fas fa-circle-user"></i> <%= p.username %>
@@ -263,7 +264,7 @@
                 <form action="/battles/<%= b.id %>/start" method="POST" class="form-inline">
                   <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                   <button type="submit" class="btn btn--success btn--sm">
-                    <i class="fas fa-play"></i> Lancer la rencontre
+                    <i class="fas fa-play"></i> <%= t('moderator.dashboard_start_battle') %>
                   </button>
                 </form>
               <% } %>
@@ -272,15 +273,15 @@
                         data-battle-id="<%= b.id %>"
                         data-players="<%- JSON.stringify(b.players).replace(/"/g, '&quot;') %>"
                         data-type="<%= b.match_type %>">
-                  <i class="fas fa-flag-checkered"></i> Terminer & résultat
+                  <i class="fas fa-flag-checkered"></i> <%= t('moderator.dashboard_end_result') %>
                 </button>
               <% } %>
               <% if (['queue', 'planned'].includes(b.status)) { %>
-                <form action="/battles/<%= b.id %>?_method=DELETE" method="POST" class="form-inline"
-                      onsubmit="return confirm('Annuler cette rencontre ?')">
+                        <form action="/battles/<%= b.id %>?_method=DELETE" method="POST" class="form-inline"
+                          onsubmit="return confirm('<%= t("moderator.confirm_cancel_battle") %>')">
                   <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                   <button type="submit" class="btn btn--danger btn--sm">
-                    <i class="fas fa-times"></i> Annuler
+                    <i class="fas fa-times"></i> <%= t('common.cancel') %>
                   </button>
                 </form>
               <% } %>
@@ -296,7 +297,7 @@
   <% if (done.length > 0) { %>
   <details class="card" style="margin-bottom: var(--space-lg);">
     <summary style="cursor:pointer; padding: var(--space-md); font-weight:600; list-style:none; display:flex; align-items:center; gap:.5rem;">
-      <i class="fas fa-flag-checkered"></i> Rencontres terminées (<%= done.length %>)
+      <i class="fas fa-flag-checkered"></i> <%= t('moderator.dashboard_ended_battles') %> (<%= done.length %>)
       <i class="fas fa-chevron-down" style="margin-left:auto;"></i>
     </summary>
     <div class="card-body" style="padding-top:0;">
@@ -304,10 +305,10 @@
         <div class="battle-card status-ended">
           <div class="battle-card-header">
             <div>
-              <span class="badge badge--muted">Terminée</span>
+              <span class="badge badge--muted"><%= t('status.ended') %></span>
               <strong style="margin-left:.5rem;"><%= b.game_name %></strong>
               <span style="color:var(--color-text-muted); font-size:.85rem;"> — <%= b.game_console %></span>
-              <% if (b.score) { %><span style="margin-left:.5rem; font-weight:600; color:var(--color-primary);">Score : <%= b.score %></span><% } %>
+              <% if (b.score) { %><span style="margin-left:.5rem; font-weight:600; color:var(--color-primary);"><%= t('moderator.result_score_short') %> <%= b.score %></span><% } %>
             </div>
             <div style="font-size:.82rem; color:var(--color-text-muted);">
               #<%= b.id %>
@@ -318,7 +319,7 @@
           <div class="battle-duration">
             <div class="battle-duration-item">
               <i class="fas fa-hourglass-end"></i>
-              <span class="battle-duration-label">Durée:</span>
+              <span class="battle-duration-label"><%= t('moderator.duration_short') %></span>
               <span class="battle-duration-value"><%= getGameDuration(b.started_at, b.ended_at) %></span>
             </div>
           </div>
@@ -342,27 +343,27 @@
 <!-- Modal : Enregistrer le résultat -->
 <div id="resultModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
   <div class="modal-box">
-    <h2 id="modalTitle" style="margin-top:0;"><i class="fas fa-flag-checkered"></i> Résultat de la rencontre</h2>
+    <h2 id="modalTitle" style="margin-top:0;"><i class="fas fa-flag-checkered"></i> <%= t('moderator.result_modal_title') %></h2>
     <form id="resultForm" method="POST">
       <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
       <input type="hidden" name="_method" value="POST" />
 
       <div class="form-group">
-        <label class="form-label" for="scoreInput">Score (facultatif)</label>
+        <label class="form-label" for="scoreInput"><%= t('moderator.result_score_label') %></label>
         <input type="text" id="scoreInput" name="score" class="form-input"
-               placeholder="Ex: 3-1, 100-85, victoire" maxlength="100" />
+               placeholder="<%= t('moderator.result_score_placeholder') %>" maxlength="100" />
       </div>
 
       <div class="form-group">
-        <label class="form-label">Gagnant(s)</label>
+        <label class="form-label"><%= t('moderator.result_winners_label') %></label>
         <div id="winnersList" style="display:flex; flex-direction:column; gap:.4rem;"></div>
       </div>
 
       <div class="form-actions">
         <button type="submit" class="btn btn--primary">
-          <i class="fas fa-save"></i> Enregistrer
+          <i class="fas fa-save"></i> <%= t('common.save') %>
         </button>
-        <button type="button" class="btn btn--ghost btn-close-modal">Annuler</button>
+        <button type="button" class="btn btn--ghost btn-close-modal"><%= t('common.cancel') %></button>
       </div>
     </form>
   </div>
@@ -397,7 +398,7 @@
         const label = document.createElement('div');
         label.style.fontWeight = '600';
         label.style.marginTop = '.5rem';
-        label.textContent = 'Équipe ' + team;
+        label.textContent = "<%= t('moderator.team_label_prefix') %> " + team;
         winnersList.appendChild(label);
         teamPlayers.forEach(function(p) {
           const wrap  = document.createElement('label');

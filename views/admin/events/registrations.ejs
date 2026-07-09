@@ -17,7 +17,7 @@
         <%= new Date(event.start_at).toLocaleDateString(locale, {
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
         }) %>
-        à
+        <%- t('common.at') %>
         <%= new Date(event.start_at).toLocaleTimeString(locale, {
           hour: '2-digit', minute: '2-digit'
         }) %>
@@ -26,10 +26,10 @@
     </div>
     <div class="admin-header-actions">
       <a href="/admin/events" class="btn btn--ghost btn--sm">
-        <i class="fas fa-arrow-left"></i> Liste des événements
+        <i class="fas fa-arrow-left"></i> <%= t('admin.events_list_title') %>
       </a>
       <a href="/admin/events/<%= event.id %>/edit" class="btn btn--warning btn--sm">
-        <i class="fas fa-edit"></i> Modifier l'événement
+        <i class="fas fa-edit"></i> <%= t('admin.modify_event_btn') %>
       </a>
     </div>
   </div>
@@ -48,18 +48,15 @@
         <i class="fas fa-<%= event.status === 'in_progress' ? 'circle-play' : event.status === 'planned' ? 'calendar-check' : 'circle-check' %>"></i>
       </div>
       <div class="stat-info">
-        <span class="stat-number"><%=
-          event.status === 'planned' ? 'Planifié' :
-          event.status === 'in_progress' ? 'En cours' : 'Terminé'
-        %></span>
-        <span class="stat-label">Statut événement</span>
+        <span class="stat-number"><%= event.status === 'planned' ? t('status.planned') : event.status === 'in_progress' ? t('status.in_progress') : t('status.ended') %></span>
+        <span class="stat-label"><%= t('admin.event_status_label') %></span>
       </div>
     </div>
     <div class="stat-card">
       <div class="stat-icon stat-icon--news"><i class="fas fa-clock"></i></div>
       <div class="stat-info">
-        <span class="stat-number"><%= registrationOpen ? 'Ouvertes' : 'Fermées' %></span>
-        <span class="stat-label">Inscriptions</span>
+        <span class="stat-number"><%= registrationOpen ? t('event.registrations_open') : t('event.registrations_closed') %></span>
+        <span class="stat-label"><%= t('event.registrations') %></span>
       </div>
     </div>
   </div>
@@ -67,7 +64,7 @@
   <!-- Tableau des inscrits -->
   <div class="card admin-users-card">
     <div class="card-header admin-card-header">
-      <h2><i class="fas fa-list"></i> Liste des inscrits (<%= registrations.length %>)</h2>
+      <h2><i class="fas fa-list"></i> <%= t('admin.registrations_list_title') %> (<%= registrations.length %>)</h2>
     </div>
     <div class="card-body">
 
@@ -76,13 +73,13 @@
         <form action="/admin/events/<%= event.id %>/registrations" method="POST" class="inline-form" style="display:flex;gap:.5rem;flex-wrap:wrap;">
           <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
           <select name="user_id" class="form-input" style="max-width:280px;" required>
-            <option value="">— Sélectionner un membre —</option>
+            <option value=""><%= t('admin.select_member') %></option>
             <% availableUsers.forEach(function(u) { %>
               <option value="<%= u.id %>"><%= u.username %> (<%= u.email %>)</option>
             <% }); %>
           </select>
           <button type="submit" class="btn btn--primary btn--sm">
-            <i class="fas fa-plus"></i> Inscrire ce membre
+            <i class="fas fa-plus"></i> <%= t('admin.add_member_btn') %>
           </button>
         </form>
       </div>
@@ -92,18 +89,18 @@
           <thead>
             <tr>
               <th>#</th>
-              <th>Pseudo</th>
-              <th>Nom complet</th>
-              <th>Email</th>
-              <th>Inscrit le</th>
-              <th>Action</th>
+              <th><%= t('admin.table_user_pseudo') %></th>
+              <th><%= t('admin.col_full_name') %></th>
+              <th><%= t('admin.table_email') %></th>
+              <th><%= t('profile.col_registered_on') %></th>
+              <th><%= t('common.actions') %></th>
             </tr>
           </thead>
           <tbody>
             <% if (registrations.length === 0) { %>
               <tr>
                 <td colspan="6" class="table-empty">
-                  <i class="fas fa-inbox"></i> Aucun inscrit pour le moment.
+                  <i class="fas fa-inbox"></i> <%= t('admin.no_registrations_yet') %>
                 </td>
               </tr>
             <% } else { %>
@@ -125,8 +122,8 @@
                       <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
                       <button type="submit"
                               class="btn btn--xs btn--danger"
-                              onclick="return confirm('Désinscrire <%= r.username %> de cet événement ?')">
-                        <i class="fas fa-user-minus"></i> Désinscrire
+                              onclick="return confirm('<%= t('admin.confirm_unregister_member').replace('{{name}}', r.username) %>')">
+                        <i class="fas fa-user-minus"></i> <%= t('common.delete') %>
                       </button>
                     </form>
                   </td>

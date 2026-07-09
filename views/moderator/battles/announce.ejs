@@ -503,29 +503,29 @@
 <div class="container admin-container">
   <div class="wall-header">
     <div>
-      <h1 class="wall-title"><i class="fas fa-tv"></i> Ecran Geant — <%= safeEvent.name %></h1>
+      <h1 class="wall-title"><i class="fas fa-tv"></i> <%= t('moderator.announce_title') %> — <%= safeEvent.name %></h1>
       <div class="wall-meta">
-        Projection dynamique des salles, rencontres et file d'attente.
-        Derniere mise a jour: <%= safeNow.toLocaleTimeString(locale) %>
+        <%= t('moderator.announce_subtitle') %>
+        <%= t('moderator.announce_last_update') %> <%= safeNow.toLocaleTimeString(locale) %>
       </div>
     </div>
     <div class="wall-actions no-print">
-      <button onclick="window.location.reload()" class="btn btn--ghost btn--sm"><i class="fas fa-rotate-right"></i> Actualiser</button>
-      <a href="/battles/events/<%= safeEvent.id %>" class="btn btn--ghost btn--sm"><i class="fas fa-arrow-left"></i> Retour</a>
+      <button onclick="window.location.reload()" class="btn btn--ghost btn--sm"><i class="fas fa-rotate-right"></i> <%= t('moderator.announce_refresh') %></button>
+      <a href="/battles/events/<%= safeEvent.id %>" class="btn btn--ghost btn--sm"><i class="fas fa-arrow-left"></i> <%= t('moderator.announce_back') %></a>
     </div>
   </div>
 
   <div class="wall-kpis">
-    <div class="wall-kpi"><strong><%= safeStats.in_progress || 0 %></strong><span>En jeu</span></div>
-    <div class="wall-kpi"><strong><%= safeStats.setup || 0 %></strong><span>Installation</span></div>
-    <div class="wall-kpi"><strong><%= safeStats.planned || 0 %></strong><span>Planifiees</span></div>
-    <div class="wall-kpi"><strong><%= safeStats.queue || 0 %></strong><span>File globale</span></div>
-    <div class="wall-kpi"><strong><%= safeStats.ended || 0 %></strong><span>Resultats</span></div>
+    <div class="wall-kpi"><strong><%= safeStats.in_progress || 0 %></strong><span><%= t('moderator.kpi_in_game') %></span></div>
+    <div class="wall-kpi"><strong><%= safeStats.setup || 0 %></strong><span><%= t('moderator.kpi_setup') %></span></div>
+    <div class="wall-kpi"><strong><%= safeStats.planned || 0 %></strong><span><%= t('moderator.kpi_planned') %></span></div>
+    <div class="wall-kpi"><strong><%= safeStats.queue || 0 %></strong><span><%= t('moderator.kpi_queue') %></span></div>
+    <div class="wall-kpi"><strong><%= safeStats.ended || 0 %></strong><span><%= t('moderator.kpi_results') %></span></div>
   </div>
 
   <div class="wall-grid" style="margin-top: .85rem;">
     <section class="wall-panel">
-      <h2><i class="fas fa-door-open"></i> Etat des salles</h2>
+      <h2><i class="fas fa-door-open"></i> <%= t('moderator.announce_rooms_title') %></h2>
       <div class="rooms-window">
         <div class="rooms-grid">
           <% computedRoomBoards.forEach(function(room) {
@@ -542,11 +542,11 @@
               <div class="match-sub"><%= roomType %> • <%= roomHardware %></div>
 
               <div class="room-block">
-                <div class="room-label">Partie en cours</div>
+                <div class="room-label"><%= t('moderator.announce_current_game') %></div>
                 <% if (room.currentBattle) { %>
                   <div class="match-line"><%= room.currentBattle.game_name %> — <%= room.currentBattle.game_console %></div>
                   <div class="match-sub">
-                    Statut: <%= room.currentBattle.status === 'setup' ? 'Installation' : room.currentBattle.status === 'in_progress' ? 'En cours' : room.currentBattle.status %>
+                    Statut: <%= room.currentBattle.status === 'setup' ? t('moderator.announce_status_setup') : room.currentBattle.status === 'in_progress' ? t('moderator.announce_status_in_progress') : room.currentBattle.status %>
                   </div>
                   <div class="player-strip">
                     <% const currentPlayers = playerTokens(room.currentBattle); %>
@@ -558,16 +558,16 @@
                     <% }); %>
                   </div>
                 <% } else { %>
-                  <div class="empty-note">Aucune partie en jeu</div>
+                  <div class="empty-note"><%= t('moderator.announce_no_current_game') %></div>
                 <% } %>
               </div>
 
               <div class="room-block">
-                <div class="room-label">Partie suivante</div>
+                <div class="room-label"><%= t('moderator.announce_next_game') %></div>
                 <% if (room.nextBattle) { %>
                   <div class="match-line"><%= room.nextBattle.game_name %> — <%= room.nextBattle.game_console %></div>
                   <div class="match-sub">
-                    Statut: <%= room.nextBattle.status === 'planned' ? 'Planifiee' : room.nextBattle.status %>
+                    Statut: <%= room.nextBattle.status === 'planned' ? t('moderator.announce_status_planned') : room.nextBattle.status %>
                   </div>
                   <div class="player-strip">
                     <% const nextPlayers = playerTokens(room.nextBattle); %>
@@ -579,23 +579,23 @@
                     <% }); %>
                   </div>
                 <% } else { %>
-                  <div class="empty-note">Aucune partie suivante</div>
+                  <div class="empty-note"><%= t('moderator.announce_no_next_game') %></div>
                 <% } %>
               </div>
             </article>
           <% }); %>
           <% if (computedRoomBoards.length === 0) { %>
-            <div class="empty-note">Aucune salle/rencontre active a afficher pour cet evenement.</div>
+            <div class="empty-note"><%= t('moderator.announce_no_rooms') %></div>
           <% } %>
         </div>
       </div>
     </section>
 
     <section class="wall-panel">
-      <h2><i class="fas fa-list-ol"></i> File d'attente globale</h2>
-      <div class="list-caption">Defilement automatique pour afficher toute la file.</div>
+      <h2><i class="fas fa-list-ol"></i> <%= t('moderator.announce_queue_title') %></h2>
+      <div class="list-caption"><%= t('moderator.announce_queue_scroll') %></div>
       <% if (displayedQueue.length === 0) { %>
-        <div class="empty-note">Aucune rencontre en file d'attente.</div>
+        <div class="empty-note"><%= t('moderator.announce_no_queue') %></div>
       <% } else { %>
         <div class="queue-window" data-auto-scroll="queue">
           <div class="queue-scroll" data-auto-scroll="queue">
@@ -623,10 +623,10 @@
 
     <div class="wall-stack">
       <section class="wall-panel">
-        <h2><i class="fas fa-flag-checkered"></i> Derniers resultats</h2>
-        <div class="list-caption">Affichage des 10 derniers resultats maximum.</div>
+        <h2><i class="fas fa-flag-checkered"></i> <%= t('moderator.announce_results_title') %></h2>
+        <div class="list-caption"><%= t('moderator.announce_results_max') %></div>
         <% if (displayedRecentResults.length === 0) { %>
-          <div class="empty-note">Aucun resultat enregistre.</div>
+          <div class="empty-note"><%= t('moderator.announce_no_results') %></div>
         <% } else { %>
           <div class="results-window" data-auto-scroll="results">
             <div class="results-scroll" data-auto-scroll="results">
@@ -642,14 +642,14 @@
                   <% const winners = resultPlayers.filter(function(p){ return p.winner; }); %>
                   <div class="result-item<%= winners.length > 0 ? ' result-item--has-winner' : '' %>">
                     <div class="match-line"><%= b.game_name %> — <%= b.game_console %></div>
-                    <div class="match-sub">Salle: <%= b.room_name || 'N/A' %> • Score: <%= b.score || 'N/A' %></div>
+                    <div class="match-sub"><%= t('moderator.announce_room_col') %>: <%= b.room_name || 'N/A' %> • <%= t('moderator.announce_score_col') %>: <%= b.score || 'N/A' %></div>
                     <div class="result-meta">
                       <div class="result-meta-item">
-                        <span class="result-meta-label"><i class="fas fa-hourglass-end"></i> Durée:</span>
+                        <span class="result-meta-label"><i class="fas fa-hourglass-end"></i> <%= t('moderator.announce_duration_col') %>:</span>
                         <span class="result-meta-value"><%= getGameDuration(b.started_at, b.ended_at) %></span>
                       </div>
                       <div class="result-meta-item">
-                        <span class="result-meta-label"><i class="fas fa-clock"></i> Fin:</span>
+                        <span class="result-meta-label"><i class="fas fa-clock"></i> <%= t('moderator.announce_end_col') %>:</span>
                         <span class="result-meta-value"><%= getElapsedTime(b.ended_at) %></span>
                       </div>
                     </div>
@@ -673,10 +673,10 @@
       </section>
 
       <section class="wall-panel">
-        <h2><i class="fas fa-ranking-star"></i> Classement complet</h2>
-        <div class="list-caption">Classement sans limite, défilement automatique.</div>
+        <h2><i class="fas fa-ranking-star"></i> <%= t('moderator.announce_ranking_title') %></h2>
+        <div class="list-caption"><%= t('moderator.announce_ranking_scroll') %></div>
         <% if (safeRankingBoard.length === 0) { %>
-          <div class="empty-note">Aucun classement disponible pour le moment.</div>
+          <div class="empty-note"><%= t('moderator.announce_no_ranking') %></div>
         <% } else { %>
           <div class="ranking-window" data-auto-scroll="ranking">
             <div class="ranking-scroll" data-auto-scroll="ranking">
@@ -684,8 +684,8 @@
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>Joueur</th>
-                    <th>Points</th>
+                    <th><%= t('moderator.announce_col_player') %></th>
+                    <th><%= t('moderator.announce_col_points') %></th>
                     <th>V</th>
                     <th>R</th>
                   </tr>

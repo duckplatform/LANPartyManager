@@ -8,9 +8,9 @@
       <div class="admin-header">
         <div>
           <h1 class="admin-title">
-            <i class="fab fa-discord"></i> Test des mentions Discord
+            <i class="fab fa-discord"></i> <%= t('admin.discord_test_title') %>
           </h1>
-          <p class="admin-subtitle">Envoie un message de test sur le canal Discord configuré</p>
+          <p class="admin-subtitle"><%= t('admin.discord_test_subtitle') %></p>
         </div>
       </div>
 
@@ -18,52 +18,50 @@
     <div class="col-lg-8">
       <div class="card">
         <div class="card-header bg-dark text-white">
-          <h4 class="mb-0">🧪 Test des mentions Discord</h4>
+          <h4 class="mb-0">🧪 <%= t('admin.discord_test_title') %></h4>
         </div>
         <div class="card-body">
           <%- include('../partials/flash') %>
 
           <p class="text-muted mb-4">
-            Envoie un message de test sur le canal Discord configuré
-            (<code>DISCORD_CHANNEL_EVENTS</code>) pour comparer les deux formats de mention.
+            <%= t('admin.discord_test_subtitle') %>
           </p>
 
           <form method="POST" action="/admin/discord-test">
             <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
             <div class="mb-3">
-              <label class="form-label fw-bold">Canal cible (optionnel)</label>
+              <label class="form-label fw-bold"><%= t('admin.discord_test_channel_label') %></label>
               <input type="text" name="channel_id" class="form-control font-monospace"
-                     placeholder="Laissez vide pour utiliser DISCORD_CHANNEL_EVENTS"
+                     placeholder="<%= t('admin.discord_test_channel_placeholder') %>"
                      value="<%= channelId || '' %>">
               <div class="form-text">
-                Canal Discord configuré : <code><%= configuredChannel || '(non configuré)' %></code>
+                <%= t('admin.discord_configured_channel') %> <code><%= configuredChannel || '(non configuré)' %></code>
               </div>
             </div>
 
             <div class="mb-3">
-              <label class="form-label fw-bold">Pseudo (texte brut)</label>
+              <label class="form-label fw-bold"><%= t('admin.discord_pseudo_label') %></label>
               <input type="text" name="pseudo" class="form-control"
                      placeholder="ex: MonPseudo"
                      value="<%= pseudo || '' %>">
-              <div class="form-text">Sera envoyé comme <code>@MonPseudo</code> — texte brut, aucune notification.</div>
+              <div class="form-text"><%= t('admin.discord_pseudo_hint') %></div>
             </div>
 
             <div class="mb-3">
-              <label class="form-label fw-bold">Discord User ID (Snowflake)</label>
+              <label class="form-label fw-bold"><%= t('admin.discord_user_id_label') %></label>
               <input type="text" name="discord_id" class="form-control font-monospace"
                      placeholder="ex: 123456789012345678"
                      value="<%= discordId || '' %>">
               <div class="form-text">
-                Sera envoyé comme <code>&lt;@123456789012345678&gt;</code> — mention réelle avec notification.
+                <%= t('admin.discord_user_id_hint') %>
                 <br>
-                Pour trouver votre ID : activez le <em>Mode développeur</em> dans Discord →
-                clic droit sur votre avatar → <em>Copier l'identifiant</em>.
+                <%= t('admin.discord_id_find_hint') %>
               </div>
             </div>
 
             <div class="d-flex gap-2">
               <button type="submit" class="btn btn-primary">
-                📤 Envoyer le message de test
+                📤 <%= t('admin.discord_send_test') %>
               </button>
               <a href="/admin/dashboard" class="btn btn-outline-secondary">Retour</a>
             </div>
@@ -80,29 +78,29 @@
           <% } %>
 
           <hr class="mt-4">
-          <h6>📋 Résumé des formats Discord</h6>
+          <h6>📋 <%= t('admin.discord_formats_summary') %></h6>
           <table class="table table-sm table-bordered mt-2">
             <thead class="table-dark">
               <tr>
-                <th>Format envoyé</th>
-                <th>Résultat</th>
-                <th>Notification ?</th>
+                <th><%= t('admin.discord_format_sent') %></th>
+                <th><%= t('admin.discord_format_result') %></th>
+                <th><%= t('admin.discord_format_notify') %></th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td><code>@MonPseudo</code></td>
-                <td>Texte brut affiché tel quel</td>
+                <td><%= t('admin.discord_format_plain_result') %></td>
                 <td class="text-danger">❌ Non</td>
               </tr>
               <tr>
                 <td><code>&lt;@123456789012345678&gt;</code></td>
-                <td>Mention cliquable avec surbrillance</td>
+                <td><%= t('admin.discord_format_mention_result') %></td>
                 <td class="text-success">✅ Oui</td>
               </tr>
               <tr>
                 <td><code>@everyone</code></td>
-                <td>Mention de tout le serveur</td>
+                <td><%= t('admin.discord_format_everyone_result') %></td>
                 <td class="text-success">✅ Oui (si autorisé)</td>
               </tr>
             </tbody>
