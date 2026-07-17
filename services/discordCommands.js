@@ -41,7 +41,7 @@ const SLASH_COMMANDS = [
   },
   {
     name: 'position',
-    description: "Affiche votre position dans le classement (requiert un compte Discord lié).",
+    description: 'Affiche votre position dans le classement (requiert un compte Discord lié).',
     dm_permission: false,
   },
   {
@@ -125,9 +125,9 @@ function verifySignature(rawBody, signature, timestamp, publicKeyHex) {
     const isValid = nacl.sign.detached.verify(message, signatureBuffer, publicKeyBuffer);
     
     if (isValid) {
-      logger.debug(`[DISCORD_INTERACTIONS] OK - Signature verification successful`);
+      logger.debug('[DISCORD_INTERACTIONS] OK - Signature verification successful');
     } else {
-      logger.warn(`[DISCORD_INTERACTIONS] FAILED - Signature doesn't match`);
+      logger.warn('[DISCORD_INTERACTIONS] FAILED - Signature doesn\'t match');
     }
     
     return isValid;

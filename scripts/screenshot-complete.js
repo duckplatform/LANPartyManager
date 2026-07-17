@@ -114,7 +114,7 @@ async function captureRoute(page, route) {
     // Vérifier pour les pages d'erreur
     const titleOrError = await page.textContent('title, h1, h2, .error-container').catch(() => '');
     if (titleOrError.toLowerCase().includes('erreur') || titleOrError.toLowerCase().includes('denied')) {
-      console.log(`  ⚠️ Erreur d'accès ou page d'erreur`);
+      console.log('  ⚠️ Erreur d\'accès ou page d\'erreur');
       return false;
     }
     

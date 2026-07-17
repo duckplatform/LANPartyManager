@@ -675,7 +675,7 @@ router.post('/events/:id/registrations', async (req, res) => {
     logger.info(`[ADMIN/EVENTS] Admin #${req.session.userId} a inscrit l'utilisateur #${userId} à l'événement #${id}`);
     req.flash('success', `${user.username} a été inscrit à l'événement.`);
   } catch (err) {
-    logger.error(`[ADMIN/EVENTS] Erreur inscription manuelle :`, err);
+    logger.error('[ADMIN/EVENTS] Erreur inscription manuelle :', err);
     req.flash('error', 'Erreur lors de l\'inscription.');
   }
   return res.redirect(`/admin/events/${id}/registrations`);
@@ -1192,7 +1192,7 @@ router.post('/discord-test', async (req, res) => {
     const rest = new REST({ version: '10' }).setToken(token);
     await rest.post(Routes.channelMessages(channelId), {
       body: {
-        content: `🧪 **Test de mentions — LANPartyManager**`,
+        content: '🧪 **Test de mentions — LANPartyManager**',
         embeds: [{
           title: 'Comparaison des formats de mention',
           color: 0x5865F2,

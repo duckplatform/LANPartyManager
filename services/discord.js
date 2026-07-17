@@ -271,7 +271,7 @@ async function notifyEventCreated(event) {
 
   const embed = {
     title:       `📅 Nouvel événement : ${event.name}`,
-    description: `Un nouvel événement vient d'être planifié ! Marquez la date dans votre agenda.`,
+    description: 'Un nouvel événement vient d\'être planifié ! Marquez la date dans votre agenda.',
     color:       0x5865F2, // Bleu Discord
     fields: [
       { name: '📍 Lieu',    value: event.location,               inline: true },
@@ -308,7 +308,7 @@ async function notifyEventStarted(event) {
 
   const embed = {
     title:       `🟢 C'est parti ! ${event.name}`,
-    description: `L'événement vient de commencer ! Rejoignez-nous dès maintenant.`,
+    description: 'L\'événement vient de commencer ! Rejoignez-nous dès maintenant.',
     color:       0x57F287, // Vert Discord
     fields: [
       { name: '📍 Lieu', value: event.location, inline: true },
@@ -355,7 +355,7 @@ async function notifyEventEnded(event, rankings = []) {
 
   const embed = {
     title:       `🏁 Fin de l'événement : ${event.name}`,
-    description: `L'événement est maintenant terminé. Merci à tous les participants ! À bientôt pour la prochaine LAN ! 🎮`,
+    description: 'L\'événement est maintenant terminé. Merci à tous les participants ! À bientôt pour la prochaine LAN ! 🎮',
     color:       0xED4245, // Rouge Discord
     fields: [
       { name: '📍 Lieu', value: event.location, inline: true },

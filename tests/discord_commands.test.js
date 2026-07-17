@@ -412,7 +412,7 @@ describe('Discord Commandes Slash', function () {
 
       expect(result.data.flags).to.equal(EPHEMERAL_FLAG);
       const embed = result.data.embeds[0];
-      expect(embed.description).to.include("pas encore participé");
+      expect(embed.description).to.include('pas encore participé');
     });
 
   });

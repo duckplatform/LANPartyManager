@@ -95,7 +95,7 @@ router.post(
       return res.status(401).json({ error: 'Invalid request signature' });
     }
 
-    logger.info(`[DISCORD_INTERACTIONS] Request signature verified successfully`);
+    logger.info('[DISCORD_INTERACTIONS] Request signature verified successfully');
 
     // Parser le JSON maintenant que la signature est vérifiée
     let interaction;

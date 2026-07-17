@@ -196,7 +196,6 @@ app.use((req, res) => {
 
 // ─── Gestionnaire d'erreurs global ────────────────────────────────────────
 
-// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   // Erreur CSRF
   if (err.code === 'EBADCSRFTOKEN' || err.code === 'INVALID_CSRF_TOKEN') {

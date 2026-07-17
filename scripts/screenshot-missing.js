@@ -85,7 +85,7 @@ async function takeScreenshot(page, name, filename) {
   try {
     const serverReady = await waitForServer();
     if (!serverReady) {
-      throw new Error(`Serveur non accessible`);
+      throw new Error('Serveur non accessible');
     }
 
     // SCREENSHOT 1: Paramètres administrateur
