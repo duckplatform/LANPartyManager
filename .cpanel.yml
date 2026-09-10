@@ -4,5 +4,5 @@ deployment:
     - export DEPLOYPATH=$HOME/lan/
     - /bin/rm $DEPLOYPATH/* -Rf
     - /bin/cp -R * $DEPLOYPATH
-    - source /home/sasi8362/nodevenv/lan/24/bin/activate && cd $DEPLOYPATH
+    - source $HOME/nodevenv/lan/24/bin/activate && cd $DEPLOYPATH
     - npm install
