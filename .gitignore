@@ -26,3 +26,6 @@ Thumbs.db
 # Couverture de tests
 coverage/
 .nyc_output/
+
+.claude/
+CLAUDE.md
