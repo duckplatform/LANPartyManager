@@ -42,7 +42,7 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.61.1",
     "chai": "^6.2.2",
     "eslint": "^10.10.0",
