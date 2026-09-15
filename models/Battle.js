@@ -365,7 +365,7 @@ const Battle = {
       return { success: false, promotedBattleIds: [] };
     }
 
-    let affectedRows = 0;
+    let affectedRows;
 
     // Verrouille la rencontre pour eviter qu'une meme salle passe en
     // setup/in_progress sur 2 battles en concurrence.
