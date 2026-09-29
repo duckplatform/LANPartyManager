@@ -18,14 +18,40 @@ const poolStub = {
 
 const Battle = require('../models/Battle');
 
+const EVENT_LOCK_SQL = 'SELECT id FROM events WHERE id = ? FOR UPDATE';
+
+/**
+ * Connexion transactionnelle simulée pour assignRoomIfAvailable :
+ * le verrou de l'événement est absorbé ici, les autres requêtes sont
+ * déléguées à poolStub.execute pour conserver l'ordre des appels attendus.
+ */
+function buildQueueConnection() {
+  return {
+    execute: sinon.stub().callsFake((sql, params) => (
+      sql === EVENT_LOCK_SQL
+        ? Promise.resolve([[{ id: params[0] }]])
+        : poolStub.execute(sql, params)
+    )),
+    beginTransaction: sinon.stub().resolves(),
+    commit: sinon.stub().resolves(),
+    rollback: sinon.stub().resolves(),
+    release: sinon.stub(),
+  };
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 
 describe('Battle Model', function () {
+
+  let queueConn;
 
   beforeEach(function () {
     dbModule.pool = poolStub;
     poolStub.execute.reset();
     poolStub.getConnection.reset();
+    // Connexion par défaut ; les tests de changeStatus la remplacent au besoin
+    queueConn = buildQueueConnection();
+    poolStub.getConnection.resolves(queueConn);
   });
 
   afterEach(function () {
@@ -194,6 +220,47 @@ describe('Battle Model', function () {
 
       expect(result).to.be.false;
       expect(poolStub.execute.callCount).to.equal(2);
+    });
+
+    it('doit verrouiller l\'événement dans une transaction avant de chercher une salle', async function () {
+      poolStub.execute.onFirstCall().resolves([[{ status: 'queue', match_type: '1v1' }]]);
+      poolStub.execute.onSecondCall().resolves([[{ total: 0 }]]);
+      poolStub.execute.onThirdCall().resolves([[{ id: 3, active_count: 0 }]]);
+      poolStub.execute.onCall(3).resolves([{ affectedRows: 1 }]);
+
+      await Battle.assignRoomIfAvailable(1, 7, 1);
+
+      expect(queueConn.beginTransaction.calledOnce).to.be.true;
+      expect(queueConn.execute.firstCall.args).to.deep.equal([EVENT_LOCK_SQL, [7]]);
+      expect(queueConn.commit.calledOnce).to.be.true;
+      expect(queueConn.rollback.notCalled).to.be.true;
+      expect(queueConn.release.calledOnce).to.be.true;
+    });
+
+    it('doit annuler la transaction et libérer la connexion en cas d\'erreur', async function () {
+      poolStub.execute.onFirstCall().rejects(new Error('DB down'));
+
+      let caught = null;
+      try {
+        await Battle.assignRoomIfAvailable(1, 1, 1);
+      } catch (err) {
+        caught = err;
+      }
+
+      expect(caught).to.be.an('error');
+      expect(queueConn.rollback.calledOnce).to.be.true;
+      expect(queueConn.commit.notCalled).to.be.true;
+      expect(queueConn.release.calledOnce).to.be.true;
+    });
+
+    it('doit retourner false si la battle a quitté la file entre-temps', async function () {
+      poolStub.execute.onFirstCall().resolves([[{ status: 'queue', match_type: '1v1' }]]);
+      poolStub.execute.onSecondCall().resolves([[{ total: 0 }]]);
+      poolStub.execute.onThirdCall().resolves([[{ id: 3, active_count: 0 }]]);
+      poolStub.execute.onCall(3).resolves([{ affectedRows: 0 }]);
+
+      const result = await Battle.assignRoomIfAvailable(1, 1, 1);
+      expect(result).to.be.false;
     });
   });
 

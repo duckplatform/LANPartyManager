@@ -166,7 +166,7 @@ router.post('/login', authLimiter, loginRules, async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const discordEnabled = (await AppSettings.get('discord_enabled')) === '1';
-    return res.render('auth/login', {
+    return res.status(422).render('auth/login', {
       title:     'Connexion',
       pageClass: 'page-auth',
       discordEnabled,
@@ -181,8 +181,10 @@ router.post('/login', authLimiter, loginRules, async (req, res) => {
 
     if (!user || !(await User.verifyPassword(password, user.password))) {
       logger.warn(`[AUTH] Tentative de connexion échouée pour : ${email}`);
+      // Statut 4xx obligatoire : authLimiter (skipSuccessfulRequests) ne compte
+      // que les réponses en échec, un 200 rendrait la limite inopérante.
       const discordEnabled = (await AppSettings.get('discord_enabled')) === '1';
-      return res.render('auth/login', {
+      return res.status(401).render('auth/login', {
         title:     'Connexion',
         pageClass: 'page-auth',
         discordEnabled,
@@ -251,7 +253,7 @@ router.post('/register', authLimiter, registerRules, async (req, res) => {
   const discordEnabled = (await AppSettings.get('discord_enabled')) === '1';
 
   if (!errors.isEmpty()) {
-    return res.render('auth/register', {
+    return res.status(422).render('auth/register', {
       title:     'Inscription',
       pageClass: 'page-auth',
       discordEnabled,
@@ -265,7 +267,7 @@ router.post('/register', authLimiter, registerRules, async (req, res) => {
 
     // Vérifie l'unicité de l'email
     if (await User.emailExists(email)) {
-      return res.render('auth/register', {
+      return res.status(409).render('auth/register', {
         title:     'Inscription',
         pageClass: 'page-auth',
         discordEnabled,
@@ -313,23 +315,26 @@ router.post('/logout', (req, res) => {
   });
 });
 
-// ─── GET /auth/discord ─────────────────────────────────────────────────────
-// Démarre le flux OAuth2 Discord en redirigeant vers la page d'autorisation.
-
-router.get('/discord', async (req, res) => {
-  if (req.session.userId) return res.redirect('/');
+/**
+ * Démarre le flux OAuth2 Discord : génère le state anti-CSRF, le mémorise en
+ * session puis redirige vers la page d'autorisation Discord.
+ * @param {Object}  req
+ * @param {Object}  res
+ * @param {{ linkMode: boolean, promptMode: 'none'|'consent' }} options
+ */
+async function startDiscordOauth(req, res, { linkMode, promptMode }) {
+  const failRedirect = linkMode ? '/profile' : '/auth/login';
 
   // Lecture prioritaire depuis app_settings, fallback env vars
   const settings   = await AppSettings.getAll();
   const discordEnabled = settings.discord_enabled !== '0'; // non défini ou '1' → activé
   const clientId   = settings.discord_client_id  || process.env.DISCORD_CLIENT_ID  || '';
   const redirectUri = getDiscordRedirectUri();
-  const promptMode = req.query.prompt === 'consent' ? 'consent' : 'none';
 
   if (!discordEnabled || !clientId || !redirectUri) {
     logger.warn('[AUTH DISCORD] Discord non configuré ou désactivé — OAuth Discord indisponible.');
     req.flash('error', 'La connexion via Discord n\'est pas disponible actuellement.');
-    return res.redirect('/auth/login');
+    return res.redirect(failRedirect);
   }
 
   // DEBUG: log le redirect URI utilisé pour diagnostiquer les problèmes de consentement
@@ -339,6 +344,7 @@ router.get('/discord', async (req, res) => {
   const state = randomBytes(32).toString('hex');
   req.session.discordOauthState = state;
   req.session.discordOauthPromptMode = promptMode;
+  req.session.discordOauthLink = linkMode;
 
   const params = new URLSearchParams({
     client_id:     clientId,
@@ -350,48 +356,82 @@ router.get('/discord', async (req, res) => {
   });
 
   return res.redirect(`${DISCORD_AUTH_URL}?${params.toString()}`);
+}
+
+// ─── GET /auth/discord ─────────────────────────────────────────────────────
+// Démarre le flux OAuth2 Discord de connexion / inscription.
+
+router.get('/discord', async (req, res) => {
+  if (req.session.userId) return res.redirect('/');
+  const promptMode = req.query.prompt === 'consent' ? 'consent' : 'none';
+  return startDiscordOauth(req, res, { linkMode: false, promptMode });
+});
+
+// ─── POST /auth/discord/link ───────────────────────────────────────────────
+// Lie un compte Discord au compte connecté (bouton du profil) — seule façon
+// de prouver la possession d'un compte Discord.
+// POST (protégé par le jeton CSRF global) pour qu'un site tiers ne puisse pas
+// déclencher la liaison, et prompt=consent pour que Discord affiche toujours
+// l'écran d'autorisation : l'utilisateur voit quel compte Discord il lie.
+
+router.post('/discord/link', async (req, res) => {
+  if (!req.session.userId) {
+    req.flash('error', 'Vous devez être connecté pour lier un compte Discord.');
+    return res.redirect('/auth/login');
+  }
+  return startDiscordOauth(req, res, { linkMode: true, promptMode: 'consent' });
 });
 
 // ─── GET /auth/discord/callback ────────────────────────────────────────────
 // Reçoit le code OAuth2 de Discord, échange le token, identifie l'utilisateur.
 
 router.get('/discord/callback', async (req, res) => {
+  // Mode liaison (depuis le profil) : les erreurs ramènent au profil
+  const linkMode     = !!(req.session.discordOauthLink && req.session.userId);
+  const failRedirect = linkMode ? '/profile' : '/auth/login';
+
   try {
     const { code, state, error: discordError } = req.query;
     const promptMode = req.session.discordOauthPromptMode || 'none';
 
+    const clearOauthSession = () => {
+      delete req.session.discordOauthState;
+      delete req.session.discordOauthPromptMode;
+      delete req.session.discordOauthLink;
+    };
+
     // Erreur explicite renvoyée par Discord (ex: accès refusé)
     if (discordError) {
+      clearOauthSession();
+      // La liaison utilise toujours prompt=consent : seule la connexion peut
+      // avoir besoin de basculer vers l'écran d'autorisation interactif.
       if (
+        !linkMode &&
         promptMode === 'none' &&
         ['consent_required', 'interaction_required', 'login_required'].includes(discordError)
       ) {
         logger.info(`[AUTH DISCORD] Autorisation interactive requise (${discordError}) — bascule vers prompt=consent.`);
-        delete req.session.discordOauthState;
-        delete req.session.discordOauthPromptMode;
         return res.redirect('/auth/discord?prompt=consent');
       }
 
       logger.warn(`[AUTH DISCORD] Erreur OAuth Discord renvoyée par le serveur: ${discordError}`);
-      delete req.session.discordOauthState;
-      delete req.session.discordOauthPromptMode;
       req.flash('error', 'Autorisation Discord refusée ou annulée.');
-      return res.redirect('/auth/login');
+      return res.redirect(failRedirect);
     }
 
     // Validation du state (protection CSRF)
     if (!state || state !== req.session.discordOauthState) {
       logger.warn('[AUTH DISCORD] State OAuth invalide (possible tentative CSRF).');
       delete req.session.discordOauthPromptMode;
+      delete req.session.discordOauthLink;
       req.flash('error', 'Requête invalide. Veuillez réessayer.');
-      return res.redirect('/auth/login');
+      return res.redirect(failRedirect);
     }
-    delete req.session.discordOauthState;
-    delete req.session.discordOauthPromptMode;
+    clearOauthSession();
 
     if (!code) {
       req.flash('error', 'Code d\'autorisation Discord manquant.');
-      return res.redirect('/auth/login');
+      return res.redirect(failRedirect);
     }
 
     // Lecture prioritaire depuis app_settings, fallback env vars
@@ -402,7 +442,7 @@ router.get('/discord/callback', async (req, res) => {
 
     if (!clientId || !clientSecret || !redirectUri) {
       req.flash('error', 'La connexion via Discord n\'est pas disponible actuellement.');
-      return res.redirect('/auth/login');
+      return res.redirect(failRedirect);
     }
 
     // DEBUG: log le callback reçu
@@ -420,7 +460,7 @@ router.get('/discord/callback', async (req, res) => {
     if (!tokenData.access_token) {
       logger.error('[AUTH DISCORD] Échec de l\'échange du code:', JSON.stringify(tokenData));
       req.flash('error', 'Erreur lors de la connexion avec Discord. Veuillez réessayer.');
-      return res.redirect('/auth/login');
+      return res.redirect(failRedirect);
     }
 
     // Récupère les informations du compte Discord
@@ -429,11 +469,25 @@ router.get('/discord/callback', async (req, res) => {
     if (!discordUser.id) {
       logger.error('[AUTH DISCORD] Réponse utilisateur Discord invalide:', JSON.stringify(discordUser));
       req.flash('error', 'Impossible de récupérer les informations Discord. Veuillez réessayer.');
-      return res.redirect('/auth/login');
+      return res.redirect(failRedirect);
+    }
+
+    const existingByDiscord = await User.findByDiscordId(discordUser.id);
+
+    // Liaison depuis le profil : la possession du compte Discord vient d'être
+    // prouvée par OAuth, on le rattache à l'utilisateur connecté.
+    if (linkMode) {
+      if (existingByDiscord && existingByDiscord.id !== req.session.userId) {
+        req.flash('error', 'Ce compte Discord est déjà lié à un autre compte.');
+        return res.redirect('/profile');
+      }
+      await User.linkDiscord(req.session.userId, discordUser.id);
+      logger.info(`[AUTH DISCORD] Discord ${discordUser.id} lié au compte #${req.session.userId}`);
+      req.flash('success', 'Compte Discord lié avec succès.');
+      return res.redirect('/profile');
     }
 
     // Cas 1 : le compte Discord est déjà lié à un compte local → connexion directe
-    const existingByDiscord = await User.findByDiscordId(discordUser.id);
     if (existingByDiscord) {
       return req.session.regenerate((err) => {
         if (err) {
@@ -451,25 +505,16 @@ router.get('/discord/callback', async (req, res) => {
       });
     }
 
-    // Cas 2 : l'e-mail Discord est déjà enregistré → liaison automatique du compte
-    if (discordUser.email && discordUser.verified) {
+    // Cas 2 : l'e-mail Discord correspond à un compte local existant.
+    // Pas de liaison automatique : les e-mails locaux ne sont pas vérifiés, un
+    // tiers aurait pu créer ce compte avec l'adresse de la victime. Le titulaire
+    // doit se connecter par mot de passe puis lier Discord depuis son profil.
+    if (discordUser.email) {
       const existingByEmail = await User.findByEmail(discordUser.email);
       if (existingByEmail) {
-        await User.linkDiscord(existingByEmail.id, discordUser.id);
-        return req.session.regenerate((err) => {
-          if (err) {
-            logger.error('[AUTH DISCORD] Erreur régénération session :', err);
-            req.flash('error', 'Erreur interne. Veuillez réessayer.');
-            return res.redirect('/auth/login');
-          }
-          req.session.userId      = existingByEmail.id;
-          req.session.username    = existingByEmail.username;
-          req.session.isAdmin     = !!existingByEmail.is_admin;
-          req.session.isModerator = !!existingByEmail.is_moderator;
-          logger.info(`[AUTH DISCORD] Discord lié automatiquement au compte #${existingByEmail.id} (${existingByEmail.email})`);
-          req.flash('success', `Compte Discord lié avec succès. Bienvenue, ${existingByEmail.username} !`);
-          return res.redirect('/');
-        });
+        logger.info(`[AUTH DISCORD] E-mail Discord déjà utilisé par le compte #${existingByEmail.id} — liaison manuelle requise.`);
+        req.flash('info', 'Un compte existe déjà avec l\'adresse e-mail de ce compte Discord. Connectez-vous avec votre mot de passe, puis liez Discord depuis votre profil.');
+        return res.redirect('/auth/login');
       }
     }
 
@@ -487,7 +532,7 @@ router.get('/discord/callback', async (req, res) => {
   } catch (err) {
     logger.error('[AUTH DISCORD] Erreur dans le callback OAuth:', err);
     req.flash('error', 'Une erreur est survenue lors de la connexion avec Discord.');
-    return res.redirect('/auth/login');
+    return res.redirect(failRedirect);
   }
 });
 
@@ -553,7 +598,7 @@ router.post('/discord/complete', authLimiter, discordCompleteRules, async (req, 
   };
 
   if (!errors.isEmpty()) {
-    return res.render('auth/discord-complete', {
+    return res.status(422).render('auth/discord-complete', {
       title:     'Finaliser mon inscription',
       pageClass: 'page-auth',
       errors:    errors.array(),
@@ -566,7 +611,7 @@ router.post('/discord/complete', authLimiter, discordCompleteRules, async (req, 
 
     // Vérification de l'unicité de l'e-mail
     if (await User.emailExists(email)) {
-      return res.render('auth/discord-complete', {
+      return res.status(409).render('auth/discord-complete', {
         title:     'Finaliser mon inscription',
         pageClass: 'page-auth',
         errors:    [{ msg: 'Cette adresse e-mail est déjà utilisée. Si vous avez déjà un compte, connectez-vous par e-mail pour lier votre Discord.' }],

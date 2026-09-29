@@ -282,6 +282,21 @@ router.post('/news', announcementValidation, async (req, res) => {
   }
 });
 
+// ─── POST /admin/news/preview ─────────────────────────────────────────────
+// Endpoint AJAX : retourne le HTML rendu depuis un fragment Markdown.
+// Doit être déclaré avant POST /news/:id, sinon « preview » serait capturé par :id.
+
+router.post('/news/preview', async (req, res) => {
+  try {
+    const { content } = req.body;
+    const html = renderMarkdown(content || '');
+    return res.json({ html });
+  } catch (err) {
+    logger.error('[ADMIN/NEWS] Erreur prévisualisation :', err);
+    return res.status(500).json({ html: '' });
+  }
+});
+
 // ─── GET /admin/news/:id/edit ─────────────────────────────────────────────
 
 router.get('/news/:id/edit', async (req, res) => {
@@ -365,20 +380,6 @@ router.post('/news/:id/delete', async (req, res) => {
   return res.redirect('/admin/news');
 });
 
-// ─── POST /admin/news/:id/preview ────────────────────────────────────────
-// Endpoint AJAX : retourne le HTML rendu depuis un fragment Markdown
-
-router.post('/news/preview', async (req, res) => {
-  try {
-    const { content } = req.body;
-    const html = renderMarkdown(content || '');
-    return res.json({ html });
-  } catch (err) {
-    logger.error('[ADMIN/NEWS] Erreur prévisualisation :', err);
-    return res.status(500).json({ html: '' });
-  }
-});
-
 // ═══════════════════════════════════════════════════════════════════════════
 // GESTION DES ÉVÉNEMENTS
 // ═══════════════════════════════════════════════════════════════════════════
@@ -403,6 +404,19 @@ const eventValidation = [
   body('status')
     .isIn(['planned', 'in_progress', 'ended']).withMessage('Statut invalide.'),
 ];
+
+/**
+ * Convertit la saisie d'un champ datetime-local ("YYYY-MM-DDTHH:mm") en Date.
+ * Sans décalage explicite, la valeur est interprétée dans le fuseau du serveur
+ * (variable d'environnement TZ) — le même que celui utilisé pour pré-remplir le
+ * formulaire d'édition et afficher les dates. mysql2 (timezone 'Z') stocke
+ * ensuite l'instant en UTC, ce qui rend les comparaisons avec new Date() exactes.
+ * @param {string} value
+ * @returns {Date}
+ */
+function parseEventStartAt(value) {
+  return new Date(value);
+}
 
 // ─── GET /admin/events ────────────────────────────────────────────────────
 
@@ -455,7 +469,8 @@ router.post('/events', eventValidation, async (req, res) => {
   }
 
   try {
-    const { name, start_at, location, discord_channel_id } = req.body;
+    const { name, location, discord_channel_id } = req.body;
+    const start_at = parseEventStartAt(req.body.start_at);
     const status = req.body.status;
     // discord_notifications_enabled : case à cocher → '1' si cochée, absent sinon
     const discord_notifications_enabled = req.body.discord_notifications_enabled === '1' ? 1 : 0;
@@ -541,7 +556,8 @@ router.post('/events/:id', eventValidation, async (req, res) => {
       return res.redirect('/admin/events');
     }
 
-    const { name, start_at, location, discord_channel_id } = req.body;
+    const { name, location, discord_channel_id } = req.body;
+    const start_at = parseEventStartAt(req.body.start_at);
     const status = req.body.status;
     // discord_notifications_enabled : case à cocher → '1' si cochée, absent sinon
     const discord_notifications_enabled = req.body.discord_notifications_enabled === '1' ? 1 : 0;
@@ -1275,6 +1291,14 @@ router.post('/discord/register-commands', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
+ * URL publique de l'application (sans slash final), affichée dans le guide Discord.
+ * @returns {string}
+ */
+function getAppUrl() {
+  return (process.env.APP_URL || '').replace(/\/$/, '');
+}
+
+/**
  * GET /admin/settings
  * Affiche le formulaire des paramètres de l'application.
  */
@@ -1285,7 +1309,7 @@ router.get('/settings', async (req, res) => {
       title:     'Paramètres de l\'application',
       pageClass: 'page-admin',
       settings,
-      appUrl:    (process.env.APP_URL || '').replace(/\/$/, ''),
+      appUrl:    getAppUrl(),
     });
   } catch (err) {
     logger.error('[ADMIN/SETTINGS] Erreur chargement paramètres :', err);
@@ -1404,6 +1428,7 @@ router.post('/settings', settingsValidation, async (req, res) => {
       pageClass: 'page-admin',
       settings,
       errors:    errors.array(),
+      appUrl:    getAppUrl(),
     });
   }
 

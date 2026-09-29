@@ -321,8 +321,13 @@ router.post(
         Game.findById(gameId),
       ]);
 
-      if (!ensureLiveEvent(event, req, res) || !game) {
-        req.flash('error', 'Événement ou jeu introuvable.');
+      // ensureLiveEvent a déjà répondu (redirection) si l'événement n'est pas en cours
+      if (!ensureLiveEvent(event, req, res)) {
+        return;
+      }
+
+      if (!game) {
+        req.flash('error', 'Jeu introuvable.');
         return res.redirect(`/battles/events/${eventId}/create`);
       }
 

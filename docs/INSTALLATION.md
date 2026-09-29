@@ -45,7 +45,12 @@ DB_PASSWORD=votre_mot_de_passe
 DB_NAME=votre_base
 
 # Sessions (changer impérativement en production)
+# Les sessions sont stockées en base (table `sessions`, créée automatiquement)
 SESSION_SECRET=changez-moi-en-production
+
+# Fuseau horaire de l'organisation : les dates d'événement saisies dans
+# l'administration sont interprétées et affichées dans ce fuseau
+TZ=Europe/Paris
 
 # Discord OAuth (optionnel)
 DISCORD_CLIENT_ID=

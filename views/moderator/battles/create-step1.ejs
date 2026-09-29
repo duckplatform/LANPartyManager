@@ -91,7 +91,7 @@
 (function () {
   'use strict';
 
-  const games = <%- JSON.stringify(games.map(function(g) { return { id: g.id, name: g.name, console: g.console, match_type: g.match_type }; })) %>;
+  const games = <%- jsonForScript(games.map(function(g) { return { id: g.id, name: g.name, console: g.console, match_type: g.match_type }; })) %>;
   const select   = document.getElementById('game_id');
   const preview  = document.getElementById('gamePreview');
   const previewNom     = document.getElementById('previewNom');

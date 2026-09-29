@@ -227,14 +227,44 @@ const Battle = {
    *   - Son type_rencontre correspond au jeu
    *   - Elle n'a aucune battle planifie, installation ou en_cours
    * Une salle attribuée ne change jamais (règle métier).
+   *
+   * La lecture des salles libres et l'UPDATE s'exécutent dans une transaction
+   * qui verrouille la ligne de l'événement (SELECT … FOR UPDATE) : deux
+   * réévaluations concurrentes (ex. tableau de bord + écran d'annonce) sont
+   * ainsi sérialisées et ne peuvent pas attribuer la même salle deux fois.
    * @param {number} battleId
    * @param {number} eventId
    * @param {number} gameId
    * @returns {Promise<boolean>} true si une salle a été attribuée
    */
   async assignRoomIfAvailable(battleId, eventId, gameId) {
+    const conn = await db.pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      await conn.execute('SELECT id FROM events WHERE id = ? FOR UPDATE', [eventId]);
+      const assigned = await Battle._assignRoomLocked(conn, battleId, eventId, gameId);
+      await conn.commit();
+      return assigned;
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
+  },
+
+  /**
+   * Corps de assignRoomIfAvailable, exécuté sous le verrou de l'événement.
+   * @param {Object} conn — connexion portant la transaction
+   * @param {number} battleId
+   * @param {number} eventId
+   * @param {number} gameId
+   * @returns {Promise<boolean>}
+   * @private
+   */
+  async _assignRoomLocked(conn, battleId, eventId, gameId) {
     // Vérifie que la battle est bien en file_attente
-    const [battleRows] = await db.pool.execute(
+    const [battleRows] = await conn.execute(
       `SELECT b.status, b.event_id, g.match_type
          FROM battles b
          JOIN games g ON g.id = b.game_id
@@ -249,7 +279,7 @@ const Battle = {
     // Regle metier: une rencontre en file d'attente n'est pas traitable
     // si un de ses joueurs est deja engage sur une autre rencontre
     // planifie/installation/en_cours dans le meme evenement.
-    const [conflicts] = await db.pool.execute(
+    const [conflicts] = await conn.execute(
       `SELECT COUNT(*) AS total
          FROM battle_players bp_wait
          JOIN battle_players bp_other
@@ -268,7 +298,7 @@ const Battle = {
     // Regle metier: une salle peut avoir au maximum
     // - 1 rencontre en cours/installation (en_cours ou installation)
     // - 1 rencontre planifiee (prochaine partie)
-    const [rooms] = await db.pool.execute(
+    const [rooms] = await conn.execute(
       `SELECT r.id,
               (
                 SELECT COUNT(*) FROM battles b3
@@ -299,12 +329,12 @@ const Battle = {
     const roomId = rooms[0].id;
     const activeCount = Number(rooms[0].active_count) || 0;
     const nextStatus = activeCount === 0 ? 'setup' : 'planned';
-    await db.pool.execute(
+    const [updateResult] = await conn.execute(
       `UPDATE battles SET room_id = ?, status = ?, updated_at = NOW()
         WHERE id = ? AND status = 'queue'`,
       [roomId, nextStatus, battleId]
     );
-    return true;
+    return updateResult.affectedRows > 0;
   },
 
   /**

@@ -105,15 +105,13 @@ const User = {
    * @param {Object} data - champs à mettre à jour
    * @returns {Promise<boolean>} succès
    */
-  async update(id, { last_name, first_name, username, email, discord_user_id }) {
-    // Valide que discord_user_id est un Snowflake numérique ou null
-    const discordId = discord_user_id && /^\d{15,20}$/.test(discord_user_id.trim())
-      ? discord_user_id.trim()
-      : null;
+  async update(id, { last_name, first_name, username, email }) {
+    // discord_user_id est volontairement exclu : il n'est modifié que par
+    // linkDiscord() après une authentification OAuth Discord.
     const [result] = await db.pool.execute(
-      `UPDATE users SET last_name = ?, first_name = ?, username = ?, email = ?, discord_user_id = ?, updated_at = NOW()
+      `UPDATE users SET last_name = ?, first_name = ?, username = ?, email = ?, updated_at = NOW()
        WHERE id = ?`,
-      [last_name.trim(), first_name.trim(), username.trim(), email.toLowerCase().trim(), discordId, id]
+      [last_name.trim(), first_name.trim(), username.trim(), email.toLowerCase().trim(), id]
     );
     return result.affectedRows > 0;
   },

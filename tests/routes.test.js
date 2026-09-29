@@ -5,6 +5,8 @@
  * Utilise supertest pour simuler des requêtes HTTP
  */
 
+const https = require('https');
+const { EventEmitter } = require('events');
 const request = require('supertest');
 const { expect } = require('chai');
 const sinon = require('sinon');
@@ -383,8 +385,25 @@ describe('Routes - Tests d\'intégration', function () {
         .set('Cookie', cookie)
         .send(`_csrf=${encodeURIComponent(csrfToken)}&email=pas-un-email&password=test`);
 
-      expect(res.status).to.equal(200);
+      expect(res.status).to.equal(422);
       expect(res.text).to.include('invalide');
+    });
+
+    it('doit répondre 401 pour des identifiants incorrects (comptabilisé par authLimiter)', async function () {
+      const loginPage = await request(app).get('/auth/login');
+      const csrfMatch = loginPage.text.match(/name="_csrf" value="([^"]+)"/);
+      const csrfToken = csrfMatch ? csrfMatch[1] : '';
+      const cookie    = loginPage.headers['set-cookie'];
+
+      // findByEmail → aucun utilisateur (résultat par défaut du stub)
+      const res = await request(app)
+        .post('/auth/login')
+        .set('Cookie', cookie)
+        .send(`_csrf=${encodeURIComponent(csrfToken)}&email=inconnu@test.com&password=Mauvais123`);
+
+      // Un statut >= 400 est indispensable : skipSuccessfulRequests ignore les 2xx/3xx
+      expect(res.status).to.equal(401);
+      expect(res.text).to.include('Email ou mot de passe incorrect');
     });
 
     it('doit rejeter une requête POST avec _csrf sous forme de tableau (protection confusion de type)', async function () {
@@ -422,8 +441,96 @@ describe('Routes - Tests d\'intégration', function () {
           '&password=court&password_confirm=court'
         );
 
-      expect(res.status).to.equal(200);
+      expect(res.status).to.equal(422);
       expect(res.text).to.include('8 caract');
+    });
+  });
+
+  // ── Ordre des routes admin ─────────────────────────────────────────────
+
+  describe('POST /admin/news/preview (ordre des routes)', function () {
+    it('doit être déclarée avant POST /news/:id pour ne pas être capturée par :id', function () {
+      const indexOf = path => adminRouter.stack.findIndex(
+        layer => layer.route && layer.route.path === path && layer.route.methods.post
+      );
+      const previewIndex = indexOf('/news/preview');
+      const updateIndex  = indexOf('/news/:id');
+
+      expect(previewIndex).to.be.greaterThan(-1);
+      expect(previewIndex).to.be.lessThan(updateIndex);
+    });
+  });
+
+  // ── Paramètres : ré-affichage après erreur de validation ──────────────
+
+  describe('POST /admin/settings (handler, erreur de validation)', function () {
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('doit transmettre appUrl à la vue lors du ré-affichage', async function () {
+      const layer = adminRouter.stack.find(
+        entry => entry.route && entry.route.path === '/settings' && entry.route.methods.post
+      );
+      const handler = layer.route.stack[layer.route.stack.length - 1].handle;
+      const savedAppUrl = process.env.APP_URL;
+      process.env.APP_URL = 'https://lan.example.com/';
+
+      // Simule une erreur de validation express-validator déjà enregistrée
+      const req = {
+        body: {},
+        session: { userId: 1 },
+        flash: sinon.stub(),
+        'express-validator#contexts': [{
+          errors: [{ type: 'field', msg: 'Le nom du site est obligatoire.', path: 'organization_name', location: 'body' }],
+          getData: () => [],
+        }],
+      };
+      const res = { status: sinon.stub().returnsThis(), render: sinon.stub(), redirect: sinon.stub() };
+
+      await handler(req, res);
+      process.env.APP_URL = savedAppUrl;
+
+      expect(res.status.calledWith(422)).to.be.true;
+      expect(res.render.firstCall.args[0]).to.equal('admin/settings');
+      expect(res.render.firstCall.args[1].appUrl).to.equal('https://lan.example.com');
+    });
+  });
+
+  // ── Wizard rencontres : événement non en cours ─────────────────────────
+
+  describe('POST /battles/events/:id/create (handler, événement terminé)', function () {
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('ne doit rediriger qu\'une seule fois si l\'événement n\'est pas en cours', async function () {
+      const handler = getRouteHandler(battlesRouter, 'post', '/events/:id/create', 1);
+      sinon.stub(Event, 'findById').resolves({ id: 3, name: 'LAN', status: 'ended' });
+      sinon.stub(Game, 'findById').resolves({ id: 1, name: 'SF6', match_type: '1v1' });
+
+      const req = { params: { id: '3' }, body: { game_id: '1' }, flash: sinon.stub() };
+      const res = { render: sinon.stub(), redirect: sinon.stub() };
+
+      await handler(req, res);
+
+      expect(res.redirect.calledOnce).to.be.true;
+      expect(res.redirect.firstCall.args[0]).to.equal('/battles');
+      expect(res.render.notCalled).to.be.true;
+    });
+  });
+
+  // ── Liaison Discord depuis le profil ───────────────────────────────────
+
+  describe('POST /auth/discord/link (non connecté)', function () {
+    it('doit rediriger vers /auth/login', async function () {
+      const agent     = request.agent(app);
+      const loginPage = await agent.get('/auth/login');
+      const csrfToken = loginPage.text.match(/name="_csrf" value="([^"]+)"/)[1];
+
+      const res = await agent.post('/auth/discord/link').send(`_csrf=${encodeURIComponent(csrfToken)}`);
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.equal('/auth/login');
     });
   });
 
@@ -938,6 +1045,200 @@ describe('Routes - Tests d\'intégration', function () {
       const res = await request(app).get('/admin/settings');
       expect(res.status).to.equal(302);
       expect(res.headers['location']).to.include('/auth/login');
+    });
+  });
+
+  // ── Callback OAuth Discord (API Discord simulée) ───────────────────────
+
+  describe('GET /auth/discord/callback (liaison et e-mail existant)', function () {
+    const DISCORD_ID = '123456789012345678';
+    const savedEnv = {};
+
+    /** Simule les réponses HTTPS de l'API Discord (token puis /users/@me). */
+    function stubDiscordApi(discordUser) {
+      const responses = {
+        '/api/oauth2/token': { access_token: 'access-token' },
+        '/api/users/@me':    discordUser,
+      };
+      sinon.stub(https, 'request').callsFake((options, callback) => {
+        const req = new EventEmitter();
+        req.write = () => {};
+        req.end = () => {
+          process.nextTick(() => {
+            const res = new EventEmitter();
+            callback(res);
+            res.emit('data', JSON.stringify(responses[options.path]));
+            res.emit('end');
+          });
+        };
+        return req;
+      });
+    }
+
+    /** Démarre le flux OAuth de connexion et retourne le state stocké en session. */
+    async function startOauth(agent) {
+      const res = await agent.get('/auth/discord');
+      expect(res.status).to.equal(302);
+      return new URL(res.headers['location']).searchParams.get('state');
+    }
+
+    /** Récupère le jeton CSRF de la session courante depuis une page HTML. */
+    async function getCsrfToken(agent, path) {
+      const page = await agent.get(path);
+      return page.text.match(/name="_csrf" value="([^"]+)"/)[1];
+    }
+
+    /** Connecte l'agent avec les stubs User fournis par le test. */
+    async function loginAs(agent) {
+      const csrfToken = await getCsrfToken(agent, '/auth/login');
+      const login = await agent.post('/auth/login')
+        .send(`_csrf=${encodeURIComponent(csrfToken)}&email=member@test.com&password=Secret123`);
+      expect(login.headers['location']).to.equal('/');
+    }
+
+    /** Démarre la liaison (POST + CSRF) et retourne l'URL d'autorisation Discord. */
+    async function startLink(agent) {
+      const csrfToken = await getCsrfToken(agent, '/');
+      const res = await agent.post('/auth/discord/link')
+        .send(`_csrf=${encodeURIComponent(csrfToken)}`);
+      expect(res.status).to.equal(302);
+      return new URL(res.headers['location']);
+    }
+
+    function stubLoggedInMember() {
+      const localUser = { id: 5, username: 'Member', email: 'member@test.com', password: 'hash', is_admin: 0, is_moderator: 0 };
+      sinon.stub(User, 'findByEmail').resolves(localUser);
+      sinon.stub(User, 'verifyPassword').resolves(true);
+      sinon.stub(User, 'findById').resolves(localUser);
+      return localUser;
+    }
+
+    beforeEach(function () {
+      for (const key of ['DISCORD_CLIENT_ID', 'DISCORD_CLIENT_SECRET', 'APP_URL']) {
+        savedEnv[key] = process.env[key];
+      }
+      process.env.DISCORD_CLIENT_ID     = 'test-client-id';
+      process.env.DISCORD_CLIENT_SECRET = 'test-client-secret';
+      process.env.APP_URL               = 'https://lanparty.example.com';
+    });
+
+    afterEach(function () {
+      sinon.restore();
+      for (const [key, value] of Object.entries(savedEnv)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+    });
+
+    it('ne doit pas lier automatiquement un compte local ayant le même e-mail', async function () {
+      stubDiscordApi({ id: DISCORD_ID, username: 'victim', email: 'victim@test.com', verified: true });
+      sinon.stub(User, 'findByDiscordId').resolves(null);
+      sinon.stub(User, 'findByEmail').resolves({ id: 42, email: 'victim@test.com', username: 'Squatter' });
+      const linkStub = sinon.stub(User, 'linkDiscord').resolves(true);
+
+      const agent = request.agent(app);
+      const state = await startOauth(agent);
+      const res   = await agent.get(`/auth/discord/callback?code=abc&state=${state}`);
+
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.equal('/auth/login');
+      expect(linkStub.notCalled).to.be.true;
+    });
+
+    it('doit forcer l\'écran de consentement Discord pour une liaison', async function () {
+      stubLoggedInMember();
+      const agent = request.agent(app);
+      await loginAs(agent);
+
+      const authorizeUrl = await startLink(agent);
+
+      expect(authorizeUrl.hostname).to.equal('discord.com');
+      expect(authorizeUrl.searchParams.get('prompt')).to.equal('consent');
+    });
+
+    it('ne doit pas démarrer de liaison via GET (lien piégé sur un site tiers)', async function () {
+      stubLoggedInMember();
+      const agent = request.agent(app);
+      await loginAs(agent);
+
+      const res = await agent.get('/auth/discord?link=1');
+
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.equal('/');
+    });
+
+    it('doit lier le compte Discord à l\'utilisateur connecté en mode liaison', async function () {
+      stubLoggedInMember();
+      stubDiscordApi({ id: DISCORD_ID, username: 'member', email: 'other@test.com', verified: true });
+      sinon.stub(User, 'findByDiscordId').resolves(null);
+      const linkStub = sinon.stub(User, 'linkDiscord').resolves(true);
+
+      const agent = request.agent(app);
+      await loginAs(agent);
+      const state = (await startLink(agent)).searchParams.get('state');
+      const res   = await agent.get(`/auth/discord/callback?code=abc&state=${state}`);
+
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.equal('/profile');
+      expect(linkStub.calledOnceWithExactly(5, DISCORD_ID)).to.be.true;
+    });
+
+    it('doit refuser la liaison d\'un compte Discord appartenant à un autre utilisateur', async function () {
+      stubLoggedInMember();
+      stubDiscordApi({ id: DISCORD_ID, username: 'someone', email: 'someone@test.com', verified: true });
+      sinon.stub(User, 'findByDiscordId').resolves({ id: 77, username: 'Owner' });
+      const linkStub = sinon.stub(User, 'linkDiscord').resolves(true);
+
+      const agent = request.agent(app);
+      await loginAs(agent);
+      const state = (await startLink(agent)).searchParams.get('state');
+      const res   = await agent.get(`/auth/discord/callback?code=abc&state=${state}`);
+
+      expect(res.status).to.equal(302);
+      expect(res.headers['location']).to.equal('/profile');
+      expect(linkStub.notCalled).to.be.true;
+    });
+  });
+
+  // ── Changement de mot de passe : déconnexion des autres sessions ───────
+
+  describe('POST /profile/password (autres sessions)', function () {
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('doit déconnecter les autres sessions et conserver la session courante', async function () {
+      const localUser = { id: 5, username: 'Member', email: 'member@test.com', password: 'hash', is_admin: 0, is_moderator: 0 };
+      sinon.stub(User, 'findByEmail').resolves(localUser);
+      sinon.stub(User, 'verifyPassword').resolves(true);
+      sinon.stub(User, 'findById').resolves(localUser);
+      const updateStub = sinon.stub(User, 'updatePassword').resolves(true);
+
+      async function login(agent) {
+        const page  = await agent.get('/auth/login');
+        const token = page.text.match(/name="_csrf" value="([^"]+)"/)[1];
+        await agent.post('/auth/login')
+          .send(`_csrf=${encodeURIComponent(token)}&email=member@test.com&password=Secret123`);
+      }
+
+      const current = request.agent(app);
+      const other   = request.agent(app);
+      await login(current);
+      await login(other);
+
+      const home  = await current.get('/');
+      const token = home.text.match(/name="_csrf" value="([^"]+)"/)[1];
+      const res   = await current.post('/profile/password').send(
+        `_csrf=${encodeURIComponent(token)}&current_password=Secret123` +
+        '&new_password=Nouveau123&new_password_confirm=Nouveau123'
+      );
+      expect(res.headers['location']).to.equal('/profile');
+      expect(updateStub.calledOnce).to.be.true;
+
+      const otherProfile   = await other.get('/profile');
+      const currentProfile = await current.get('/profile');
+      expect(otherProfile.headers['location']).to.equal('/auth/login');
+      expect(currentProfile.status).to.equal(200);
     });
   });
 

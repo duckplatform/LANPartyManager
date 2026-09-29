@@ -1,5 +1,23 @@
 # Mises à jour et changements
 
+## Correctifs de sécurité et de fiabilité (revue de code)
+
+### Sécurité
+- **Limitation des tentatives de connexion** : les échecs de connexion renvoient désormais `401` (et les erreurs de validation `422`/`409`), ce qui permet à `authLimiter` de les comptabiliser.
+- **Liaison Discord** : un compte Discord n'est plus lié automatiquement à un compte local ayant la même adresse e-mail (les e-mails locaux ne sont pas vérifiés). L'ID Discord n'est plus saisissable dans le profil : la liaison se fait via le bouton « Lier mon compte Discord » (`POST /auth/discord/link`, protégé par CSRF), qui passe par l'autorisation OAuth Discord avec écran de consentement systématique.
+- **Changement de mot de passe** : toutes les autres sessions de l'utilisateur sont déconnectées ; la session courante est conservée.
+- **Échappement JSON dans les vues** : les `JSON.stringify` placés dans des attributs HTML utilisent `<%= %>` ; ceux placés dans un bloc `<script>` passent par `jsonForScript()` (échappe `<`, empêche la fermeture prématurée du bloc).
+- **Droits de session** : les rôles admin/modérateur sont relus en base à chaque requête (`refreshSessionUser`) ; une rétrogradation ou une suppression de compte prend effet immédiatement.
+
+### Fiabilité
+- **Sessions persistées en MySQL** (`config/sessionStore.js`, table `sessions`) à la place du MemoryStore. La table est créée automatiquement au démarrage ; elle figure aussi dans `database/install.sql`.
+- **File d'attente des rencontres** : l'attribution de salle s'exécute dans une transaction qui verrouille l'événement, évitant qu'une même salle soit attribuée deux fois lors de réévaluations concurrentes.
+- **Dates d'événement** : la saisie est convertie en instant UTC selon le fuseau du serveur (`TZ`). Définissez `TZ` sur le fuseau de l'organisation. Les événements existants, enregistrés auparavant en heure locale « naïve », peuvent nécessiter une correction manuelle de l'heure si le serveur n'était pas en UTC.
+
+### Corrections
+- Prévisualisation Markdown des actualités (`POST /admin/news/preview`) de nouveau fonctionnelle.
+- Plus d'erreur 500 lors d'une erreur de validation des paramètres, ni lors de l'étape 1 du wizard de rencontre pour un événement terminé.
+
 ## [ÉTAPE 8.1] Configuration personnalisable de l'application
 
 ### Objectif
