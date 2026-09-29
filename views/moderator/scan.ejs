@@ -187,9 +187,9 @@
   const canvas     = document.getElementById('scanCanvas');
   const ctx        = canvas.getContext('2d', { willReadFrequently: true });
   const i18n = {
-    qrUnavailable: <%- JSON.stringify(t('moderator.qr_unavailable')) %>,
-    cameraUnavailableHttps: <%- JSON.stringify(t('moderator.camera_unavailable_https')) %>,
-    cameraAccessError: <%- JSON.stringify(t('moderator.camera_access_error')) %>
+    qrUnavailable: <%- jsonForScript(t('moderator.qr_unavailable')) %>,
+    cameraUnavailableHttps: <%- jsonForScript(t('moderator.camera_unavailable_https')) %>,
+    cameraAccessError: <%- jsonForScript(t('moderator.camera_access_error')) %>
   };
 
   let stream = null;

@@ -88,12 +88,21 @@
           </div>
 
           <div class="form-group">
-            <label for="discord_user_id" class="form-label">
+            <span class="form-label">
               <i class="fab fa-discord"></i> <%= t('profile.field_discord_id') %>
-            </label>
-            <input type="text" id="discord_user_id" name="discord_user_id" class="form-input font-monospace"
-                   value="<%= user.discord_user_id || '' %>" maxlength="20"
-                   placeholder="ex: 123456789012345678" autocomplete="off" />
+            </span>
+            <p>
+              <% if (user.discord_user_id) { %>
+                <i class="fas fa-link"></i> <%= t('profile.discord_linked') %>
+                <code class="font-monospace"><%= user.discord_user_id %></code>
+              <% } else { %>
+                <%= t('profile.discord_not_linked') %>
+              <% } %>
+            </p>
+            <button type="submit" form="discord-link-form" class="btn btn--ghost btn--sm">
+              <i class="fab fa-discord"></i>
+              <%= user.discord_user_id ? t('profile.discord_relink_button') : t('profile.discord_link_button') %>
+            </button>
             <small class="form-hint">
               <%- t('profile.field_discord_id_hint') %>
             </small>
@@ -104,6 +113,11 @@
               <i class="fas fa-floppy-disk"></i> <%= t('profile.save') %>
             </button>
           </div>
+        </form>
+
+        <!-- Liaison Discord : formulaire séparé (POST + CSRF), les formulaires ne s'imbriquent pas -->
+        <form id="discord-link-form" action="/auth/discord/link" method="POST" hidden>
+          <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
         </form>
       </div>
     </div>
@@ -201,7 +215,7 @@
             <form action="/profile/events/<%= activeEvent.id %>/unregister" method="POST">
               <input type="hidden" name="_csrf" value="<%= csrfToken() %>" />
               <button type="submit" class="btn btn--ghost btn--sm"
-                      onclick='return confirm(<%- JSON.stringify(t("profile.confirm_unregister_event")) %>)'>
+                      onclick='return confirm(<%= JSON.stringify(t("profile.confirm_unregister_event")) %>)'>
                 <i class="fas fa-user-minus"></i> <%= t('profile.cancel_registration_btn') %>
               </button>
             </form>

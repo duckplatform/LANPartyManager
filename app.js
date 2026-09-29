@@ -22,7 +22,9 @@ const { Server }     = require('socket.io');
 const logger             = require('./config/logger');
 const { testConnection } = require('./config/database');
 const { globalLimiter }  = require('./middleware/rateLimiter');
-const { injectLocals }   = require('./middleware/auth');
+const { injectLocals, refreshSessionUser } = require('./middleware/auth');
+const { MySQLSessionStore } = require('./config/sessionStore');
+const { jsonForScript }     = require('./config/viewHelpers');
 
 // ─── Initialisation de l'application Express ──────────────────────────────
 
@@ -42,6 +44,7 @@ let dbRetryTimer = null;
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.locals.jsonForScript = jsonForScript;
 
 // ─── Proxy inverse (Apache cPanel) ────────────────────────────────────────
 // Nécessaire pour que express-session (cookie secure) et express-rate-limit
@@ -91,9 +94,13 @@ app.use(express.static(path.join(__dirname, 'public'), {
 // ─── Sessions ─────────────────────────────────────────────────────────────
 
 const SESSION_SECRET = process.env.SESSION_SECRET || 'change-this-secret-in-production';
+// Sessions persistées en MySQL (partagées entre processus Passenger, conservées
+// au redémarrage). Les tests conservent le MemoryStore (BDD simulée).
+const sessionStore = ENV === 'test' ? undefined : new MySQLSessionStore();
 app.use(session({
   name:   'sid',
   secret: SESSION_SECRET,
+  store:  sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -173,6 +180,10 @@ app.use((req, res, next) => {
     message:    'L\'application est demarree, mais la base de donnees n\'est pas encore disponible. Reessayez dans quelques instants.',
   });
 });
+
+// ─── Resynchronisation des droits de session avec la BDD ──────────────────
+
+app.use(refreshSessionUser);
 
 // ─── Routes ───────────────────────────────────────────────────────────────
 

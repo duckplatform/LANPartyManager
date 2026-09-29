@@ -14,6 +14,7 @@ const EventRegistration = require('../models/EventRegistration');
 const discord           = require('../services/discord');
 const logger    = require('../config/logger');
 const { requireAuth } = require('../middleware/auth');
+const { destroyOtherUserSessions } = require('../config/sessionStore');
 
 // ─── Aide : charge les données événement pour le rendu du profil ───────────
 
@@ -75,10 +76,6 @@ const updateRules = [
     .matches(/^[a-zA-Z0-9_\-. ]+$/).withMessage('Le pseudo contient des caractères non autorisés.'),
   body('email')
     .trim().normalizeEmail().isEmail().withMessage('Adresse e-mail invalide.'),
-  body('discord_user_id')
-    .optional({ checkFalsy: true })
-    .trim()
-    .matches(/^\d{15,20}$/).withMessage('L\'ID Discord doit être un nombre de 15 à 20 chiffres.'),
 ];
 
 router.post('/', requireAuth, updateRules, async (req, res) => {
@@ -92,14 +89,16 @@ router.post('/', requireAuth, updateRules, async (req, res) => {
     return res.render('profile', {
       title:     'Mon profil',
       pageClass: 'page-profile',
-      user:      { ...user, ...req.body },
+      user:      { ...user, ...req.body, discord_user_id: user ? user.discord_user_id : null },
       errors:    errors.array(),
       ...eventData,
     });
   }
 
   try {
-    const { last_name, first_name, username, email, discord_user_id } = req.body;
+    // discord_user_id n'est pas modifiable ici : il n'est lié que via OAuth
+    // (/auth/discord?link=1), qui prouve la possession du compte Discord.
+    const { last_name, first_name, username, email } = req.body;
 
     // Vérification d'unicité e-mail
     if (await User.emailExists(email, req.session.userId)) {
@@ -109,13 +108,13 @@ router.post('/', requireAuth, updateRules, async (req, res) => {
       return res.render('profile', {
         title:     'Mon profil',
         pageClass: 'page-profile',
-        user:      { ...user, ...req.body },
+        user:      { ...user, ...req.body, discord_user_id: user ? user.discord_user_id : null },
         errors:    [{ msg: 'Cette adresse e-mail est déjà utilisée.' }],
         ...eventData,
       });
     }
 
-    await User.update(req.session.userId, { last_name, first_name, username, email, discord_user_id });
+    await User.update(req.session.userId, { last_name, first_name, username, email });
     // Met à jour la session avec le nouveau pseudo
     req.session.username = username;
     logger.info(`[PROFILE] Utilisateur #${req.session.userId} a mis à jour son profil.`);
@@ -181,6 +180,8 @@ router.post('/password', requireAuth, passwordRules, async (req, res) => {
     }
 
     await User.updatePassword(req.session.userId, req.body.new_password);
+    // Déconnecte les autres sessions (ex. un appareil compromis) ; la session courante est conservée
+    await destroyOtherUserSessions(req.sessionStore, req.session.userId, req.sessionID);
     logger.info(`[PROFILE] Utilisateur #${req.session.userId} a changé son mot de passe.`);
     req.flash('success', 'Mot de passe modifié avec succès.');
     return res.redirect('/profile');

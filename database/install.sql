@@ -284,6 +284,21 @@ INSERT IGNORE INTO `app_settings` (`key`, `value`) VALUES
   ('language',                 'fr'),
   ('locale',                   'fr-FR');
 
+-- ------------------------------------------------------------
+-- Table : sessions (store express-session, voir config/sessionStore.js)
+-- Créée aussi automatiquement au démarrage si absente.
+-- ------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `sessions` (
+  `session_id` VARCHAR(128) NOT NULL,
+  `expires`    INT UNSIGNED NOT NULL COMMENT 'Timestamp UNIX (secondes) d''expiration',
+  `data`       MEDIUMTEXT   NOT NULL COMMENT 'Session sérialisée en JSON',
+  PRIMARY KEY (`session_id`),
+  KEY `idx_sessions_expires` (`expires`)
+) ENGINE=InnoDB
+  DEFAULT CHARSET=utf8mb4
+  COLLATE=utf8mb4_unicode_ci
+  COMMENT='Sessions utilisateur (express-session)';
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================

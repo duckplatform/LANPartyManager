@@ -6,7 +6,8 @@
 
 const { expect } = require('chai');
 const sinon      = require('sinon');
-const { requireAuth, requireAdmin, requireModerator, injectLocals } = require('../middleware/auth');
+const { requireAuth, requireAdmin, requireModerator, refreshSessionUser, injectLocals } = require('../middleware/auth');
+const User       = require('../models/User');
 
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -114,6 +115,62 @@ describe('Middleware Auth', function () {
 
       requireModerator(req, res, next);
       expect(res.redirect.calledWith('/')).to.be.true;
+    });
+  });
+
+  // ── refreshSessionUser ─────────────────────────────────────────────────
+
+  describe('refreshSessionUser()', function () {
+    afterEach(function () {
+      sinon.restore();
+    });
+
+    it('doit ignorer les requêtes anonymes sans interroger la BDD', async function () {
+      const findStub = sinon.stub(User, 'findById');
+      const next = sinon.spy();
+
+      await refreshSessionUser({ session: {} }, { locals: {} }, next);
+
+      expect(findStub.notCalled).to.be.true;
+      expect(next.calledOnceWithExactly()).to.be.true;
+    });
+
+    it('doit retirer immédiatement les droits admin révoqués en base', async function () {
+      sinon.stub(User, 'findById').resolves({ id: 4, username: 'ExAdmin', is_admin: 0, is_moderator: 0 });
+      const req  = { session: { userId: 4, username: 'ExAdmin', isAdmin: true, isModerator: true } };
+      const res  = { locals: {} };
+      const next = sinon.spy();
+
+      await refreshSessionUser(req, res, next);
+
+      expect(req.session.isAdmin).to.be.false;
+      expect(req.session.isModerator).to.be.false;
+      expect(res.locals.currentUser).to.deep.equal({ id: 4, username: 'ExAdmin', isAdmin: false, isModerator: false });
+      expect(next.calledOnceWithExactly()).to.be.true;
+    });
+
+    it('doit rendre la session anonyme si le compte a été supprimé', async function () {
+      sinon.stub(User, 'findById').resolves(null);
+      const req  = { session: { userId: 9, username: 'Gone', isAdmin: true, isModerator: false } };
+      const res  = { locals: { currentUser: { id: 9 } } };
+      const next = sinon.spy();
+
+      await refreshSessionUser(req, res, next);
+
+      expect(req.session.userId).to.be.undefined;
+      expect(req.session.isAdmin).to.be.undefined;
+      expect(res.locals.currentUser).to.be.null;
+      expect(next.calledOnceWithExactly()).to.be.true;
+    });
+
+    it('doit propager l\'erreur BDD (échec fermé)', async function () {
+      const dbErr = new Error('DB down');
+      sinon.stub(User, 'findById').rejects(dbErr);
+      const next = sinon.spy();
+
+      await refreshSessionUser({ session: { userId: 1, isAdmin: true } }, { locals: {} }, next);
+
+      expect(next.calledOnceWithExactly(dbErr)).to.be.true;
     });
   });
 

@@ -271,7 +271,7 @@
               <% if (['setup', 'in_progress'].includes(b.status)) { %>
                 <button type="button" class="btn btn--warning btn--sm btn-open-result"
                         data-battle-id="<%= b.id %>"
-                        data-players="<%- JSON.stringify(b.players).replace(/"/g, '&quot;') %>"
+                        data-players="<%= JSON.stringify(b.players) %>"
                         data-type="<%= b.match_type %>">
                   <i class="fas fa-flag-checkered"></i> <%= t('moderator.dashboard_end_result') %>
                 </button>

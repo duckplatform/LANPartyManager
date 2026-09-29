@@ -422,6 +422,7 @@ Configurez ces variables dans l'interface cPanel → **Node.js Selector** :
 | `DB_PORT` | Port MySQL (optionnel) | `3306` |
 | `SESSION_SECRET` | Secret de session (clé longue aléatoire) | `abc123...xyz` |
 | `NODE_ENV` | Environnement | `production` |
+| `TZ` | Fuseau horaire de l'organisation (saisie et affichage des dates d'événement) | `Europe/Paris` |
 | `PORT` | Port d'écoute (optionnel) | `3000` |
 | `LOG_LEVEL` | Niveau de log (optionnel) | `info` |
 | `APP_URL` | URL publique du site (pour les liens Discord) | `https://monsite.example.com` |

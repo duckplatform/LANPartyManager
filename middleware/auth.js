@@ -6,6 +6,7 @@
  */
 
 const AppSettings                              = require('../models/AppSettings');
+const User                                     = require('../models/User');
 const { loadTranslations, createT, DEFAULT_LOCALE } = require('../config/i18n');
 
 /**
@@ -42,6 +43,46 @@ function requireModerator(req, res, next) {
   }
   req.flash('error', 'Accès refusé : droits modérateur requis.');
   return res.redirect('/');
+}
+
+/**
+ * Resynchronise la session avec la base à chaque requête authentifiée.
+ * Les droits admin/modérateur stockés en session à la connexion sont
+ * rafraîchis : une rétrogradation ou une suppression de compte prend effet
+ * immédiatement, au lieu de persister jusqu'à l'expiration de la session (24 h).
+ * Doit être enregistré après la vérification de disponibilité de la BDD.
+ */
+async function refreshSessionUser(req, res, next) {
+  if (!req.session || !req.session.userId) {
+    return next();
+  }
+
+  try {
+    const user = await User.findById(req.session.userId);
+
+    if (!user) {
+      // Compte supprimé : la session redevient anonyme
+      delete req.session.userId;
+      delete req.session.username;
+      delete req.session.isAdmin;
+      delete req.session.isModerator;
+      res.locals.currentUser = null;
+      return next();
+    }
+
+    req.session.username    = user.username;
+    req.session.isAdmin     = !!user.is_admin;
+    req.session.isModerator = !!user.is_moderator;
+    res.locals.currentUser  = {
+      id:          user.id,
+      username:    user.username,
+      isAdmin:     req.session.isAdmin,
+      isModerator: req.session.isModerator,
+    };
+    return next();
+  } catch (err) {
+    return next(err);
+  }
 }
 
 /**
@@ -110,4 +151,4 @@ async function injectLocals(req, res, next) {
   next();
 }
 
-module.exports = { requireAuth, requireAdmin, requireModerator, injectLocals };
+module.exports = { requireAuth, requireAdmin, requireModerator, refreshSessionUser, injectLocals };
